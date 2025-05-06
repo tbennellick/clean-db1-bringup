@@ -1,49 +1,118 @@
-name: Build
+name: Build FW
 
-on:
-  push:
-  pull_request:
-  schedule:
-    - cron: "0 0 * * *"
-
+on: [push]
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, macos-13, macos-14, windows-2022]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    container: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    env:
+      CMAKE_PREFIX_PATH: /opt/zephyr-sdk
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: example-application
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Mark git repo as not dubious ownership
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          # Without this, git commands during the build fail.
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
+#      - name: Clone Submodules BEL
+#        if: github.repository_owner == 'tbennellick'
+#        uses: actions/checkout@v4
+#        with:
+#          repository: "tbennellick/client-mobile-gateway-common"
+#          path: app/repo
+#          ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
+#          persist-credentials: true
+#
+#      - name: Clone Submodules STS
+#        if: github.repository_owner == 'Stowood'
+#        uses: actions/checkout@v4
+#        with:
+#          repository: "Stowood/repo"
+#          path: app/repo
+#          ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
+#          persist-credentials: true
+#
+#      - name: checkout submodule
+#        run: |
+#          git submodule init
+#          git submodule update
 
-      - name: Setup Zephyr project
-        uses: zephyrproject-rtos/action-zephyr-setup@v1
-        with:
-          app-path: example-application
-          toolchains: arm-zephyr-eabi
+      - name: Name the build
+        id: step_one
+        run: |
+            echo "build_name=$(date -Iseconds | tr ':' '.')_${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Git Describe
+        run: |
+          cd app/
+          git describe --tags --dirty --abbrev=7
+
+      - name: Set up repo, dependencies and toolchain
+        run: |
+          west init -l .
+          west update --fetch-opt=--filter=tree:0
+          west setup-toolchain
 
       - name: Build firmware
-        working-directory: example-application
-        shell: bash
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            EXTRA_TWISTER_FLAGS="--short-build-path -O/tmp/twister-out"
-          fi
-          west twister -T app -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
+          cd app/
+          ./build.sh
 
-      - name: Twister Tests
-        working-directory: example-application
-        shell: bash
+      - name: Pack Firmware
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            EXTRA_TWISTER_FLAGS="--short-build-path -O/tmp/twister-out"
-          fi
-          west twister -T tests -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
+          cd app/
+          tar cJf "${build_name}.tar" build/
+          cp build/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf" 
+          cp build/zephyr/zephyr.hex "${build_name}.db1-bu-zephyr.hex" 
+
+      - name: Archive firmware
+        uses: actions/upload-artifact@v3
+        with:
+          name: db1-bu-firmware-${{ env.build_name }}
+          path: |
+            app/${{ env.build_name }}.tar
+            app/build/zephyr/zephyr.*
+            app/${{ env.build_name }}.db1-bu-zephyr.elf
+            app/${{ env.build_name }}.db1-bu-zephyr.hex
+          if-no-files-found: error
+
+#      - id: 'auth'
+#        name: 'Authenticate to Google Cloud'
+#        uses: 'google-github-actions/auth@v1'
+#        with:
+#          credentials_json: '${{ secrets.GCS_WRITER_SERVICE_ACCOUNT }}'
+#      - id: 'upload-file'
+#        uses: 'google-github-actions/upload-cloud-storage@v1'
+#        with:
+#          process_gcloudignore: false
+#          path: app/${{ env.build_name }}.tar
+#          destination: "ble-hub-binaries/"
+
+      - name: Dump on Failure
+        if: failure()
+        run: |
+          tree /__w/
+
+      - name: Pack Firmware on failure
+        if: failure()
+        run: |
+          cd app/
+          tar cJf "fail-${build_name}.tar" build/
+
+      - name: Archive build on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: |
+            app/fail-${{ env.build_name }}.tar
+          if-no-files-found: error
+
