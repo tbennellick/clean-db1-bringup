@@ -4,3 +4,10 @@ west-commands:
       - name: example-west-command
         class: ExampleWestCommand
         help: an example west extension command
+
+  - file: scripts/setup_toolchain.py
+    commands:
+      - name: setup-toolchain
+        class: SetupToolchain
+        help: get or configure toolchain
+
