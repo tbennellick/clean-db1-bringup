@@ -74,7 +74,7 @@ jobs:
           cp build/zephyr/zephyr.hex "${build_name}.db1-bu-zephyr.hex" 
 
       - name: Archive firmware
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: db1-bu-firmware-${{ env.build_name }}
           path: |
@@ -109,7 +109,7 @@ jobs:
 
       - name: Archive build on failure
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firmware
           path: |
