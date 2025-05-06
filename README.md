@@ -1,138 +1,67 @@
-# Zephyr Example Application
+# BFP2 Dev board 1 bring up firmware
 
-<a href="https://github.com/zephyrproject-rtos/example-application/actions/workflows/build.yml?query=branch%3Amain">
-  <img src="https://github.com/zephyrproject-rtos/example-application/actions/workflows/build.yml/badge.svg?event=push">
-</a>
-<a href="https://github.com/zephyrproject-rtos/example-application/actions/workflows/docs.yml?query=branch%3Amain">
-  <img src="https://github.com/zephyrproject-rtos/example-application/actions/workflows/docs.yml/badge.svg?event=push">
-</a>
-<a href="https://zephyrproject-rtos.github.io/example-application">
-  <img alt="Documentation" src="https://img.shields.io/badge/documentation-3D578C?logo=sphinx&logoColor=white">
-</a>
-<a href="https://zephyrproject-rtos.github.io/example-application/doxygen">
-  <img alt="API Documentation" src="https://img.shields.io/badge/API-documentation-3D578C?logo=c&logoColor=white">
-</a>
+This is a Zephyr "Workspace"[^1] project based on [example-application]. It is forked from a tag of a point release to ensure reliable builds. ( revision: v4.1.0 in west.yml)
 
-This repository contains a Zephyr example application. The main purpose of this
-repository is to serve as a reference on how to structure Zephyr-based
-applications. Some of the features demonstrated in this example are:
+[example-application]: https://github.com/zephyrproject-rtos/example-application
+[^1]: https://docs.zephyrproject.org/latest/develop/application/index.html#zephyr-workspace-app
 
-- Basic [Zephyr application][app_dev] skeleton
-- [Zephyr workspace applications][workspace_app]
-- [Zephyr modules][modules]
-- [West T2 topology][west_t2]
-- [Custom boards][board_porting]
-- Custom [devicetree bindings][bindings]
-- Out-of-tree [drivers][drivers]
-- Out-of-tree libraries
-- Example CI configuration (using GitHub Actions)
-- Custom [west extension][west_ext]
-- Custom [Zephyr runner][runner_ext]
-- Doxygen and Sphinx documentation boilerplate
+## Building and running the application
+This project is intended to be built on a modern linux system. It will probably work on other host OS but that is not considered here. 
 
-This repository is versioned together with the [Zephyr main tree][zephyr]. This
-means that every time that Zephyr is tagged, this repository is tagged as well
-with the same version number, and the [manifest](west.yml) entry for `zephyr`
-will point to the corresponding Zephyr tag. For example, the `example-application`
-v2.6.0 will point to Zephyr v2.6.0. Note that the `main` branch always
-points to the development branch of Zephyr, also `main`.
-
-[app_dev]: https://docs.zephyrproject.org/latest/develop/application/index.html
-[workspace_app]: https://docs.zephyrproject.org/latest/develop/application/index.html#zephyr-workspace-app
-[modules]: https://docs.zephyrproject.org/latest/develop/modules.html
-[west_t2]: https://docs.zephyrproject.org/latest/develop/west/workspaces.html#west-t2
-[board_porting]: https://docs.zephyrproject.org/latest/guides/porting/board_porting.html
-[bindings]: https://docs.zephyrproject.org/latest/guides/dts/bindings.html
-[drivers]: https://docs.zephyrproject.org/latest/reference/drivers/index.html
-[zephyr]: https://github.com/zephyrproject-rtos/zephyr
-[west_ext]: https://docs.zephyrproject.org/latest/develop/west/extensions.html
-[runner_ext]: https://docs.zephyrproject.org/latest/develop/modules.html#external-runners
-
-## Getting Started
-
-Before getting started, make sure you have a proper Zephyr development
-environment. Follow the official
-[Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/getting_started/index.html).
-
-### Initialization
-
-The first step is to initialize the workspace folder (``my-workspace``) where
-the ``example-application`` and all Zephyr modules will be cloned. Run the following
-command:
-
+# Local Build
+## Install prerequisites
 ```shell
-# initialize my-workspace for the example-application (main branch)
-west init -m https://github.com/zephyrproject-rtos/example-application --mr main my-workspace
-# update Zephyr modules
-cd my-workspace
+sudo dnf install -y wget2-2.1.0 wget2-wget-2.1.0 git-2.46.0 cmake-3.28.2 ninja-build-1.12.1 xz-5.4.6 python3-devel-3.12.4 perl-Digest-SHA-1:6.04 protobuf-compiler-3.19.6
+pip install --no-cache-dir wget==3.2 filehash==0.2.dev1 west==1.2.0 pyelftools==0.30 grpcio-tools==1.62.0 protobuf==4.25.3
+# Later versions will probably work fine. These are the versions used in CI build.
+```
+
+## Get source, dependencies and toolchain
+
+Note that the repository is not cloned directly. Instead, the zephyr tool west is used to manage dependencies.
+```shell
+west init -m ggit@github.com:Stowood/devboard1-bringup-zephyr.git --mr main db1-bringup
+cd db1-bringup
 west update
+west setup-toolchain
 ```
 
 ### Building and running
 
-To build the application, run the following command:
+To build, run the following command:
 
 ```shell
-cd example-application
-west build -b $BOARD app
+cd db1-bringup.git/
+cd app/
+./build.sh
+./flash.sh
 ```
 
-where `$BOARD` is the target board.
+--------------------------------------------------------
 
-You can use the `custom_plank` board found in this
-repository. Note that Zephyr sample boards may be used if an
-appropriate overlay is provided (see `app/boards`).
+### Toolchain
+The `setup-toolchain` command used above is a custom west extension that downloads and verifies the exact version of the toolchain.
 
-A sample debug configuration is also provided. To apply it, run the following
-command:
+The toolchain is passed to the build by exporting ZEPHYR_SDK_INSTALL_DIR in the build.sh script
 
+If the correct version of the SDK is present in  /opt/zephyr-sdk/ the script will link to that instead of downloading it.
+
+### More advanced building
+The standard west commands are available as with any other zephyr/ncs build. Including:
 ```shell
-west build -b $BOARD app -- -DEXTRA_CONF_FILE=debug.conf
+# To use some of these, you will need need to export ZEPHYR_SDK_INSTALL_DIR eg:
+export ZEPHYR_SDK_INSTALL_DIR=../../toolchain/tc/
+# or 
+export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk/zephyr-sdk-0.17.1-rc1/
+west build -b frdm_mcxn947/mcxn947/cpu0
+west flash --runner=jlink
+
+west boards
+west debug
+west build -t menuconfig
 ```
-
-Once you have built the application, run the following command to flash it:
-
-```shell
-west flash
-```
-
-### Testing
-
-To execute Twister integration tests, run the following command:
+### Testing TBC
 
 ```shell
 west twister -T tests --integration
 ```
-
-### Documentation
-
-A minimal documentation setup is provided for Doxygen and Sphinx. To build the
-documentation first change to the ``doc`` folder:
-
-```shell
-cd doc
-```
-
-Before continuing, check if you have Doxygen installed. It is recommended to
-use the same Doxygen version used in [CI](.github/workflows/docs.yml). To
-install Sphinx, make sure you have a Python installation in place and run:
-
-```shell
-pip install -r requirements.txt
-```
-
-API documentation (Doxygen) can be built using the following command:
-
-```shell
-doxygen
-```
-
-The output will be stored in the ``_build_doxygen`` folder. Similarly, the
-Sphinx documentation (HTML) can be built using the following command:
-
-```shell
-make html
-```
-
-The output will be stored in the ``_build_sphinx`` folder. You may check for
-other output formats other than HTML by running ``make help``.
