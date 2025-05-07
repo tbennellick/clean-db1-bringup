@@ -20,7 +20,7 @@ pip install --no-cache-dir wget==3.2 filehash==0.2.dev1 west==1.2.0 pyelftools==
 
 Note that the repository is not cloned directly. Instead, the zephyr tool west is used to manage dependencies.
 ```shell
-west init -m ggit@github.com:Stowood/devboard1-bringup-zephyr.git --mr main db1-bringup
+west init -m git@github.com:Stowood/devboard1-bringup-zephyr.git --mr main db1-bringup
 cd db1-bringup
 west update
 west setup-toolchain
