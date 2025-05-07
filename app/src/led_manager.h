@@ -1,0 +1,24 @@
+#pragma once
+
+typedef enum {
+	LED_MANAGER_COLOUR_OFF = 0,
+	LED_MANAGER_COLOUR_RED = 1,
+	LED_MANAGER_COLOUR_GREEN = 2,
+	LED_MANAGER_COLOUR_BLUE = 4,
+	LED_MANAGER_COLOUR_YELLOW = LED_MANAGER_COLOUR_RED | LED_MANAGER_COLOUR_GREEN,
+	LED_MANAGER_COLOUR_MAGENTA = LED_MANAGER_COLOUR_RED | LED_MANAGER_COLOUR_BLUE,
+	LED_MANAGER_COLOUR_CYAN = LED_MANAGER_COLOUR_GREEN | LED_MANAGER_COLOUR_BLUE,
+	LED_MANAGER_COLOUR_WHITE = LED_MANAGER_COLOUR_RED | LED_MANAGER_COLOUR_GREEN | LED_MANAGER_COLOUR_BLUE,
+} led_manager_colour_t;
+
+// Upper 16-bits set on time in ms, lower 16-bit set off time in ms
+typedef enum {
+	LED_MANAGER_MODE_CONT = 0,  // On continuously
+	LED_MANAGER_MODE_BLINK = 900U << 16U | 100U,
+	LED_MANAGER_MODE_FLASH = 250U << 16U | 250U,
+    LED_MANAGER_MODE_STROBE_SLOW = 1U << 16U | 5000U,
+
+} led_manager_mode_t;
+
+void led_manager_set(led_manager_colour_t colour, led_manager_mode_t mode);
+void led_manager_init(void);

@@ -8,9 +8,10 @@
 		led1 = &debug_led_1;
 		led2 = &debug_led_2;
 		led3 = &debug_led_3;
-		user-led-r = &red_led;
-		user-led-g = &green_led;
-		user-led-b = &blue_led;
+
+		user-red = &red_led;
+		user-green = &green_led;
+		user-blue = &blue_led;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -41,17 +42,17 @@
 			status = "disabled";
 		};
 
-		red_led: led_0 {
+		red_led: red {
 			gpios = <&gpio3 18 GPIO_ACTIVE_LOW>;
 			label = "Red LED";
 			status = "disabled";
 		};
-		green_led: led_1 {
+		green_led: green {
 			gpios = <&gpio3 19 GPIO_ACTIVE_LOW>;
 			label = "Green LED";
 			status = "disabled";
 		};
-		blue_led: led_2 {
+		blue_led: blue {
 			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 			label = "Blue LED";
 			status = "disabled";

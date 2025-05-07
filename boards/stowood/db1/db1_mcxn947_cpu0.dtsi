@@ -46,7 +46,7 @@
 	status = "okay";
 };
 
-&gpio4 {
+&gpio0 {
 	status = "okay";
 };
 
@@ -54,22 +54,30 @@
 	status = "okay";
 };
 
-&gpio0 {
-	status = "okay";
-};
-
 &gpio2 {
 	status = "okay";
 };
 
-&green_led {
+&gpio3 {
 	status = "okay";
 };
 
-&red_led {
+&gpio4 {
 	status = "okay";
 };
 
+&gpio5 {
+	status = "okay";
+};
+
+//&green_led {
+//	status = "okay";
+//};
+//
+//&red_led {
+//	status = "okay";
+//};
+//
 &user_button_2 {
 	status = "okay";
 };
