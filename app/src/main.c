@@ -5,6 +5,8 @@
 
 #include "debug_leds.h"
 #include "led_manager.h"
+#include "power.h"
+
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
 int main(void)
@@ -14,14 +16,16 @@ int main(void)
     debug_led_on();
     led_manager_init();
     led_manager_set(LED_MANAGER_COLOUR_RED, LED_MANAGER_MODE_CONT);
-    k_sleep(K_SECONDS(1));
+    k_sleep(K_MSEC(100));
     led_manager_set(LED_MANAGER_COLOUR_GREEN, LED_MANAGER_MODE_CONT);
-    k_sleep(K_SECONDS(1));
+    k_sleep(K_MSEC(100));
     led_manager_set(LED_MANAGER_COLOUR_BLUE, LED_MANAGER_MODE_CONT);
-    k_sleep(K_SECONDS(1));
+    k_sleep(K_MSEC(100));
     led_manager_set(LED_MANAGER_COLOUR_WHITE, LED_MANAGER_MODE_CONT);
-    k_sleep(K_SECONDS(1));
+    k_sleep(K_MSEC(100));
     led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
+
+    init_power();
 
 	while (1)
         {

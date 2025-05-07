@@ -12,6 +12,12 @@
 		user-red = &red_led;
 		user-green = &green_led;
 		user-blue = &blue_led;
+		power-ven-sys-base = &power_ven_sys_base;
+		power-ven-storage = &power_ven_storage;
+		power-ven-ble = &power_ven_ble;
+		power-ven-sys = &power_ven_sys;
+		power-ven-bat = &power_ven_bat;
+
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -24,38 +30,52 @@
 		debug_led_0: dbg_0 {
 			gpios = <&gpio4 12 GPIO_ACTIVE_LOW>;
 			label = "Debug LED 0";
-			status = "disabled";
 		};
 		debug_led_1: dbg_1 {
 			gpios = <&gpio4 13 GPIO_ACTIVE_LOW>;
 			label = "Debug LED 1";
-			status = "disabled";
 		};
 		debug_led_2: dbg_2 {
 			gpios = <&gpio4 16 GPIO_ACTIVE_LOW>;
 			label = "Debug LED 2";
-			status = "disabled";
 		};
 		debug_led_3: dbg_3 {
 			gpios = <&gpio4 15 GPIO_ACTIVE_LOW>;
 			label = "Debug LED 3";
-			status = "disabled";
 		};
 
 		red_led: red {
 			gpios = <&gpio3 18 GPIO_ACTIVE_LOW>;
 			label = "Red LED";
-			status = "disabled";
 		};
 		green_led: green {
 			gpios = <&gpio3 19 GPIO_ACTIVE_LOW>;
 			label = "Green LED";
-			status = "disabled";
 		};
 		blue_led: blue {
 			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 			label = "Blue LED";
-			status = "disabled";
+		};
+
+		power_ven_sys_base: power_ven_sys_base {
+			gpios = <&gpio5 8 GPIO_ACTIVE_HIGH>;
+			label = "Power V_EN_SYS_BASE";
+		};
+		power_ven_storage: power_ven_storage {
+			gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>;
+			label = "Power V_EN_STORAGE";
+		};
+		power_ven_ble: power_ven_ble {
+			gpios = <&gpio1 23 GPIO_ACTIVE_HIGH>;
+			label = "Power V_EN_BLE";
+		};
+		power_ven_sys: power_ven_sys {
+			gpios = <&gpio2 11 GPIO_ACTIVE_HIGH>;
+			label = "Power V_EN_SYS";
+		};
+		power_ven_bat: power_ven_bat {
+			gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+			label = "Power V_EN_BAT";
 		};
 	};
 

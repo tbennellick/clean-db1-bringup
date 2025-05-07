@@ -89,10 +89,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="86e578e5-50d5-480c-9269-8b7da97e3f8a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1_mcxn947_cpu0.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1_mcxn947_cpu0.dtsi" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -611,7 +611,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1746628363259</updated>
-      <workItem from="1746628364473" duration="9993000" />
+      <workItem from="1746628364473" duration="12191000" />
     </task>
     <servers />
   </component>
