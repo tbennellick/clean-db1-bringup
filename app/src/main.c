@@ -20,6 +20,8 @@ int main(void)
     led_manager_set(LED_MANAGER_COLOUR_BLUE, LED_MANAGER_MODE_CONT);
     k_sleep(K_SECONDS(1));
     led_manager_set(LED_MANAGER_COLOUR_WHITE, LED_MANAGER_MODE_CONT);
+    k_sleep(K_SECONDS(1));
+    led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
 
 	while (1)
         {
