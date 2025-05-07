@@ -5,3 +5,4 @@ project(app LANGUAGES C)
 
 target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/debug_leds.c)
+target_sources(app PRIVATE src/handle_fatal.c)

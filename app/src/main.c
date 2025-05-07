@@ -17,6 +17,7 @@ int main(void)
         {
             k_sleep(K_MSEC(2000));
             printk("Spam!....\n");
+            debug_led_toggle();
         }
 	return 0;
 }

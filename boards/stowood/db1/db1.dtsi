@@ -4,10 +4,14 @@
 
 / {
 	aliases{
-		led0 = &red_led;
-		led1 = &green_led;
-		led2 = &blue_led;
-		led3 = &blue_led;
+		led0 = &debug_led_0;
+		led1 = &debug_led_1;
+		led2 = &debug_led_2;
+		led3 = &debug_led_3;
+		user-led-r = &red_led;
+		user-led-g = &green_led;
+		user-led-b = &blue_led;
+
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
 		sdhc0 = &usdhc0;
@@ -16,19 +20,40 @@
 
 	leds {
 		compatible = "gpio-leds";
+		debug_led_0: dbg_0 {
+			gpios = <&gpio4 12 GPIO_ACTIVE_LOW>;
+			label = "Debug LED 0";
+			status = "disabled";
+		};
+		debug_led_1: dbg_1 {
+			gpios = <&gpio4 13 GPIO_ACTIVE_LOW>;
+			label = "Debug LED 1";
+			status = "disabled";
+		};
+		debug_led_2: dbg_2 {
+			gpios = <&gpio4 16 GPIO_ACTIVE_LOW>;
+			label = "Debug LED 2";
+			status = "disabled";
+		};
+		debug_led_3: dbg_3 {
+			gpios = <&gpio4 15 GPIO_ACTIVE_LOW>;
+			label = "Debug LED 3";
+			status = "disabled";
+		};
+
+		red_led: led_0 {
+			gpios = <&gpio3 18 GPIO_ACTIVE_LOW>;
+			label = "Red LED";
+			status = "disabled";
+		};
 		green_led: led_1 {
-			gpios = <&gpio0 27 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio3 19 GPIO_ACTIVE_LOW>;
 			label = "Green LED";
 			status = "disabled";
 		};
 		blue_led: led_2 {
-			gpios = <&gpio1 2 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 			label = "Blue LED";
-			status = "disabled";
-		};
-		red_led: led_3 {
-			gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
-			label = "Red LED";
 			status = "disabled";
 		};
 	};
