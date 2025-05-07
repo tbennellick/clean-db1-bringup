@@ -1,0 +1,9 @@
+board:
+  name: db1
+  full_name: dev-board1
+  vendor: nxp
+  socs:
+  - name: mcxn947
+    variants:
+    - name: qspi
+      cpucluster: 'cpu0'

@@ -1,0 +1,5 @@
+config BOARD_INIT_PRIORITY
+	int "Board initialization priority"
+	default 1
+	help
+	  Board initialization priority.
