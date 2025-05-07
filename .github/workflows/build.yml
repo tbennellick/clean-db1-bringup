@@ -50,6 +50,7 @@ jobs:
         run: |
             echo "build_name=$(date -Iseconds | tr ':' '.')_${GITHUB_SHA}" >> "$GITHUB_ENV"
 
+# If this step fails, it may be because there are no tags in the repo. (git tag v0.0.0)
       - name: Git Describe
         run: |
           cd app/
