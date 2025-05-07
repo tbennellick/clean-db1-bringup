@@ -72,7 +72,6 @@ jobs:
           cd app/
           tar cJf "${build_name}.tar" build/
           cp build/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf" 
-          cp build/zephyr/zephyr.hex "${build_name}.db1-bu-zephyr.hex" 
 
       - name: Archive firmware
         uses: actions/upload-artifact@v4
@@ -82,7 +81,6 @@ jobs:
             app/${{ env.build_name }}.tar
             app/build/zephyr/zephyr.*
             app/${{ env.build_name }}.db1-bu-zephyr.elf
-            app/${{ env.build_name }}.db1-bu-zephyr.hex
           if-no-files-found: error
 
 #      - id: 'auth'
