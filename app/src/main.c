@@ -6,6 +6,8 @@
 #include "debug_leds.h"
 #include "led_manager.h"
 #include "power.h"
+#include "imu.h"
+
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -26,6 +28,8 @@ int main(void)
     led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
 
     init_power();
+
+    init_imu();
 
 	while (1)
         {

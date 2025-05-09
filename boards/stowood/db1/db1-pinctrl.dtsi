@@ -5,8 +5,8 @@
 		group0 {
 			pinmux = <FC1_P0_PIO0_24>,
 				<FC1_P1_PIO0_25>,
-				<FC1_P2_PIO0_26>,
-				<FC1_P3_PIO0_27>;
+				<FC1_P2_PIO0_22>,
+				<FC1_P3_PIO0_23>;
 			slew-rate = "fast";
 			drive-strength = "low";
 			input-enable;

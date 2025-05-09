@@ -112,6 +112,15 @@
 &flexcomm1_lpspi1 {
 	pinctrl-0 = <&pinmux_flexcomm1_lpspi>;
 	pinctrl-names = "default";
+	status = "okay";
+	lsm6dso: lsm6dso@0 {
+		compatible = "st,lsm6dso";
+		status = "okay";
+		reg = <0x0>;
+		irq-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
+		spi-max-frequency = <4000000>;
+	};
+
 };
 
 nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
