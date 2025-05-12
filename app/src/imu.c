@@ -3,6 +3,10 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(IMU, LOG_LEVEL_DBG);
+
+
 static inline float out_ev(struct sensor_value *val)
 {
 	return (val->val1 + (float)val->val2 / 1000000);
@@ -50,11 +54,13 @@ void init_imu(void)
 
     trig_cnt++;
 
-    sensor_sample_fetch_chan(dev, SENSOR_CHAN_ACCEL_XYZ);
-    sensor_channel_get(dev, SENSOR_CHAN_ACCEL_X, &x);
-    sensor_channel_get(dev, SENSOR_CHAN_ACCEL_Y, &y);
-    sensor_channel_get(dev, SENSOR_CHAN_ACCEL_Z, &z);
+        sensor_sample_fetch_chan(dev, SENSOR_CHAN_ACCEL_XYZ);
+        sensor_channel_get(dev, SENSOR_CHAN_ACCEL_X, &x);
+        sensor_channel_get(dev, SENSOR_CHAN_ACCEL_Y, &y);
+        sensor_channel_get(dev, SENSOR_CHAN_ACCEL_Z, &z);
 
-    printf("accel x:%f ms/2 y:%f ms/2 z:%f ms/2\n",
-           (double)out_ev(&x), (double)out_ev(&y), (double)out_ev(&z));
+        LOG_INF("accel x:%f ms/2 y:%f ms/2 z:%f ms/2\n",
+               (double)out_ev(&x), (double)out_ev(&y), (double)out_ev(&z));
+
+
 }

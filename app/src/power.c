@@ -36,6 +36,22 @@ void safe_init_gpio(const struct gpio_dt_spec *spec, int flags)
     }
 }
 
+/* TODO */
+/* Power up should be handled by the power susbsytem, that way it is automatic with sleep. */
+void early_power_up_bodge(void)
+{
+    k_sleep(K_MSEC(5));
+    gpio_pin_set_dt(&ven_sys_base, 1);
+    k_sleep(K_MSEC(5));
+    gpio_pin_set_dt(&ven_storage, 1);
+    k_sleep(K_MSEC(5));
+    gpio_pin_set_dt(&ven_ble, 1);
+    k_sleep(K_MSEC(5));
+    gpio_pin_set_dt(&ven_sys, 1);
+    k_sleep(K_MSEC(5));
+    gpio_pin_set_dt(&ven_bat, 1);
+}
+
 void init_power(void)
 {
 
@@ -45,14 +61,15 @@ void init_power(void)
     safe_init_gpio(&ven_sys, GPIO_OUTPUT_LOW);
     safe_init_gpio(&ven_bat, GPIO_OUTPUT_LOW);
 
-    k_sleep(K_MSEC(200));
-    gpio_pin_set_dt(&ven_sys_base, 1);
-    k_sleep(K_MSEC(200));
-    gpio_pin_set_dt(&ven_storage, 1);
-    k_sleep(K_MSEC(200));
-    gpio_pin_set_dt(&ven_ble, 1);
-    k_sleep(K_MSEC(200));
-    gpio_pin_set_dt(&ven_sys, 1);
-    k_sleep(K_MSEC(200));
-    gpio_pin_set_dt(&ven_bat, 1);
 }
+
+
+
+static int auto_early_power_up(void) {
+    init_power();
+    early_power_up_bodge();
+
+    return 0;
+}
+
+SYS_INIT(auto_early_power_up, POST_KERNEL, 50);
