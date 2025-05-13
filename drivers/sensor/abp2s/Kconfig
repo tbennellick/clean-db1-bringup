@@ -1,0 +1,7 @@
+menuconfig ABP2S
+	bool "ABP2 SPI Pressure Sensor"
+	default y
+	depends on DT_HAS_HONEYWELL_ABP2S_ENABLED
+	select SPI
+	help
+	  Enable the driver for Honeywell ABP2 pressure Sensors.

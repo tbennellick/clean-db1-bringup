@@ -1,2 +1,2 @@
 add_subdirectory_ifdef(CONFIG_EXAMPLE_SENSOR example_sensor)
-add_subdirectory_ifdef(CONFIG_ADT7310 adt7310)
+add_subdirectory_ifdef(CONFIG_ABP2S abp2s)

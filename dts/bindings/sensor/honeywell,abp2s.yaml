@@ -1,0 +1,5 @@
+description: High Accuracy, Compensated/Amplified Pressure sensor
+
+compatible: "honeywell,abp2s"
+
+include: [sensor-device.yaml, spi-device.yaml]

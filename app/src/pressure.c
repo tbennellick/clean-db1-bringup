@@ -39,7 +39,7 @@ LOG_MODULE_REGISTER(pressure, LOG_LEVEL_DBG);
 
 void init_pressure(void)
 {
-    const struct device *const dev = DEVICE_DT_GET_ONE(adi_adt7310);
+    const struct device *const dev = DEVICE_DT_GET_ONE(honeywell_abp2s);
 
 	if (!device_is_ready(dev)) {
 		printk("%s: device not ready.\n", dev->name);
