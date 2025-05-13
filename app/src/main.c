@@ -8,6 +8,7 @@
 #include "power.h"
 #include "imu.h"
 #include "rip.h"
+#include "pressure.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -32,6 +33,8 @@ int main(void)
     init_imu();
 
     init_rip();
+
+    init_pressure();
 
 	while (1)
         {

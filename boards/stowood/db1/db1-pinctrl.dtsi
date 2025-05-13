@@ -37,6 +37,19 @@
 		};
 	};
 
+	pinmux_flexcomm8_lpspi: pinmux_flexcomm8_lpspi {
+		group0 {
+			pinmux = <FC8_P0_PIO3_14>,
+					 <FC8_P1_PIO3_15>,
+					 <FC8_P2_PIO3_16>,
+					 <FC8_P3_PIO3_17>;
+			slew-rate = "fast";
+			drive-strength = "low";
+			input-enable;
+		};
+	};
+
+
 	pinmux_flexcomm2_lpuart: pinmux_flexcomm2_lpuart {
 		group0 {
 			pinmux = <FC2_P2_PIO4_2>,

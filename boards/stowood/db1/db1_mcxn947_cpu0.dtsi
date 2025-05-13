@@ -126,6 +126,16 @@
 	status = "okay";
 };
 
+&flexcomm8 {
+	status = "okay";
+};
+
+&flexcomm8_lpspi8 {
+	status = "okay";
+};
+
+
+
 &flexspi {
 	status = "okay";
 };

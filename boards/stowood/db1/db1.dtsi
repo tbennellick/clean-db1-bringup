@@ -161,6 +161,21 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	};
 };
 
+
+&flexcomm8_lpspi8 {
+	pinctrl-0 = <&pinmux_flexcomm8_lpspi>;
+	pinctrl-names = "default";
+	status = "okay";
+	adt7310: adt7310@0 {
+		compatible = "adi,adt7310";
+		status = "okay";
+		reg = <0x0>;
+		spi-max-frequency = <1000000>; /* Can go higher */
+	};
+
+};
+
+
 /* SmartDMA is used for video driver on this board */
 &smartdma {
 	status = "okay";
