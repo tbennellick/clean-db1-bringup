@@ -18,6 +18,7 @@
 		power-ven-sys = &power_ven_sys;
 		power-ven-bat = &power_ven_bat;
 
+		rip-en = &rip_en;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -76,6 +77,10 @@
 		power_ven_bat: power_ven_bat {
 			gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
 			label = "Power V_EN_BAT";
+		};
+		rip_en: rip_en {
+			gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+			label = "RIP_EN";
 		};
 	};
 

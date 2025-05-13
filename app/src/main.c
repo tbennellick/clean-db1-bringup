@@ -7,7 +7,7 @@
 #include "led_manager.h"
 #include "power.h"
 #include "imu.h"
-
+#include "rip.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -30,6 +30,8 @@ int main(void)
     init_power();
 
     init_imu();
+
+    init_rip();
 
 	while (1)
         {
