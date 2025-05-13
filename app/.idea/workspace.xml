@@ -56,6 +56,7 @@
       <config projectName="app" targetName="asm" />
       <config projectName="app" targetName="zephyr_pre0" />
       <config projectName="app" targetName="device_api_ld_target" />
+      <config projectName="app" targetName="drivers__sensor__adi__adt7310" />
       <config projectName="app" targetName="drivers__interrupt_controller" />
       <config projectName="app" targetName="drivers__console" />
       <config projectName="app" targetName="offsets" />
@@ -92,14 +93,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="86e578e5-50d5-480c-9269-8b7da97e3f8a" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../drivers/sensor/adt7310/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../drivers/sensor/adt7310/Kconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../drivers/sensor/adt7310/adt7310.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../drivers/sensor/adt7310/adt7310.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../drivers/sensor/adt7310/adt7310_trigger.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../dts/bindings/sensor/adi,adt7310.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj.conf" beforeDir="false" afterPath="$PROJECT_DIR$/prj.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1-pinctrl.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1-pinctrl.dtsi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1_mcxn947_cpu0.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1_mcxn947_cpu0.dtsi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../drivers/sensor/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../drivers/sensor/Kconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/Kconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/Kconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/Kconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/CMakeLists.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/Kconfig" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310_trigger.c" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/st/lsm6dso/lsm6dso.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/st/lsm6dso/lsm6dso.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/dts/bindings/sensor/adi,adt7310.yaml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +122,7 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Default-zephyr0.17.1-rc1" />
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../zephyr" />
   </component>
   <component name="ProjectApplicationVersion">
     <option name="ide" value="CLion" />
@@ -131,36 +142,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Embedded GDB Server.zephyr_final.executor&quot;: &quot;Debug&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CMakeWestChangeProjectRootActivity&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.west.python.interpreter.configured&quot;: &quot;true&quot;,
-    &quot;SHELLCHECK.PATH&quot;: &quot;I do mind&quot;,
-    &quot;cf.advertisement.text.has.clang-format&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/fast/db1-bringup/devboard1-bringup-zephyr.git/app/src&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;CMakeSettings&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Embedded GDB Server.zephyr_final.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.CMakeWestChangeProjectRootActivity": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "RunOnceActivity.west.python.interpreter.configured": "true",
+    "SHELLCHECK.PATH": "I do mind",
+    "cf.advertisement.text.has.clang-format": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "7823374e",
+    "last_opened_file_path": "/fast/db1-bringup/devboard1-bringup-zephyr.git/app/src",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "CMakeSettings",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/../boards/stowood" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/../dts/bindings/sensor" />
+      <recent name="$PROJECT_DIR$/../drivers/sensor" />
     </key>
   </component>
   <component name="RunManager" selected="Embedded GDB Server.zephyr_final">
