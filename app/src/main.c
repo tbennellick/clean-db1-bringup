@@ -30,9 +30,9 @@ int main(void)
 
     init_power();
 
-    init_imu();
+//    init_imu();
 
-    init_rip();
+//    init_rip();
 
     init_pressure();
 

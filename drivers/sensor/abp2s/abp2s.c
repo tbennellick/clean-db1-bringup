@@ -10,91 +10,51 @@
 #include "abp2s.h"
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
+//LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
+LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
 
-//static int abp2_temp_reg_read(const struct device *dev, uint8_t reg, int16_t *val)
-//{
-//	const struct abp2_dev_config *cfg = dev->config;
-//	uint8_t cmd_buf[3] = { ADT7310_READ_CMD | (reg << 3) };
-//	int ret;
-//	const struct spi_buf tx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf_set tx = { .buffers = &tx_buf, .count = 1 };
-//	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
-//
-//	ret = spi_transceive_dt(&cfg->bus, &tx, &rx);
-//	if (ret < 0) {
-//		return ret;
-//	}
-//
-//	memcpy(val, cmd_buf + 1, 2);
-//	*val = sys_be16_to_cpu(*val);
-//
-//	return 0;
-//}
-//
-//static int abp2_temp_reg_write(const struct device *dev, uint8_t reg, int16_t val)
-//{
-//	const struct abp2_dev_config *cfg = dev->config;
-//	uint8_t cmd_buf[3];
-//	const struct spi_buf tx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf_set tx = { .buffers = &tx_buf, .count = 1 };
-//	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
-//
-//	cmd_buf[0] = ADT7310_WRITE_CMD | (reg << 3);
-//	val = sys_cpu_to_be16(val);
-//	memcpy(&cmd_buf[1], &val, sizeof(val));
-//
-//	return spi_transceive_dt(&cfg->bus, &tx, &rx);
-//}
-//
-//static int abp2_reg_read(const struct device *dev, uint8_t reg, uint8_t *val)
-//{
-//	const struct abp2_dev_config *cfg = dev->config;
-//	uint8_t cmd_buf[2] = { ADT7310_READ_CMD | (reg << 3) };
-//	const struct spi_buf tx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf_set tx = { .buffers = &tx_buf, .count = 1 };
-//	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
-//	int ret;
-//
-//	ret = spi_transceive_dt(&cfg->bus, &tx, &rx);
-//	if (ret < 0) {
-//		return ret;
-//	}
-//
-//	*val = cmd_buf[1];
-//
-//	return 0;
-//}
-//
-//static int abp2_reg_write(const struct device *dev, uint8_t reg, uint8_t val)
-//{
-//	const struct abp2_dev_config *cfg = dev->config;
-//	uint8_t cmd_buf[2] = { ADT7310_WRITE_CMD | (reg << 3), val };
-//	const struct spi_buf tx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf_set tx = { .buffers = &tx_buf, .count = 1 };
-//	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
-//
-//	return spi_transceive_dt(&cfg->bus, &tx, &rx);
-//}
+static int abp2_read(const struct device *dev, uint8_t *val)
+{
+	const struct abp2_dev_config *cfg = dev->config;
+
+	uint8_t cmd_buf[7] = {0};
+
+	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
+	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
+
+	int ret = spi_read_dt(&cfg->bus, &rx);
+
+	if (ret < 0) {
+		return ret;
+	}
+
+    LOG_HEXDUMP_DBG(cmd_buf, sizeof(cmd_buf), "read");
+    memcpy(val, cmd_buf, sizeof(cmd_buf));
+
+	return 0;
+}
+
+
 
 static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
 	struct abp2_data *drv_data = dev->data;
-	int16_t value;
+	int16_t value = 0;
 	int ret;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
 
-//	ret = abp2_temp_reg_read(dev, ADT7310_REG_TEMP, &value);
-//	if (ret < 0) {
-//		return ret;
-//	}
+
+    uint8_t buf[7] = {0};
+    ret = abp2_read(dev, buf);
+
+    //
+//    if (ret) {
+//        return ret;
+//    }
+
 
 	drv_data->sample = value;
 
@@ -104,8 +64,8 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 static int abp2_channel_get(const struct device *dev, enum sensor_channel chan,
 			       struct sensor_value *val)
 {
-	int32_t value;
-	struct abp2_data *drv_data = dev->data;
+//	int32_t value;
+//	struct abp2_data *drv_data = dev->data;
 
 	if (chan != SENSOR_CHAN_AMBIENT_TEMP) {
 		return -ENOTSUP;
@@ -117,102 +77,48 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan,
 
 	return 0;
 }
-
-static int abp2_update_reg(const struct device *dev, uint8_t reg, uint8_t value, uint8_t mask)
-{
-	int ret;
-	uint8_t reg_value;
-
-	ret = abp2_reg_read(dev, reg, &reg_value);
-	if (ret < 0) {
-		return ret;
-	}
-
-	reg_value &= ~mask;
-	reg_value |= value;
-
-	return abp2_reg_write(dev, reg, reg_value);
-}
+//
+//static int abp2_update_reg(const struct device *dev, uint8_t reg, uint8_t value, uint8_t mask)
+//{
+//	int ret;
+//	uint8_t reg_value;
+//
+//	ret = abp2_reg_read(dev, reg, &reg_value);
+//	if (ret < 0) {
+//		return ret;
+//	}
+//
+//	reg_value &= ~mask;
+//	reg_value |= value;
+//
+//	return abp2_reg_write(dev, reg, reg_value);
+//}
 
 static int abp2_attr_set(const struct device *dev, enum sensor_channel chan,
 			    enum sensor_attribute attr, const struct sensor_value *val)
 {
-//	int32_t rate, value;
-//	uint8_t reg = 0;
-//
-//	if (chan != SENSOR_CHAN_AMBIENT_TEMP) {
-//		return -ENOTSUP;
-//	}
-//
-//	if (val->val1 > INT32_MAX/1000000 - 1 || val->val1 < INT32_MIN/1000000 + 1) {
-//		return -EINVAL;
-//	}
-//
-//	switch (attr) {
-//	case SENSOR_ATTR_SAMPLING_FREQUENCY:
-//		rate = val->val1 * 1000000 + val->val2;
-//
-//		if (rate > ADT7310_MAX_SAMPLE_RATE || rate < 0) {
-//			return -EINVAL;
-//		}
-//
-//		if (rate > 1000000) {
-//			return abp2_update_reg(dev, ADT7310_REG_CONFIG,
-//						  ADT7310_CONFIG_OP_MODE_CONTINUOUS,
-//						  ADT7310_CONFIG_OP_MODE_MASK);
-//		} else {
-//			return abp2_update_reg(dev, ADT7310_REG_CONFIG,
-//						  ADT7310_CONFIG_OP_MODE_1SPS,
-//						  ADT7310_CONFIG_OP_MODE_MASK);
-//		}
-//	case SENSOR_ATTR_HYSTERESIS:
-//		if (val->val1 < 0 || val->val1 > ADT7310_HYSTERESIS_TEMP_MAX || val->val2 != 0) {
-//			return -EINVAL;
-//		}
-//		return abp2_reg_write(dev, ADT7310_REG_HYST, val->val1);
-//	case SENSOR_ATTR_UPPER_THRESH:
-//		reg = ADT7310_REG_THRESH_HIGH;
-//		__fallthrough;
-//	case SENSOR_ATTR_LOWER_THRESH:
-//		if (!reg) {
-//			reg = ADT7310_REG_THRESH_LOW;
-//		}
-//
-//		value = val->val1 * 1000000 + val->val2;
-//		value = ADT7310_MICRO_DEG_TO_SAMPLE(value);
-//
-//		if (value < INT16_MIN || value > INT16_MAX) {
-//			return -EINVAL;
-//		}
-//		return abp2_temp_reg_write(dev, reg, value);
-//	default:
-//		return -ENOTSUP;
-//	}
-//
+
 	return 0;
 }
 
-static int abp2_probe(const struct device *dev)
-{
-	uint8_t value;
-	int ret;
-
-//	ret = abp2_reg_read(dev, ADT7310_REG_ID, &value);
+//static int abp2_probe(const struct device *dev)
+//{
+////	uint8_t value;
+////	int ret;
+////
+////
+////	if (ret) {
+////		return ret;
+////	}
 //
-//	if (ret) {
-//		return ret;
-//	}
+////	value &= 0xf8;
+////	if (value != ADT7310_ID) {
+////		LOG_ERR("Invalid device ID");
+////		return -ENODEV;
+////	}
 //
-//	value &= 0xf8;
-//	if (value != ADT7310_ID) {
-//		LOG_ERR("Invalid device ID");
-//		return -ENODEV;
-//	}
-//
-//	return abp2_reg_write(dev, ADT7310_REG_CONFIG,
-//				 ADT7310_CONFIG_RESOLUTION_16BIT |
-//				 ADT7310_CONFIG_INT_COMPARATOR_MODE);
-}
+//	return 1;
+//}
 
 
 static int abp2_init(const struct device *dev)
@@ -224,11 +130,12 @@ static int abp2_init(const struct device *dev)
 		LOG_ERR("SPI bus %s not ready", cfg->bus.bus->name);
 		return -ENODEV;
 	}
-//
+
 //	ret = abp2_probe(dev);
 //	if (ret) {
 //		return ret;
 //	}
+    ret = 0;
 
 	return ret;
 }

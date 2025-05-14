@@ -35,7 +35,6 @@
       <config projectName="app" targetName="shields" />
       <config projectName="app" targetName="run" />
       <config projectName="app" targetName="syscall_list_h_target" />
-      <config projectName="app" targetName="drivers__sensor__st__lsm6dso" />
       <config projectName="app" targetName="bintools" />
       <config projectName="app" targetName="rom_report" />
       <config projectName="app" targetName="lib__posix__options" />
@@ -63,7 +62,6 @@
       <config projectName="app" targetName="config-twister" />
       <config projectName="app" targetName="app_version_h" />
       <config projectName="app" targetName="rtt" />
-      <config projectName="app" targetName="drivers__sensor__st__stmemsc" />
       <config projectName="app" targetName="drivers__gpio" />
       <config projectName="app" targetName="hardenconfig" />
       <config projectName="app" targetName="arch__arm__core__cortex_m__cmse" />
@@ -94,16 +92,10 @@
   <component name="ChangeListManager">
     <list default="true" id="86e578e5-50d5-480c-9269-8b7da97e3f8a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj.conf" beforeDir="false" afterPath="$PROJECT_DIR$/prj.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pressure.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/pressure.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/Kconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/Kconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/adt7310/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/adt7310/Kconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/Kconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/adt7310/adt7310.c" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/adt7310/adt7310.h" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/adt7310/adt7310_trigger.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.c" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/Kconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/Kconfig" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/CMakeLists.txt" beforeDir="false" />
@@ -112,6 +104,7 @@
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310.h" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310_trigger.c" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/st/lsm6dso/lsm6dso.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/st/lsm6dso/lsm6dso.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/spi/spi_nxp_lpspi/spi_nxp_lpspi.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/spi/spi_nxp_lpspi/spi_nxp_lpspi.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/dts/bindings/sensor/adi,adt7310.yaml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -547,16 +540,6 @@
       </method>
     </configuration>
     <configuration name="drivers__sensor__st__lsm6dso" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="drivers__sensor__st__lsm6dso" CONFIG_NAME="Default-zephyr0.17.1-rc1">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="drivers__sensor__st__lsm6dso" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="drivers__sensor__st__lsm6dso" CONFIG_NAME="Default-zephyr0.17.1-rc1">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="drivers__sensor__st__stmemsc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="drivers__sensor__st__stmemsc" CONFIG_NAME="Default-zephyr0.17.1-rc1">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -1020,8 +1003,6 @@
       <item itemvalue="CMake Application.drivers__pinctrl" />
       <item itemvalue="CMake Application.drivers__sensor" />
       <item itemvalue="CMake Application.drivers__sensor__nxp__mcux_lpcmp" />
-      <item itemvalue="CMake Application.drivers__sensor__st__lsm6dso" />
-      <item itemvalue="CMake Application.drivers__sensor__st__stmemsc" />
       <item itemvalue="CMake Application.drivers__serial" />
       <item itemvalue="CMake Application.drivers__spi" />
       <item itemvalue="CMake Application.drivers__timer" />
@@ -1063,7 +1044,7 @@
       <updated>1746628363259</updated>
       <workItem from="1746628364473" duration="12484000" />
       <workItem from="1746640867205" duration="31001000" />
-      <workItem from="1747140311814" duration="1367000" />
+      <workItem from="1747140311814" duration="8741000" />
     </task>
     <servers />
   </component>
