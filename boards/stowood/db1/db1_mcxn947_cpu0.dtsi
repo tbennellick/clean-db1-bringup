@@ -79,7 +79,7 @@
 //};
 //
 &user_button_2 {
-	status = "okay";
+//	status = "okay";
 };
 
 &edma0 {
@@ -121,10 +121,13 @@
 &flexcomm7 {
 	status = "okay";
 };
-
-&flexcomm7_lpi2c7 {
+&flexcomm7_lpspi7 {
 	status = "okay";
 };
+
+//&flexcomm7_lpi2c7 {
+//	status = "okay";
+//};
 
 &flexcomm8 {
 	status = "okay";

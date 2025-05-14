@@ -7,7 +7,8 @@
 
 struct abp2_data
 {
-    int16_t sample;
+    int32_t pressure;
+    int32_t temperature;
 };
 
 struct abp2_dev_config {

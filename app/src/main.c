@@ -35,11 +35,12 @@ int main(void)
     init_rip();
 
     init_pressure();
+    printk("Spam!....\n");
 
 	while (1)
         {
             k_sleep(K_MSEC(2000));
-            printk("Spam!....\n");
+            printk(".");
             debug_led_toggle();
         }
 	return 0;
