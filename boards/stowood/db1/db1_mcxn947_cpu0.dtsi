@@ -121,10 +121,13 @@
 &flexcomm7 {
 	status = "okay";
 };
-
-&flexcomm7_lpi2c7 {
+&flexcomm7_lpspi7 {
 	status = "okay";
 };
+
+//&flexcomm7_lpi2c7 {
+//	status = "okay";
+//};
 
 &flexcomm8 {
 	status = "okay";
