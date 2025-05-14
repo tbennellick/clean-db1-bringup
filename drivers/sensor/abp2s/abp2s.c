@@ -13,6 +13,8 @@
 //LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
 LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
 
+
+
 static int abp2_read(const struct device *dev, uint8_t *val)
 {
 	const struct abp2_dev_config *cfg = dev->config;
@@ -24,7 +26,8 @@ static int abp2_read(const struct device *dev, uint8_t *val)
 
 	int ret = spi_read_dt(&cfg->bus, &rx);
 
-	if (ret < 0) {
+	if (ret !=0) {
+        LOG_ERR("Failed to read from SPI device (%d)", ret);
 		return ret;
 	}
 
@@ -39,24 +42,21 @@ static int abp2_read(const struct device *dev, uint8_t *val)
 static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
 	struct abp2_data *drv_data = dev->data;
-	int16_t value = 0;
 	int ret;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
 
-
     uint8_t buf[7] = {0};
     ret = abp2_read(dev, buf);
-
-    //
-//    if (ret) {
-//        return ret;
-//    }
+    if (ret) {
+        return ret;
+    }
 
 
-	drv_data->sample = value;
+    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
+    drv_data->temperature = (int32_t ) sys_get_be24(&buf[4]);
 
 	return 0;
 }
@@ -64,35 +64,19 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 static int abp2_channel_get(const struct device *dev, enum sensor_channel chan,
 			       struct sensor_value *val)
 {
-//	int32_t value;
-//	struct abp2_data *drv_data = dev->data;
+	struct abp2_data *drv_data = dev->data;
 
-	if (chan != SENSOR_CHAN_AMBIENT_TEMP) {
+	if (chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
 
-//	value = ADT7310_SAMPLE_TO_MICRO_DEG((int32_t)drv_data->sample);
-//	val->val1 = value / 1000000;
-//	val->val2 = value % 1000000;
+    /* TODO Convert to mBar or something  (Datasheet unclear on -ve values) */
+	val->val1 = (drv_data->pressure&& 0xFF0000) >> 16;
+	val->val2 = (drv_data->pressure&& 0x00FFFF);
 
 	return 0;
 }
-//
-//static int abp2_update_reg(const struct device *dev, uint8_t reg, uint8_t value, uint8_t mask)
-//{
-//	int ret;
-//	uint8_t reg_value;
-//
-//	ret = abp2_reg_read(dev, reg, &reg_value);
-//	if (ret < 0) {
-//		return ret;
-//	}
-//
-//	reg_value &= ~mask;
-//	reg_value |= value;
-//
-//	return abp2_reg_write(dev, reg, reg_value);
-//}
+
 
 static int abp2_attr_set(const struct device *dev, enum sensor_channel chan,
 			    enum sensor_attribute attr, const struct sensor_value *val)
@@ -101,49 +85,45 @@ static int abp2_attr_set(const struct device *dev, enum sensor_channel chan,
 	return 0;
 }
 
-//static int abp2_probe(const struct device *dev)
-//{
-////	uint8_t value;
-////	int ret;
-////
-////
-////	if (ret) {
-////		return ret;
-////	}
-//
-////	value &= 0xf8;
-////	if (value != ADT7310_ID) {
-////		LOG_ERR("Invalid device ID");
-////		return -ENODEV;
-////	}
-//
-//	return 1;
-//}
+static int abp2_probe(const struct device *dev)
+{
+	int ret;
+
+    uint8_t  buf[7] = {0};
+    ret = abp2_read(dev, buf);
+	if (ret) {
+		return ret;
+	}
+    uint8_t status = buf[0];
+    /* Device valid if Status == 01X0000X */
+    if ((status & 0xDE) == 0x40)
+    {
+        LOG_ERR("Invalid status byte 0x%02x, want 01#0000#", status);
+        return -ENODEV;
+    }
+
+	return 0;
+}
 
 
 static int abp2_init(const struct device *dev)
 {
 	const struct abp2_dev_config *cfg = dev->config;
-	int ret;
 
 	if (!spi_is_ready_dt(&cfg->bus)) {
 		LOG_ERR("SPI bus %s not ready", cfg->bus.bus->name);
 		return -ENODEV;
 	}
 
-//	ret = abp2_probe(dev);
-//	if (ret) {
-//		return ret;
-//	}
-    ret = 0;
-
-	return ret;
+    /* TODO put this back one working */
+//	return abp2_probe(dev);
+    return 0;
 }
 
 static DEVICE_API(sensor, abp2_driver_api) = {
 	.attr_set = abp2_attr_set,
-	.sample_fetch = abp2_sample_fetch,
-	.channel_get  = abp2_channel_get,
+	.sample_fetch = abp2_sample_fetch, // Device to driver (private)
+	.channel_get  = abp2_channel_get, // driver to thread
 };
 
 #define ABP2S_DEFINE(inst)                                                                       \
