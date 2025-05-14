@@ -79,7 +79,7 @@
 //};
 //
 &user_button_2 {
-	status = "okay";
+//	status = "okay";
 };
 
 &edma0 {
