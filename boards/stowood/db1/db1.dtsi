@@ -165,7 +165,8 @@ ads1298: ads1298@0 {
 	compatible = "ti,ads1298";
 	status = "okay";
 	reg = <0x0>;
-	spi-max-frequency = <100000>; /* Can go higher */
+	spi-max-frequency = <1000000>; /* Can go higher */
+//	spi-min-frequency = <500000>; /* Can go higher */
 };
 
 };

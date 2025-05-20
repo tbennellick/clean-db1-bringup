@@ -15,24 +15,73 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 
 
 
-static int ads1298_read(const struct device *dev, uint8_t *val)
+/* CS must remain low for the entire duration of the serial communication.
+ * After the serial communication is finished, always wait four or more tCLK periods before taking CS high.*/
+/* There is a minimum SCK
+ * tSCLK < (tDR – 4tCLK) / (NBITS × NCHANNELS + 24)*/
+
+
+#define SPI_BUF_SIZE 18
+static __aligned(32) char spi_buffer_tx[SPI_BUF_SIZE] __used;
+static __aligned(32) char spi_buffer_rx[SPI_BUF_SIZE] __used;
+
+
+static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *val)
 {
 	const struct ads1298_dev_config *cfg = dev->config;
 
-	uint8_t cmd_buf[7] = {0};
+    const struct spi_buf tx_bufs[] = {
+            {
+                    .buf = spi_buffer_tx,
+                    .len = 4,
+            },
+    };
+    const struct spi_buf rx_bufs[] = {
+            {
+                    .buf = spi_buffer_rx,
+                    .len = 4,
+            },
+    };
+    const struct spi_buf_set tx = {
+            .buffers = tx_bufs,
+            .count = ARRAY_SIZE(tx_bufs)
+    };
+    const struct spi_buf_set rx = {
+            .buffers = rx_bufs,
+            .count = ARRAY_SIZE(rx_bufs)
+    };
 
-	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
+    if (reg > 0x1F) {
+        LOG_ERR("Invalid register %d", reg);
+        return -EINVAL;
+    }
+    if (len > 0x1f) {
+        LOG_ERR("Invalid length %d", len);
+        return -EINVAL;
+    }
 
-	int ret = spi_read_dt(&cfg->bus, &rx);
+    spi_buffer_tx[0] = 0x20 | (reg & 0x1F); // Read command
+    spi_buffer_tx[1] = len;
+
+
+    int ret;
+
+    //    spi_cfg_cmd->operation |= SPI_HOLD_ON_CS;
+
+
+    ret = spi_transceive_dt(&cfg->bus, &tx, &rx);
+    if (ret) {
+        printk("SPI transceive failed: %d\n", ret);
+        return ret;
+    }
 
 	if (ret !=0) {
         LOG_ERR("Failed to read from SPI device (%d)", ret);
 		return ret;
 	}
 
-    LOG_HEXDUMP_DBG(cmd_buf, sizeof(cmd_buf), "read");
-    memcpy(val, cmd_buf, sizeof(cmd_buf));
+    LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
+    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
 
 	return 0;
 }
@@ -49,7 +98,7 @@ static int ads1298_sample_fetch(const struct device *dev, enum sensor_channel ch
 	}
 
     uint8_t buf[7] = {0};
-    ret = ads1298_read(dev, buf);
+    ret = ads1298_read_reg(dev, 0,1, buf);
     if (ret) {
         return ret;
     }
@@ -90,8 +139,9 @@ static int ads1298_probe(const struct device *dev)
 	int ret;
 
     uint8_t  buf[7] = {0};
-    ret = ads1298_read(dev, buf);
-	if (ret) {
+    ret = ads1298_read_reg(dev, 0,1, buf);
+
+    if (ret) {
 		return ret;
 	}
     uint8_t status = buf[0];
