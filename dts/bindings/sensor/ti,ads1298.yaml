@@ -1,6 +1,8 @@
-description: ADT7310 16-Bit digital SPI temperature sensor
+description: |
+  Texas Instruments ADS1298 8-channel, 24-bit analog-to-digital converter
+  with integrated programmable gain amplifier and internal reference.
 
-compatible: "adi,adt7310"
+compatible: "ti,ads1298"
 
 include: [sensor-device.yaml, spi-device.yaml]
 

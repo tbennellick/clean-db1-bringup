@@ -118,23 +118,16 @@
 	pinctrl-0 = <&pinmux_flexcomm1_lpspi>;
 	pinctrl-names = "default";
 	status = "okay";
-//	lsm6dso: lsm6dso@0 {
-//		compatible = "st,lsm6dso";
-//		status = "okay";
-//		reg = <0x0>;
-//		irq-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
-//		spi-max-frequency = <1000000>; /* Can go higher */
-//		accel-pm = <0>; /* Normal mode */
-//		accel-range = <0>; /* 2g */
-//		accel-odr = <1>; /* 12.5Hz */
-//	};
-//abp2s: abp2s@0 {
-//	compatible = "honeywell,abp2s";
-//	status = "okay";
-//	reg = <0x0>;
-//	spi-max-frequency = <100000>; /* Can go higher */
-//};
-
+	lsm6dso: lsm6dso@0 {
+		compatible = "st,lsm6dso";
+		status = "okay";
+		reg = <0x0>;
+		irq-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
+		spi-max-frequency = <1000000>; /* Can go higher */
+		accel-pm = <0>; /* Normal mode */
+		accel-range = <0>; /* 2g */
+		accel-odr = <1>; /* 12.5Hz */
+	};
 };
 
 nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
@@ -162,12 +155,18 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	pinctrl-0 = <&pinmux_flexcomm7_lpspi>;
 	pinctrl-names = "default";
 	status = "okay";
-	abp2s: abp2s@0 {
-		compatible = "honeywell,abp2s";
-		status = "okay";
-		reg = <0x0>;
-		spi-max-frequency = <100000>; /* Can go higher */
-	};
+//	abp2s: abp2s@0 {
+//		compatible = "honeywell,abp2s";
+//		status = "okay";
+//		reg = <0x0>;
+//		spi-max-frequency = <100000>; /* Can go higher */
+//	};
+ads1298: ads1298@0 {
+	compatible = "ti,ads1298";
+	status = "okay";
+	reg = <0x0>;
+	spi-max-frequency = <100000>; /* Can go higher */
+};
 
 };
 

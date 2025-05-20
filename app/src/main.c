@@ -34,7 +34,7 @@ int main(void)
 
 //    init_rip();
 
-    init_pressure();
+//    init_pressure();
     printk("Spam!....\n");
 
 	while (1)
