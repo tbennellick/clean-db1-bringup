@@ -31,6 +31,7 @@
 		modem-on = &modem_on;
 
 		hs-usb-sel = &hs_usb_sel;
+		backlight = &backlight;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -126,6 +127,11 @@
 			gpios = <&gpio1 16 GPIO_ACTIVE_HIGH>;
 			label = "HS USB Mux Select";
 		};
+		backlight: backlight {
+			gpios = <&gpio3 12 GPIO_ACTIVE_HIGH>;
+			label = "Display Backlight";
+		};
+
 	};
 
 	gpio_keys {
