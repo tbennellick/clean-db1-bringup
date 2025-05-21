@@ -122,6 +122,13 @@
 &flexcomm4_lpuart4 {
 	status = "okay";
 };
+&flexcomm5 {
+	status = "okay";
+};
+
+&flexcomm5_lpspi5 {
+	status = "okay";
+};
 
 &flexcomm6 {
 	status = "okay";

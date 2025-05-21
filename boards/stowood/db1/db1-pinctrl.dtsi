@@ -25,15 +25,16 @@
 		};
 	};
 
-	pinmux_flexcomm3_lpi2c: pinmux_flexcomm3_lpi2c {
+
+	pinmux_flexcomm5_lpspi: pinmux_flexcomm5_lpspi {
 		group0 {
-			pinmux = <FC3_P0_PIO1_12>,
-				<FC3_P1_PIO1_13>;
+			pinmux = <FC5_P0_PIO1_4>,
+					 <FC5_P1_PIO1_5>,
+					 <FC5_P2_PIO1_6>, // TODO, this needs removing once running
+					 <FC5_P3_PIO1_7>;
 			slew-rate = "fast";
 			drive-strength = "low";
 			input-enable;
-			bias-pull-up;
-			drive-open-drain;
 		};
 	};
 
