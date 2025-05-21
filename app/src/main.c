@@ -28,7 +28,7 @@ int main(void)
     k_sleep(K_MSEC(100));
     led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
 
-    init_power();
+    //    init_power(); Called early in kernel startup
 
     init_imu();
 
