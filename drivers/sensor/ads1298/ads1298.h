@@ -15,10 +15,5 @@ struct ads1298_dev_config {
 	struct spi_dt_spec bus;
 };
 
-//struct max6675_config {
-//    struct spi_dt_spec spi;
-//};
-
-
 
 #endif

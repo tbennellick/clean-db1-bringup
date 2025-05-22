@@ -63,25 +63,9 @@ const struct spi_buf_set rx = {
 static int ads1298_wakeup(const struct device *dev)
 {
     const struct ads1298_dev_config *cfg = dev->config;
-
-//        ret = spi_read_dt(&config->spi, &rx_bufs);
-//        if (ret < 0) {
-//            return ret;
-//        }
-
-
     tx_buf[0] = ADS1298_CMD_WAKEUP;
     tx_bufs[0].len =1;
-//    int ret  = spi_write_dt(&cfg->bus, &tx);
-//    int ret  = spi_transceive_dt(&cfg->bus, &tx, &rx);
     int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config, &tx, NULL);
-
-
-    if (ret) {
-
-        LOG_ERR("SPI transceive failed: %d", ret);
-        return ret;
-    }
 
     if (ret !=0) {
         LOG_ERR("Failed to read from SPI device (%d)", ret);
