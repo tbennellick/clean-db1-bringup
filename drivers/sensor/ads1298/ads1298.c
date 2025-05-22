@@ -55,7 +55,10 @@ const struct spi_buf_set tx = {
         .buffers = tx_bufs,
         .count = ARRAY_SIZE(tx_bufs)
 };
-
+const struct spi_buf_set rx = {
+        .buffers = rx_bufs,
+        .count = ARRAY_SIZE(rx_bufs)
+};
 
 static int ads1298_wakeup(const struct device *dev)
 {
@@ -63,8 +66,12 @@ static int ads1298_wakeup(const struct device *dev)
 
     tx_buf[0] = ADS1298_CMD_WAKEUP;
     tx_bufs[0].len =1;
-    int ret  = spi_write_dt(&cfg->bus, &tx);
+//    int ret  = spi_write_dt(&cfg->bus, &tx);
+    int ret  = spi_transceive_dt(&cfg->bus, &tx, &rx);
+
+
     if (ret) {
+
         LOG_ERR("SPI transceive failed: %d", ret);
         return ret;
     }
@@ -81,7 +88,7 @@ static int ads1298_wakeup(const struct device *dev)
 }
 
 
-
+__maybe_unused
 static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *val)
 {
 	const struct ads1298_dev_config *cfg = dev->config;
@@ -131,7 +138,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
 static int ads1298_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
 //	struct ads1298_data *drv_data = dev->data;
-	int ret;
+//	int ret;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
@@ -179,7 +186,7 @@ static int ads1298_attr_set(const struct device *dev, enum sensor_channel chan,
 
 static int ads1298_probe(const struct device *dev)
 {
-	int ret;
+//	int ret;
 //
 //    uint8_t  buf[7] = {0};
 //    ret = ads1298_read_reg(dev, 0,1, buf);
