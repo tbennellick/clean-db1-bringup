@@ -14,7 +14,6 @@
   </component>
   <component name="CMakeRunConfigurationManager">
     <generated>
-      <config projectName="app" targetName="..__devboard1-bringup-zephyr.git__drivers__sensor__abp2s" />
       <config projectName="app" targetName="linker_zephyr_prebuilt_script_target" />
       <config projectName="app" targetName="compiler-cpp" />
       <config projectName="app" targetName="runners_yaml_props_target" />
@@ -35,6 +34,7 @@
       <config projectName="app" targetName="shields" />
       <config projectName="app" targetName="run" />
       <config projectName="app" targetName="syscall_list_h_target" />
+      <config projectName="app" targetName="drivers__sensor__st__lsm6dso" />
       <config projectName="app" targetName="bintools" />
       <config projectName="app" targetName="rom_report" />
       <config projectName="app" targetName="lib__posix__options" />
@@ -49,6 +49,7 @@
       <config projectName="app" targetName="lib__libc__common" />
       <config projectName="app" targetName="footprint" />
       <config projectName="app" targetName="menuconfig" />
+      <config projectName="app" targetName="..__devboard1-bringup-zephyr.git__drivers__sensor__ads1298" />
       <config projectName="app" targetName="linker" />
       <config projectName="app" targetName="arch__arm__core__mpu" />
       <config projectName="app" targetName="zephyr_generated_headers" />
@@ -62,6 +63,7 @@
       <config projectName="app" targetName="config-twister" />
       <config projectName="app" targetName="app_version_h" />
       <config projectName="app" targetName="rtt" />
+      <config projectName="app" targetName="drivers__sensor__st__stmemsc" />
       <config projectName="app" targetName="drivers__gpio" />
       <config projectName="app" targetName="hardenconfig" />
       <config projectName="app" targetName="arch__arm__core__cortex_m__cmse" />
@@ -91,19 +93,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="86e578e5-50d5-480c-9269-8b7da97e3f8a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.c" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.h" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/abp2s/abp2s.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/Kconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/Kconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/Kconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/adi/adt7310/adt7310_trigger.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/sensor/st/lsm6dso/lsm6dso.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/sensor/st/lsm6dso/lsm6dso.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/drivers/spi/spi_nxp_lpspi/spi_nxp_lpspi.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/drivers/spi/spi_nxp_lpspi/spi_nxp_lpspi.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../zephyr/dts/bindings/sensor/adi,adt7310.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/power.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/power.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/include/zephyr/drivers/pinctrl.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/include/zephyr/drivers/pinctrl.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +141,7 @@
     "cf.advertisement.text.has.clang-format": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "dev-pressure",
+    "git-widget-placeholder": "exg",
     "last_opened_file_path": "/fast/db1-bringup/devboard1-bringup-zephyr.git/dts/bindings/sensor",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -205,23 +196,6 @@
       </texify-makeindex>
       <method v="2" />
     </configuration>
-    <configuration default="true" type="BIBTEX_RUN_CONFIGURATION" factoryName="LaTeX configuration factory">
-      <texify-bibtex>
-        <compiler />
-        <compiler-path />
-        <compiler-arguments />
-        <envs />
-        <main-file />
-        <aux-dir />
-        <latex-distribution>PROJECT_SDK</latex-distribution>
-      </texify-bibtex>
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="..__devboard1-bringup-zephyr.git__boards__stowood__db1" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="..__devboard1-bringup-zephyr.git__boards__stowood__db1" CONFIG_NAME="Default-zephyr0.17.1-rc1">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -232,7 +206,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="..__devboard1-bringup-zephyr.git__drivers__sensor__abp2s" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="..__devboard1-bringup-zephyr.git__drivers__sensor__abp2s" CONFIG_NAME="Default-zephyr0.17.1-rc1">
+    <configuration name="..__devboard1-bringup-zephyr.git__drivers__sensor__ads1298" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="..__devboard1-bringup-zephyr.git__drivers__sensor__ads1298" CONFIG_NAME="Default-zephyr0.17.1-rc1">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -243,6 +217,11 @@
       </method>
     </configuration>
     <configuration name="..__modules__hal__nxp" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="..__modules__hal__nxp" CONFIG_NAME="Default-zephyr0.17.1-rc1">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -927,6 +906,15 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="EXTERNAL_TOOL_RUN_CONFIGURATION" factoryName="LaTeX configuration factory">
+      <texify-external>
+        <program>PYTHONTEX</program>
+        <main-file />
+        <work-dir />
+        <envs />
+      </texify-external>
+      <method v="2" />
+    </configuration>
     <configuration default="true" type="LATEX_RUN_CONFIGURATION" factoryName="LaTeX configuration factory">
       <texify>
         <compiler>PDFLATEX</compiler>
@@ -960,6 +948,8 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="CMake Application.drivers__sensor__st__lsm6dso" />
+      <item itemvalue="CMake Application.drivers__sensor__st__stmemsc" />
       <item itemvalue="CMake Application.devicetree_target" />
       <item itemvalue="CMake Application.app_version_h" />
       <item itemvalue="CMake Application.device_api_ld_target" />
@@ -985,7 +975,7 @@
       <item itemvalue="CMake Application.rtt" />
       <item itemvalue="CMake Application.boards" />
       <item itemvalue="CMake Application...__devboard1-bringup-zephyr.git__boards__stowood__db1" />
-      <item itemvalue="CMake Application...__devboard1-bringup-zephyr.git__drivers__sensor__abp2s" />
+      <item itemvalue="CMake Application...__devboard1-bringup-zephyr.git__drivers__sensor__ads1298" />
       <item itemvalue="CMake Application...__modules__hal__nxp" />
       <item itemvalue="CMake Application.app" />
       <item itemvalue="CMake Application.arch__arm__core" />
@@ -1053,5 +1043,14 @@
     <isAutomaticCheckingOnLaunch value="false" />
     <isAutomaticFoundErrors value="true" />
     <isAutomaticReloadCMake value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <watches-manager>
+      <configuration name="com.jetbrains.cidr.embedded.customgdbserver.type">
+        <watch expression="levels" language="ObjectiveC" />
+        <watch expression="dev-&gt;name" />
+        <watch expression="data-&gt;children-&gt;periph" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

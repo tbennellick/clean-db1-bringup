@@ -8,6 +8,7 @@ LOG_MODULE_REGISTER(power, CONFIG_LOG_DEFAULT_LEVEL);
 #include <stdio.h>
 #include <zephyr/devicetree.h>
 #include "power.h"
+#include "gpio_init.h"
 
 #define POWER_VEN_SYS_BASE DT_ALIAS(power_ven_sys_base)
 static const struct gpio_dt_spec ven_sys_base = GPIO_DT_SPEC_GET(POWER_VEN_SYS_BASE, gpios);
@@ -20,21 +21,6 @@ static const struct gpio_dt_spec ven_sys = GPIO_DT_SPEC_GET(POWER_VEN_SYS, gpios
 #define POWER_VEN_BAT DT_ALIAS(power_ven_bat)
 static const struct gpio_dt_spec ven_bat = GPIO_DT_SPEC_GET(POWER_VEN_BAT, gpios);
 
-void safe_init_gpio(const struct gpio_dt_spec *spec, int flags)
-{
-    if (!gpio_is_ready_dt(spec))
-    {
-        LOG_ERR("Gpio not ready %s %d",spec->port->name, spec->pin);
-    }
-    else
-    {
-        int res = gpio_pin_configure_dt(spec, flags);
-        if (res !=0)
-        {
-            LOG_ERR("Cant init %s %d",spec->port->name, spec->pin);
-        }
-    }
-}
 
 /* TODO */
 /* Power up should be handled by the power susbsytem, that way it is automatic with sleep. */

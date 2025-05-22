@@ -25,27 +25,67 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 static __aligned(32) char spi_buffer_tx[SPI_BUF_SIZE] __used;
 static __aligned(32) char spi_buffer_rx[SPI_BUF_SIZE] __used;
 
+#define ADS1298_CMD_WAKEUP 0x02
+#define ADS1298_CMD_STANDBY 0x04
+#define ADS1298_CMD_RESET 0x06
+#define ADS1298_CMD_START 0x08
+#define ADS1298_CMD_STOP 0x0A
+#define ADS1298_CMD_RDATAC 0x10
+#define ADS1298_CMD_SDATAC 0x11
+#define ADS1298_CMD_RDATA 0x12
+#define ADS1298_CMD_RREG 0x20
+#define ADS1298_CMD_WREG 0x40
+
+#define EXG_MAX_SPI_LEN 8
+uint8_t tx_buf[EXG_MAX_SPI_LEN];
+uint8_t rx_buf[EXG_MAX_SPI_LEN];
+struct spi_buf tx_bufs[] = {
+        {
+                .buf = tx_buf,
+                .len = sizeof(tx_buf),
+        },
+};
+struct spi_buf rx_bufs[] = {
+        {
+                .buf = rx_buf,
+                .len = sizeof(rx_buf),
+        },
+};
+const struct spi_buf_set tx = {
+        .buffers = tx_bufs,
+        .count = ARRAY_SIZE(tx_bufs)
+};
+
+
+static int ads1298_wakeup(const struct device *dev)
+{
+    const struct ads1298_dev_config *cfg = dev->config;
+
+    tx_buf[0] = ADS1298_CMD_WAKEUP;
+    tx_bufs[0].len =1;
+    int ret  = spi_write_dt(&cfg->bus, &tx);
+    if (ret) {
+        LOG_ERR("SPI transceive failed: %d", ret);
+        return ret;
+    }
+
+    if (ret !=0) {
+        LOG_ERR("Failed to read from SPI device (%d)", ret);
+        return ret;
+    }
+
+    LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
+//    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
+
+    return 0;
+}
+
+
 
 static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *val)
 {
 	const struct ads1298_dev_config *cfg = dev->config;
 
-    const struct spi_buf tx_bufs[] = {
-            {
-                    .buf = spi_buffer_tx,
-                    .len = 4,
-            },
-    };
-    const struct spi_buf rx_bufs[] = {
-            {
-                    .buf = spi_buffer_rx,
-                    .len = 4,
-            },
-    };
-    const struct spi_buf_set tx = {
-            .buffers = tx_bufs,
-            .count = ARRAY_SIZE(tx_bufs)
-    };
     const struct spi_buf_set rx = {
             .buffers = rx_bufs,
             .count = ARRAY_SIZE(rx_bufs)
@@ -60,7 +100,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
         return -EINVAL;
     }
 
-    spi_buffer_tx[0] = 0x20 | (reg & 0x1F); // Read command
+    spi_buffer_tx[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
     spi_buffer_tx[1] = len;
 
 
@@ -81,7 +121,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
 	}
 
     LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
-    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
+//    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
 
 	return 0;
 }
@@ -90,22 +130,25 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
 
 static int ads1298_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
-	struct ads1298_data *drv_data = dev->data;
+//	struct ads1298_data *drv_data = dev->data;
 	int ret;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
 
-    uint8_t buf[7] = {0};
-    ret = ads1298_read_reg(dev, 0,1, buf);
-    if (ret) {
-        return ret;
-    }
+    ads1298_wakeup(dev);
+//
+//    uint8_t  buf[7] = {0};
+//    ret = ads1298_read_reg(dev, 0,1, buf);
+//    LOG_WRN("ret: %d", ret);
+//    if (ret) {
+//        return ret;
+//    }
 
 
-    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
-    drv_data->temperature = (int32_t ) sys_get_be24(&buf[4]);
+//    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
+//    drv_data->temperature = (int32_t ) sys_get_be24(&buf[4]);
 
 	return 0;
 }
@@ -137,20 +180,20 @@ static int ads1298_attr_set(const struct device *dev, enum sensor_channel chan,
 static int ads1298_probe(const struct device *dev)
 {
 	int ret;
-
-    uint8_t  buf[7] = {0};
-    ret = ads1298_read_reg(dev, 0,1, buf);
-
-    if (ret) {
-		return ret;
-	}
-    uint8_t status = buf[0];
-    /* Device valid if Status == 01X0000X */
-    if ((status & 0xDE) == 0x40)
-    {
-        LOG_ERR("Invalid status byte 0x%02x, want 01#0000#", status);
-        return -ENODEV;
-    }
+//
+//    uint8_t  buf[7] = {0};
+//    ret = ads1298_read_reg(dev, 0,1, buf);
+//
+//    if (ret) {
+//		return ret;
+//	}
+//    uint8_t status = buf[0];
+//    /* Device valid if Status == 01X0000X */
+//    if ((status & 0xDE) == 0x40)
+//    {
+//        LOG_ERR("Invalid status byte 0x%02x, want 01#0000#", status);
+//        return -ENODEV;
+//    }
 
 	return 0;
 }

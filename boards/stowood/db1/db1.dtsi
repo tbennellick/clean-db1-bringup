@@ -19,6 +19,9 @@
 		power-ven-bat = &power_ven_bat;
 
 		rip-en = &rip_en;
+		exg-nrst = &exg_nrst;
+		exg-clksel = &exg_clksel;
+		exg-npwdn = &exg_npwdn;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -82,6 +85,19 @@
 			gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
 			label = "RIP_EN";
 		};
+		exg_nrst: exg_nrst {
+			gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+			label = "EXG_nRST";
+		};
+		exg_clksel: exg_clksel {
+			gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
+			label = "EXG_CLKSEL";
+		};
+		exg_npwdn: exg_npwdn {
+			gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
+			label = "EXG_nPWDN";
+		};
+
 	};
 
 	gpio_keys {
