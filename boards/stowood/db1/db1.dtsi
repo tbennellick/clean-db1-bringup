@@ -22,6 +22,7 @@
 		exg-nrst = &exg_nrst;
 		exg-clksel = &exg_clksel;
 		exg-npwdn = &exg_npwdn;
+		exg-cs-temp = &exg_cs_temp;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -96,6 +97,10 @@
 		exg_npwdn: exg_npwdn {
 			gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
 			label = "EXG_nPWDN";
+		};
+		exg_cs_temp: exg_cs_temp { /* This shouold be passed to driver via device tree */
+			gpios = <&gpio3 5 GPIO_ACTIVE_HIGH>;
+			label = "EXG_CS_TEMP";
 		};
 
 	};

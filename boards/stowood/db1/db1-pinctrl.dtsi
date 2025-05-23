@@ -29,8 +29,8 @@
 		group0 {
 			pinmux = <FC7_P0_PIO3_2>,
 					 <FC7_P1_PIO3_3>,
-					 <FC7_P2_PIO3_4>,
-					 <FC7_P3_PIO3_5>;
+					 <FC7_P2_PIO3_4>;
+//					 <FC7_P3_PIO3_5>;
 			slew-rate = "fast";
 			drive-strength = "low";
 			input-enable;

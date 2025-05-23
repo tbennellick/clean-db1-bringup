@@ -94,7 +94,8 @@
   <component name="ChangeListManager">
     <list default="true" id="86e578e5-50d5-480c-9269-8b7da97e3f8a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/ads1298/ads1298.c" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/ads1298/ads1298.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1-pinctrl.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1-pinctrl.dtsi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/include/zephyr/drivers/pinctrl.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/include/zephyr/drivers/pinctrl.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -1054,11 +1055,6 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../drivers/sensor/ads1298/ads1298.c</url>
-          <line>69</line>
-          <option name="timeStamp" value="22" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/../../zephyr/drivers/spi/spi_context.h</url>
           <line>286</line>
           <option name="timeStamp" value="23" />
@@ -1071,6 +1067,9 @@
         <watch expression="dev-&gt;name" />
         <watch expression="data-&gt;children-&gt;periph" />
       </configuration>
+      <inline-watch fileUrl="file://$PROJECT_DIR$/../../zephyr/drivers/spi/spi_nxp_lpspi/spi_nxp_lpspi.c" line="269">
+        <watch expression="base-&gt;TCR" />
+      </inline-watch>
     </watches-manager>
   </component>
 </project>
