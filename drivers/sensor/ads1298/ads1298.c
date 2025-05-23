@@ -14,11 +14,16 @@
 LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 
 
+/* SCLK/tSCLK is the SPI clock, not the "main oscillator" */
+/* CLK/tCLK is clock on CLK pin */
+/*fDR/tDR is output data rate  250 SPS to 32 kSPS */
+/* Requirements is  >200z so 250 SPS*/
 
 /* CS must remain low for the entire duration of the serial communication.
  * After the serial communication is finished, always wait four or more tCLK periods before taking CS high.*/
-/* There is a minimum SCK
- * tSCLK < (tDR – 4tCLK) / (NBITS × NCHANNELS + 24)*/
+/* There is a minimum SCK: tSCLK < (tDR – 4tCLK) / (NBITS × NCHANNELS + 24)*/
+/* For multibyte commands, a 4 tCLK period must separate the end of one byte (or opcode) and the next. */
+
 
 /* Hack - TODO: move to device tree */
 #define EXG_CS_TEMP DT_ALIAS(exg_cs_temp)
@@ -64,43 +69,42 @@ const struct spi_buf_set rx = {
         .count = ARRAY_SIZE(rx_bufs)
 };
 
+
+
+/* Bufs can be null */
+static int ads1298_transact(const struct spi_dt_spec *spec, const struct spi_buf_set *tx_bufs, const struct spi_buf_set *rx_bufs)
+{
+    gpio_pin_set_dt(&exg_cs_temp, 0);
+    
+    int ret  = spi_transceive_dt(spec, tx_bufs, rx_bufs);
+    k_busy_wait(4);/* TODO make this dynamic */
+    gpio_pin_set_dt(&exg_cs_temp, 1);
+
+    if (ret !=0) {
+        LOG_ERR("Failed to transact with SPI device (%d)", ret);
+    }
+    return ret;
+}
+
+__maybe_unused
 static int ads1298_wakeup(const struct device *dev)
 {
     const struct ads1298_dev_config *cfg = dev->config;
     tx_buf[0] = ADS1298_CMD_WAKEUP;
     tx_bufs[0].len =1;
 
+    int ret = ads1298_transact(&cfg->bus, &tx, NULL);
 
-    gpio_pin_set_dt(&exg_cs_temp, 0);
-
-    int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , &tx, NULL);
-
-    if (ret !=0) {
-        LOG_ERR("Failed to read from SPI device (%d)", ret);
-        goto out;
-    }
-
-//    LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
-//    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
-    k_busy_wait(1);
-
-out:
-    gpio_pin_set_dt(&exg_cs_temp, 1);
+    k_busy_wait(1000);
 
     return ret;
 
 }
 
-
 __maybe_unused
 static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *val)
 {
-	const struct ads1298_dev_config *cfg = dev->config;
-
-    const struct spi_buf_set rx = {
-            .buffers = rx_bufs,
-            .count = ARRAY_SIZE(rx_bufs)
-    };
+    const struct ads1298_dev_config *cfg = dev->config;
 
     if (reg > 0x1F) {
         LOG_ERR("Invalid register %d", reg);
@@ -111,28 +115,15 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
         return -EINVAL;
     }
 
-    spi_buffer_tx[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
-    spi_buffer_tx[1] = len;
+    tx_buf[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
+    tx_bufs[0].len = len;
+    rx_bufs[0].len = 2;
 
+    int ret = ads1298_transact(&cfg->bus, &tx, &rx);
 
-    int ret;
+    LOG_HEXDUMP_DBG(rx_bufs[0].buf, rx_bufs[0].len, "read");
 
-    //    spi_cfg_cmd->operation |= SPI_HOLD_ON_CS;
-    ret = spi_transceive_dt(&cfg->bus, &tx, &rx);
-    if (ret) {
-        printk("SPI transceive failed: %d\n", ret);
-        return ret;
-    }
-
-	if (ret !=0) {
-        LOG_ERR("Failed to read from SPI device (%d)", ret);
-		return ret;
-	}
-
-    LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
-//    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
-
-	return 0;
+	return ret;
 }
 
 
@@ -140,20 +131,23 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
 static int ads1298_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
 //	struct ads1298_data *drv_data = dev->data;
-//	int ret;
+	int ret;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
 
-    ads1298_wakeup(dev);
-//
-//    uint8_t  buf[7] = {0};
-//    ret = ads1298_read_reg(dev, 0,1, buf);
-//    LOG_WRN("ret: %d", ret);
-//    if (ret) {
-//        return ret;
-//    }
+    ret = ads1298_wakeup(dev);
+    if (ret) {
+        return ret;
+    }
+
+    uint8_t  buf[7] = {0};
+    ret = ads1298_read_reg(dev, 0,1, buf);
+    LOG_WRN("ret: %d", ret);
+    if (ret) {
+        return ret;
+    }
 
 
 //    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
