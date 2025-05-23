@@ -20,6 +20,10 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 /* There is a minimum SCK
  * tSCLK < (tDR – 4tCLK) / (NBITS × NCHANNELS + 24)*/
 
+/* Hack - TODO: move to device tree */
+#define EXG_CS_TEMP DT_ALIAS(exg_cs_temp)
+static const struct gpio_dt_spec exg_cs_temp = GPIO_DT_SPEC_GET(EXG_CS_TEMP, gpios);
+
 
 #define SPI_BUF_SIZE 18
 static __aligned(32) char spi_buffer_tx[SPI_BUF_SIZE] __used;
@@ -67,23 +71,22 @@ static int ads1298_wakeup(const struct device *dev)
     tx_bufs[0].len =1;
 
 
-    struct spi_config tmp_config;
-    memcpy(&tmp_config, &cfg->bus.config, sizeof(tmp_config));
-    tmp_config.operation |= SPI_HOLD_ON_CS;
+    gpio_pin_set_dt(&exg_cs_temp, 0);
 
-    int ret  = spi_transceive(cfg->bus.bus, &tmp_config , &tx, NULL);
+    int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , &tx, NULL);
 
     if (ret !=0) {
         LOG_ERR("Failed to read from SPI device (%d)", ret);
         goto out;
     }
 
-    LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
+//    LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
 //    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
-    k_sleep(K_MSEC(2));
+    k_busy_wait(1);
 
 out:
-    spi_release(cfg->bus.bus, &tmp_config);
+    gpio_pin_set_dt(&exg_cs_temp, 1);
+
     return ret;
 
 }
@@ -115,8 +118,6 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
     int ret;
 
     //    spi_cfg_cmd->operation |= SPI_HOLD_ON_CS;
-
-
     ret = spi_transceive_dt(&cfg->bus, &tx, &rx);
     if (ret) {
         printk("SPI transceive failed: %d\n", ret);
@@ -215,6 +216,21 @@ static int ads1298_init(const struct device *dev)
 		LOG_ERR("SPI bus %s not ready", cfg->bus.bus->name);
 		return -ENODEV;
 	}
+
+    if (!gpio_is_ready_dt(&exg_cs_temp))
+    {
+        LOG_ERR("Gpio not ready %s %d",(char *)&exg_cs_temp.port->name, exg_cs_temp.pin);
+    }
+    else
+    {
+        int res = gpio_pin_configure_dt(&exg_cs_temp, GPIO_OUTPUT_HIGH);
+        if (res !=0)
+        {
+            LOG_ERR("Cant init %s %d",(char *) &exg_cs_temp.port->name, exg_cs_temp.pin);
+        }
+    }
+
+
 
 	return ads1298_probe(dev);
 //    return 0;
