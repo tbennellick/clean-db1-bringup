@@ -72,11 +72,17 @@ const struct spi_buf_set rx = {
 
 
 /* Bufs can be null */
-static int ads1298_transact(const struct spi_dt_spec *spec, const struct spi_buf_set *tx_bufs, const struct spi_buf_set *rx_bufs)
+static int ads1298_transact(const struct device *dev, const struct spi_buf_set *txbs, const struct spi_buf_set *rxbs)
 {
+    const struct ads1298_dev_config *cfg = dev->config;
+
     gpio_pin_set_dt(&exg_cs_temp, 0);
-    
-    int ret  = spi_transceive_dt(spec, tx_bufs, rx_bufs);
+
+    struct spi_config tmp_config;
+    memcpy(&tmp_config, &cfg->bus.config, sizeof(tmp_config));
+//    tmp_config.operation |= SPI_HOLD_ON_CS;
+    int ret  = spi_transceive(cfg->bus.bus, &tmp_config , txbs, rxbs);
+
     k_busy_wait(4);/* TODO make this dynamic */
     gpio_pin_set_dt(&exg_cs_temp, 1);
 
@@ -89,11 +95,10 @@ static int ads1298_transact(const struct spi_dt_spec *spec, const struct spi_buf
 __maybe_unused
 static int ads1298_wakeup(const struct device *dev)
 {
-    const struct ads1298_dev_config *cfg = dev->config;
     tx_buf[0] = ADS1298_CMD_WAKEUP;
     tx_bufs[0].len =1;
 
-    int ret = ads1298_transact(&cfg->bus, &tx, NULL);
+    int ret = ads1298_transact(dev, &tx, NULL);
 
     k_busy_wait(1000);
 
@@ -104,7 +109,6 @@ static int ads1298_wakeup(const struct device *dev)
 __maybe_unused
 static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *val)
 {
-    const struct ads1298_dev_config *cfg = dev->config;
 
     if (reg > 0x1F) {
         LOG_ERR("Invalid register %d", reg);
@@ -119,7 +123,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
     tx_bufs[0].len = len;
     rx_bufs[0].len = 2;
 
-    int ret = ads1298_transact(&cfg->bus, &tx, &rx);
+    int ret = ads1298_transact(dev, &tx, &rx);
 
     LOG_HEXDUMP_DBG(rx_bufs[0].buf, rx_bufs[0].len, "read");
 
