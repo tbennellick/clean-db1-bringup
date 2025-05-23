@@ -65,17 +65,27 @@ static int ads1298_wakeup(const struct device *dev)
     const struct ads1298_dev_config *cfg = dev->config;
     tx_buf[0] = ADS1298_CMD_WAKEUP;
     tx_bufs[0].len =1;
-    int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config, &tx, NULL);
+
+
+    struct spi_config tmp_config;
+    memcpy(&tmp_config, &cfg->bus.config, sizeof(tmp_config));
+    tmp_config.operation |= SPI_HOLD_ON_CS;
+
+    int ret  = spi_transceive(cfg->bus.bus, &tmp_config , &tx, NULL);
 
     if (ret !=0) {
         LOG_ERR("Failed to read from SPI device (%d)", ret);
-        return ret;
+        goto out;
     }
 
     LOG_HEXDUMP_DBG(spi_buffer_tx, sizeof(spi_buffer_tx), "read");
 //    memcpy(val, spi_buffer_tx, sizeof(spi_buffer_tx));
+    k_sleep(K_MSEC(2));
 
-    return 0;
+out:
+    spi_release(cfg->bus.bus, &tmp_config);
+    return ret;
+
 }
 
 
