@@ -78,16 +78,7 @@ static int ads1298_transact(const struct device *dev, const struct spi_buf_set *
 
     gpio_pin_set_dt(&exg_cs_temp, 0);
 
-    /* This changes stuff but shouldn't*/
-#ifdef NEW_THING
-    struct spi_config tmp_config;
-    memcpy(&tmp_config, &cfg->bus.config, sizeof(tmp_config));
-//    tmp_config.operation |= SPI_MODE_CPHA ; //SPI_MODE_CPOL;
-    int ret  = spi_transceive(cfg->bus.bus, &tmp_config , txbs, rxbs);
-#else
-
     int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , txbs, rxbs);
-#endif
 
     k_busy_wait(4);/* TODO make this dynamic */
     gpio_pin_set_dt(&exg_cs_temp, 1);
@@ -252,7 +243,7 @@ static DEVICE_API(sensor, ads1298_driver_api) = {
 	static const struct ads1298_dev_config ads1298_config_##inst = {                           \
 		.bus = SPI_DT_SPEC_INST_GET(                                                       \
 			inst,                                                                      \
-			(SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_MODE_CPOL | SPI_MODE_CPHA), 0),  \
+			(SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_MODE_CPHA), 0),  \
                                                                                                    \
 		IF_ENABLED(CONFIG_ADT7310_TRIGGER,                                                 \
 			   (.int_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, int_gpios, {0}),))};        \
