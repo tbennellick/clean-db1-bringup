@@ -29,6 +29,14 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 /* Hack - TODO: move to device tree */
 #define EXG_CS_TEMP DT_ALIAS(exg_cs_temp)
 static const struct gpio_dt_spec exg_cs_temp = GPIO_DT_SPEC_GET(EXG_CS_TEMP, gpios);
+#define EXG_CLKSEL DT_ALIAS(exg_clksel)
+static const struct gpio_dt_spec exg_clksel = GPIO_DT_SPEC_GET(EXG_CLKSEL, gpios);
+#define EXG_NRST DT_ALIAS(exg_nrst)
+static const struct gpio_dt_spec exg_nrst = GPIO_DT_SPEC_GET(EXG_NRST, gpios);
+#define EXG_NPWDN DT_ALIAS(exg_npwdn)
+static const struct gpio_dt_spec exg_npwdn = GPIO_DT_SPEC_GET(EXG_NPWDN, gpios);
+#define EXG_START_CONV DT_ALIAS(exg_start_conv)
+static const struct gpio_dt_spec exg_start_conv = GPIO_DT_SPEC_GET(EXG_START_CONV, gpios);
 
 
 #define SPI_BUF_SIZE 18
@@ -118,14 +126,27 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
     }
 
     tx_buf[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
-    tx_bufs[0].len = len;
-    rx_bufs[0].len = 2;
+    tx_bufs[0].len = len + 1; // 1 byte for command + len bytes for data
+    rx_bufs[0].len = tx_bufs[0].len;
 
     int ret = ads1298_transact(dev, &tx, &rx);
 
     LOG_HEXDUMP_DBG(rx_bufs[0].buf, rx_bufs[0].len, "read");
 
 	return ret;
+}
+
+__maybe_unused
+static int ads1298_set_sdatac_mode(const struct device *dev)
+{
+
+    tx_buf[0] = ADS1298_CMD_SDATAC;
+    tx_bufs[0].len = 1;
+
+    int ret = ads1298_transact(dev, &tx, NULL);
+    LOG_DBG("Set SDATAC mode ret: %d", ret);
+
+    return ret;
 }
 
 
@@ -139,17 +160,11 @@ static int ads1298_sample_fetch(const struct device *dev, enum sensor_channel ch
 		return -ENOTSUP;
 	}
 
-    ret = ads1298_wakeup(dev);
-    if (ret) {
-        return ret;
-    }
+//    ret = ads1298_wakeup(dev);
+//    if (ret) {
+//        return ret;
+//    }
 
-    uint8_t  buf[7] = {0};
-    ret = ads1298_read_reg(dev, 0,1, buf);
-    LOG_WRN("ret: %d", ret);
-    if (ret) {
-        return ret;
-    }
 
 
 //    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
@@ -204,6 +219,23 @@ static int ads1298_probe(const struct device *dev)
 }
 
 
+void hack_safe_init_gpio(const struct gpio_dt_spec *spec, int flags)
+{
+    if (!gpio_is_ready_dt(spec))
+    {
+        LOG_ERR("Gpio not ready %s %d",spec->port->name, spec->pin);
+    }
+    else
+    {
+        int res = gpio_pin_configure_dt(spec, flags);
+        if (res !=0)
+        {
+            LOG_ERR("Cant init %s %d",spec->port->name, spec->pin);
+        }
+    }
+}
+
+
 static int ads1298_init(const struct device *dev)
 {
 	const struct ads1298_dev_config *cfg = dev->config;
@@ -212,20 +244,32 @@ static int ads1298_init(const struct device *dev)
 		LOG_ERR("SPI bus %s not ready", cfg->bus.bus->name);
 		return -ENODEV;
 	}
+    /* Following flow in fig 93*/
+    hack_safe_init_gpio(&exg_clksel, GPIO_OUTPUT_HIGH);
+    hack_safe_init_gpio(&exg_start_conv, GPIO_OUTPUT_HIGH);
 
-    if (!gpio_is_ready_dt(&exg_cs_temp))
-    {
-        LOG_ERR("Gpio not ready %s %d",(char *)&exg_cs_temp.port->name, exg_cs_temp.pin);
-    }
-    else
-    {
-        int res = gpio_pin_configure_dt(&exg_cs_temp, GPIO_OUTPUT_HIGH);
-        if (res !=0)
-        {
-            LOG_ERR("Cant init %s %d",(char *) &exg_cs_temp.port->name, exg_cs_temp.pin);
-        }
-    }
+    hack_safe_init_gpio(&exg_nrst, GPIO_OUTPUT_HIGH);
+    hack_safe_init_gpio(&exg_npwdn, GPIO_OUTPUT_HIGH);
+    /* tPOR =  2^18 tCLK periods = 0.131s @ 2MHz tCLK */
+    k_sleep(K_MSEC(150)); /* Osc should start and DRDY toggle at 250Hz */
+    hack_safe_init_gpio(&exg_cs_temp, GPIO_OUTPUT_HIGH);
+    gpio_pin_set_dt(&exg_cs_temp, 1);
 
+    /* Issue reset pulse */
+    gpio_pin_set_dt(&exg_nrst, 0);
+    k_busy_wait(10); /* tRST = 18 * tCLK =8.7us */
+    gpio_pin_set_dt(&exg_nrst, 1);
+
+    /* Send SDATAC Command */
+    int ret = ads1298_set_sdatac_mode(dev);
+
+    /* Think about external ref */
+    uint8_t  buf[7] = {0};
+    ret = ads1298_read_reg(dev, 0,1, buf);
+    LOG_WRN("ret: %d", ret);
+    if (ret) {
+        return ret;
+    }
 
 
 	return ads1298_probe(dev);
