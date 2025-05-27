@@ -89,6 +89,8 @@ static int ads1298_transact(const struct device *dev, const struct spi_buf_set *
 
     int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , txbs, rxbs);
 
+    k_busy_wait(100); /* Fudge to make CS last - bug in SPI driver, transact returns before its complete. */
+
     k_busy_wait(4);/* TODO make this dynamic */
     gpio_pin_set_dt(&exg_cs_temp, 1);
 
