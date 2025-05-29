@@ -21,6 +21,7 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 
 /* CS must remain low for the entire duration of the serial communication.
  * After the serial communication is finished, always wait four or more tCLK periods before taking CS high.*/
+/* That is 4*514e-9 = 2.056us*/
 /* There is a minimum SCK: tSCLK < (tDR – 4tCLK) / (NBITS × NCHANNELS + 24)*/
 /* THis is ~50kHz with boot settings */
 /* SPI clock max = 20MHz (tsclk>50ns) */
