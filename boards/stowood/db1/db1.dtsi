@@ -183,7 +183,10 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	status = "okay";
 //	pcs-sck-delay = <0>; //Delay in nanoseconds from the chip select assert to the first clock
 //	sck-pcs-delay = <0>; //Delay in nanoseconds from the last clock edge to the chip select
-//	transfer-delay = <0>; //Delay in nanoseconds between last SCK edge of a transfer word and the first SCK edge of the next transfer word.
+
+	/* Gap between last clock of each word must be more than tsdecode 9.5.2.9 */
+	/* if CLK is 2.048 MHz, then tSDECODE (4 × tCLK) is 1.96 µs. */
+	transfer-delay = <2000>; //Delay in nanoseconds between last SCK edge of a transfer word and the first SCK edge of the next transfer word.
 ads1298: ads1298@0 {
 	compatible = "ti,ads1298";
 	status = "okay";
