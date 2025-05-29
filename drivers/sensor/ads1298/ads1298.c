@@ -27,9 +27,6 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 /* SPI clock max = 20MHz (tsclk>50ns) */
 /* For multibyte commands, a 4 tCLK period must separate the end of one byte (or opcode) and the next. */
 
-/* Hack - TODO: move to device tree */
-#define EXG_CS_TEMP DT_ALIAS(exg_cs_temp)
-static const struct gpio_dt_spec exg_cs_temp = GPIO_DT_SPEC_GET(EXG_CS_TEMP, gpios);
 #define EXG_CLKSEL DT_ALIAS(exg_clksel)
 static const struct gpio_dt_spec exg_clksel = GPIO_DT_SPEC_GET(EXG_CLKSEL, gpios);
 #define EXG_NRST DT_ALIAS(exg_nrst)
@@ -84,9 +81,9 @@ static __aligned(32) char spi_buffer_rx[SPI_BUF_SIZE] __used;
 
 
 
-#define MAX_REG_WRITE_BYTES 256
+#define MAX_REG_RW_BYTES 256
 #define REG_WRITE_OPCODE_LEN 2 /* 1 byte for command and reg  + 1 byte for length */
-#define EXG_MAX_SPI_LEN (MAX_REG_WRITE_BYTES+REG_WRITE_OPCODE_LEN)
+#define EXG_MAX_SPI_LEN (MAX_REG_RW_BYTES+REG_WRITE_OPCODE_LEN)
 uint8_t actual_tx_buffer[EXG_MAX_SPI_LEN];
 uint8_t actual_rx_buffer[EXG_MAX_SPI_LEN];
 struct spi_buf tx_bufs[] = {
@@ -117,19 +114,7 @@ static int ads1298_transact(const struct device *dev, const struct spi_buf_set *
 {
     const struct ads1298_dev_config *cfg = dev->config;
 
-    gpio_pin_set_dt(&exg_cs_temp, 0);
-    k_busy_wait(4);/* TODO make this dynamic */
-    gpio_pin_set_dt(&exg_cs_temp, 1);
-    k_busy_wait(4);/* TODO make this dynamic */
-    gpio_pin_set_dt(&exg_cs_temp, 0);
-//    k_busy_wait(4);/* TODO make this dynamic */
-
     int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , txbs, rxbs);
-
-//    k_busy_wait(100); /* Fudge to make CS last - bug in SPI driver, transact returns before its complete. */
-
-    k_busy_wait(4);/* TODO make this dynamic */
-    gpio_pin_set_dt(&exg_cs_temp, 1);
 
     if (ret !=0) {
         LOG_ERR("Failed to transact with SPI device (%d)", ret);
@@ -152,26 +137,27 @@ static int ads1298_wakeup(const struct device *dev)
 }
 
 __maybe_unused
-static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *val)
+static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint16_t len, uint8_t *val)
 {
 
     if (reg > 0x1F) {
         LOG_ERR("Invalid register %d", reg);
         return -EINVAL;
     }
-    if (len > 0x1f) {
+    if (len > MAX_REG_RW_BYTES || len < 1) {
         LOG_ERR("Invalid length %d", len);
         return -EINVAL;
     }
 
     actual_tx_buffer[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
-    tx_bufs[0].len = len + 1; // 1 byte for command + len bytes for data
+    actual_tx_buffer[1] = len - 1; // Length of registers to read (0-31)
+    tx_bufs[0].len = len + REG_WRITE_OPCODE_LEN; // 1 byte for command + len bytes for data
     rx_bufs[0].len = tx_bufs[0].len;
 
     int ret = ads1298_transact(dev, &tx, &rx);
 
     LOG_HEXDUMP_DBG(rx_bufs[0].buf, rx_bufs[0].len, "read");
-
+    memcpy(val, &rx_bufs[0].buf[2], len);
 	return ret;
 }
 
@@ -183,7 +169,7 @@ static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint16_t len
         LOG_ERR("Invalid register %d", reg);
         return -EINVAL;
     }
-    if (len > MAX_REG_WRITE_BYTES || len < 1) {
+    if (len > MAX_REG_RW_BYTES || len < 1) {
         LOG_ERR("Invalid length %d", len);
         return -EINVAL;
     }
@@ -333,18 +319,40 @@ static int ads1298_init(const struct device *dev)
     exg_reset();
 
     hack_safe_init_gpio(&exg_clksel, GPIO_OUTPUT_HIGH); /* High = internal clock*/
-    hack_safe_init_gpio(&exg_start_conv, GPIO_OUTPUT_HIGH); /* HIgh to observe nDRDY as sign of life*/
+//    hack_safe_init_gpio(&exg_start_conv, GPIO_OUTPUT_HIGH); /* High to observe nDRDY as sign of life*/
+    hack_safe_init_gpio(&exg_start_conv, GPIO_OUTPUT_LOW);
 
     hack_safe_init_gpio(&exg_npwdn, GPIO_OUTPUT_HIGH);
-    hack_safe_init_gpio(&exg_cs_temp, GPIO_OUTPUT_HIGH);
     exg_reset();
 
     ret = ads1298_set_sdatac_mode(dev);
     buf[0] = 0xc0;
     ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG3, 1, buf);
+    buf[0] = 0x86;
+    ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG1, 1, buf);
+    buf[0] = 0x00;
+    ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG2, 1, buf);
+
+    buf[0] = 0x01;
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH1SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH2SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH3SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH4SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH5SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH6SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH7SET, 1, buf);
+    ret = ads1298_write_reg(dev, ADS1298_REG_CH8SET, 1, buf);
+
+#define ID_CHECK
+#ifdef ID_CHECK
     buf[0] = 0x00;
     ret = ads1298_read_reg(dev, ADS1298_REG_ID, 1, buf);
     LOG_WRN("read ID: 0x%02x", buf[0]);
+#endif
+
+    gpio_pin_set_dt(&exg_start_conv, 1);
+
+    k_sleep(K_MSEC(500));
 //    if (ret) {
 //        return ret;
 //    }
