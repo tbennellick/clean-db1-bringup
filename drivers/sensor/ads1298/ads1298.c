@@ -22,7 +22,7 @@ LOG_MODULE_REGISTER(ADS1298, LOG_LEVEL_DBG);
 /* CS must remain low for the entire duration of the serial communication.
  * After the serial communication is finished, always wait four or more tCLK periods before taking CS high.*/
 /* There is a minimum SCK: tSCLK < (tDR – 4tCLK) / (NBITS × NCHANNELS + 24)*/
-/* THis is 5~50kHz with boot settings */
+/* THis is ~50kHz with boot settings */
 /* SPI clock max = 20MHz (tsclk>50ns) */
 /* For multibyte commands, a 4 tCLK period must separate the end of one byte (or opcode) and the next. */
 
@@ -54,19 +54,50 @@ static __aligned(32) char spi_buffer_rx[SPI_BUF_SIZE] __used;
 #define ADS1298_CMD_RREG 0x20
 #define ADS1298_CMD_WREG 0x40
 
-#define EXG_MAX_SPI_LEN 8
-uint8_t tx_buf[EXG_MAX_SPI_LEN];
-uint8_t rx_buf[EXG_MAX_SPI_LEN];
+#define ADS1298_REG_ID 0x00
+#define ADS1298_REG_CONFIG1 0x01
+#define ADS1298_REG_CONFIG2 0x02
+#define ADS1298_REG_CONFIG3 0x03
+#define ADS1298_REG_LOFF 0x04
+#define ADS1298_REG_CH1SET 0x05
+#define ADS1298_REG_CH2SET 0x06
+#define ADS1298_REG_CH3SET 0x07
+#define ADS1298_REG_CH4SET 0x08
+#define ADS1298_REG_CH5SET 0x09
+#define ADS1298_REG_CH6SET 0x0A
+#define ADS1298_REG_CH7SET 0x0B
+#define ADS1298_REG_CH8SET 0x0C
+#define ADS1298_REG_RLD_SENSP 0x0D
+#define ADS1298_REG_RLD_SENSN 0x0E
+#define ADS1298_REG_LOFF_SENSP 0x0F
+#define ADS1298_REG_LOFF_SENSN 0x10
+#define ADS1298_REG_LOFF_FLIP 0x11
+#define ADS1298_REG_LOFF_STATP 0x12
+#define ADS1298_REG_LOFF_STATN 0x13
+#define ADS1298_REG_GPIO 0x14
+#define ADS1298_REG_PACE 0x15
+#define ADS1298_REG_RESP 0x16
+#define ADS1298_REG_CONFIG4 0x17
+#define ADS1298_REG_WCT1 0x18
+#define ADS1298_REG_WCT2 0x19
+
+
+
+#define MAX_REG_WRITE_BYTES 256
+#define REG_WRITE_OPCODE_LEN 2 /* 1 byte for command and reg  + 1 byte for length */
+#define EXG_MAX_SPI_LEN (MAX_REG_WRITE_BYTES+REG_WRITE_OPCODE_LEN)
+uint8_t actual_tx_buffer[EXG_MAX_SPI_LEN];
+uint8_t actual_rx_buffer[EXG_MAX_SPI_LEN];
 struct spi_buf tx_bufs[] = {
         {
-                .buf = tx_buf,
-                .len = sizeof(tx_buf),
+                .buf = actual_tx_buffer,
+                .len = sizeof(actual_tx_buffer),
         },
 };
 struct spi_buf rx_bufs[] = {
         {
-                .buf = rx_buf,
-                .len = sizeof(rx_buf),
+                .buf = actual_rx_buffer,
+                .len = sizeof(actual_rx_buffer),
         },
 };
 const struct spi_buf_set tx = {
@@ -86,10 +117,15 @@ static int ads1298_transact(const struct device *dev, const struct spi_buf_set *
     const struct ads1298_dev_config *cfg = dev->config;
 
     gpio_pin_set_dt(&exg_cs_temp, 0);
+    k_busy_wait(4);/* TODO make this dynamic */
+    gpio_pin_set_dt(&exg_cs_temp, 1);
+    k_busy_wait(4);/* TODO make this dynamic */
+    gpio_pin_set_dt(&exg_cs_temp, 0);
+//    k_busy_wait(4);/* TODO make this dynamic */
 
     int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , txbs, rxbs);
 
-    k_busy_wait(100); /* Fudge to make CS last - bug in SPI driver, transact returns before its complete. */
+//    k_busy_wait(100); /* Fudge to make CS last - bug in SPI driver, transact returns before its complete. */
 
     k_busy_wait(4);/* TODO make this dynamic */
     gpio_pin_set_dt(&exg_cs_temp, 1);
@@ -103,7 +139,7 @@ static int ads1298_transact(const struct device *dev, const struct spi_buf_set *
 __maybe_unused
 static int ads1298_wakeup(const struct device *dev)
 {
-    tx_buf[0] = ADS1298_CMD_WAKEUP;
+    actual_tx_buffer[0] = ADS1298_CMD_WAKEUP;
     tx_bufs[0].len =1;
 
     int ret = ads1298_transact(dev, &tx, NULL);
@@ -127,7 +163,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
         return -EINVAL;
     }
 
-    tx_buf[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
+    actual_tx_buffer[0] = ADS1298_CMD_RREG | (reg & 0x1F); // Read command
     tx_bufs[0].len = len + 1; // 1 byte for command + len bytes for data
     rx_bufs[0].len = tx_bufs[0].len;
 
@@ -139,10 +175,32 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, 
 }
 
 __maybe_unused
+static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint16_t len, uint8_t *val)
+{
+
+    if (reg > 0x1F) {
+        LOG_ERR("Invalid register %d", reg);
+        return -EINVAL;
+    }
+    if (len > MAX_REG_WRITE_BYTES || len < 1) {
+        LOG_ERR("Invalid length %d", len);
+        return -EINVAL;
+    }
+
+    actual_tx_buffer[0] = ADS1298_CMD_WREG | (reg & 0x1F);
+    actual_tx_buffer[1] = len - 1; /* -1 from datasheet*/
+    memcpy(&actual_tx_buffer[2], val, len);
+    tx_bufs[0].len = len + REG_WRITE_OPCODE_LEN;
+
+    return ads1298_transact(dev, &tx, NULL);
+}
+
+
+__maybe_unused
 static int ads1298_set_sdatac_mode(const struct device *dev)
 {
 
-    tx_buf[0] = ADS1298_CMD_SDATAC;
+    actual_tx_buffer[0] = ADS1298_CMD_SDATAC;
     tx_bufs[0].len = 1;
 
     int ret = ads1298_transact(dev, &tx, NULL);
@@ -156,7 +214,7 @@ static int ads1298_set_sdatac_mode(const struct device *dev)
 static int ads1298_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
 //	struct ads1298_data *drv_data = dev->data;
-	int ret;
+//	int ret;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
@@ -237,42 +295,59 @@ void hack_safe_init_gpio(const struct gpio_dt_spec *spec, int flags)
     }
 }
 
+static inline void wait_tpor(void)
+{
+    /* tPOR =  2^18 tCLK periods = 0.131s @ 2MHz tCLK */
+    k_sleep(K_MSEC(150)); /* Osc should start and DRDY toggle at 250Hz */
+}
+
+static inline void exg_reset(void)
+{
+    /* Fig 105 Wait for power rails to settle before setting 'signals' */
+    wait_tpor();
+    /* Fig 105 Issue reset pulse */
+    gpio_pin_set_dt(&exg_nrst, 0);
+    k_busy_wait(1); /* tRST = 2 * tCLKmax = 36n */
+    gpio_pin_set_dt(&exg_nrst, 1);
+    /* Fig105 wait 18x tCKmax => 9.25us */
+    k_busy_wait(10);
+    /* end of 11.1/fig105*/
+}
 
 static int ads1298_init(const struct device *dev)
 {
 	const struct ads1298_dev_config *cfg = dev->config;
+    uint8_t  buf[7] = {0};
+    int ret;
 
 	if (!spi_is_ready_dt(&cfg->bus)) {
 		LOG_ERR("SPI bus %s not ready", cfg->bus.bus->name);
 		return -ENODEV;
 	}
-    /* Following flow in fig 93*/
-    hack_safe_init_gpio(&exg_clksel, GPIO_OUTPUT_HIGH);
-    hack_safe_init_gpio(&exg_start_conv, GPIO_OUTPUT_HIGH);
 
+    /* Following flow in fig 93 */
+
+    /* First step calls out 11.1 and fig 105*/
     hack_safe_init_gpio(&exg_nrst, GPIO_OUTPUT_HIGH);
+    exg_reset();
+
+    hack_safe_init_gpio(&exg_clksel, GPIO_OUTPUT_HIGH); /* High = internal clock*/
+    hack_safe_init_gpio(&exg_start_conv, GPIO_OUTPUT_HIGH); /* HIgh to observe nDRDY as sign of life*/
+
     hack_safe_init_gpio(&exg_npwdn, GPIO_OUTPUT_HIGH);
-    /* tPOR =  2^18 tCLK periods = 0.131s @ 2MHz tCLK */
-    k_sleep(K_MSEC(150)); /* Osc should start and DRDY toggle at 250Hz */
     hack_safe_init_gpio(&exg_cs_temp, GPIO_OUTPUT_HIGH);
-    gpio_pin_set_dt(&exg_cs_temp, 1);
+    exg_reset();
 
-    /* Issue reset pulse */
-    gpio_pin_set_dt(&exg_nrst, 0);
-    k_busy_wait(10); /* tRST = 18 * tCLK =8.7us */
-    gpio_pin_set_dt(&exg_nrst, 1);
-
-    /* Send SDATAC Command */
-    int ret = ads1298_set_sdatac_mode(dev);
-
-    /* Think about external ref */
-    uint8_t  buf[7] = {0};
-    ret = ads1298_read_reg(dev, 0,1, buf);
-    LOG_WRN("ret: %d", ret);
-    if (ret) {
-        return ret;
-    }
-
+    ret = ads1298_set_sdatac_mode(dev);
+    buf[0] = 0xc0;
+    ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG3, 1, buf);
+    buf[0] = 0x00;
+    ret = ads1298_read_reg(dev, ADS1298_REG_ID, 1, buf);
+    LOG_WRN("read ID: 0x%02x", buf[0]);
+//    if (ret) {
+//        return ret;
+//    }
+//
 
 	return ads1298_probe(dev);
 //    return 0;
