@@ -93,9 +93,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="86e578e5-50d5-480c-9269-8b7da97e3f8a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" beforeDir="false" afterPath="$PROJECT_DIR$/../boards/stowood/db1/db1.dtsi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drivers/sensor/ads1298/ads1298.c" beforeDir="false" afterPath="$PROJECT_DIR$/../drivers/sensor/ads1298/ads1298.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/exg.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/exg.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../zephyr/boards/st/stm32f4_disco/stm32f4_disco.dts" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/boards/st/stm32f4_disco/stm32f4_disco.dts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/doc/connectivity/networking/api/mqtt.rst" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/doc/connectivity/networking/api/mqtt.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/doc/connectivity/networking/api/mqtt_sn.rst" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/doc/connectivity/networking/api/mqtt_sn.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../zephyr/include/zephyr/drivers/pinctrl.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../zephyr/include/zephyr/drivers/pinctrl.h" afterDir="false" />
@@ -110,7 +110,7 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Default-zephyr0.17.1-rc1" />
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../zephyr" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="ProjectApplicationVersion">
     <option name="ide" value="CLion" />
@@ -145,7 +145,7 @@
     "cf.advertisement.text.has.clang-format": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "7823374e",
+    "git-widget-placeholder": "exg",
     "last_opened_file_path": "/fast/db1-bringup/devboard1-bringup-zephyr.git/dts/bindings/sensor",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",

@@ -18,19 +18,5 @@ void init_exg(void)
         LOG_ERR("Device %s is not ready\n", dev->name);
         k_sleep(K_MSEC(200));
     }
-    LOG_WRN("Device ready: %s\n", dev->name);
-    k_sleep(K_MSEC(200));
-
-    struct sensor_value p;
-    while (1)
-    {
-
-        sensor_sample_fetch_chan(dev, SENSOR_CHAN_PRESS);
-
-        sensor_channel_get(dev, SENSOR_CHAN_PRESS, &p);
-
-        LOG_INF("pressure: %d.%06d\n", p.val1, p.val2);
-        k_sleep(K_MSEC(500));
-    }
-
+    LOG_DBG("Device ready: %s\n", dev->name);
 }

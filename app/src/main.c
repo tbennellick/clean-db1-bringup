@@ -31,10 +31,8 @@ int main(void)
 
     //    init_power(); Called early in kernel startup
 
-//    init_imu();
-
-//    init_rip();
-
+    init_imu();
+    init_rip();
 //    init_pressure();
 
     init_exg();
