@@ -1,0 +1,7 @@
+menuconfig ADS1298
+	bool "Enable ADS1298 driver"
+	default y
+	depends on DT_HAS_TI_ADS1298_ENABLED
+	select SPI
+	help
+	  Enable the driver for TI ADS1298 ExG AFE

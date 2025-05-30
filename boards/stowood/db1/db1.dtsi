@@ -19,6 +19,12 @@
 		power-ven-bat = &power_ven_bat;
 
 		rip-en = &rip_en;
+		exg-nrst = &exg_nrst;
+		exg-clksel = &exg_clksel;
+		exg-npwdn = &exg_npwdn;
+//		exg-cs-temp = &exg_cs_temp;
+		exg-cs-temp = &debug_led_3;
+		exg-start-conv = &exg_start_conv;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -82,6 +88,27 @@
 			gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
 			label = "RIP_EN";
 		};
+		exg_nrst: exg_nrst {
+			gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+			label = "EXG_nRST";
+		};
+		exg_clksel: exg_clksel {
+			gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
+			label = "EXG_CLKSEL";
+		};
+		exg_npwdn: exg_npwdn {
+			gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
+			label = "EXG_nPWDN";
+		};
+		exg_cs_temp: exg_cs_temp { /* This shouold be passed to driver via device tree */
+			gpios = <&gpio3 5 GPIO_ACTIVE_HIGH>;
+			label = "EXG_CS_TEMP";
+		};
+		exg_start_conv: exg_start_conv {
+			gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+			label = "EXG_START_CONV";
+		};
+
 	};
 
 	gpio_keys {
@@ -128,7 +155,6 @@
 		accel-range = <0>; /* 2g */
 		accel-odr = <1>; /* 12.5Hz */
 	};
-
 };
 
 nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
@@ -156,6 +182,26 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	pinctrl-0 = <&pinmux_flexcomm7_lpspi>;
 	pinctrl-names = "default";
 	status = "okay";
+	/* CS must remain low for the entire duration of the serial communication. */
+	/* After the serial communication is finished, always wait four or more tCLK periods before taking CS high.*/
+	/* That is 4*514e-9 = 2.056us*/
+	pcs-sck-delay = <2500>; //Delay in nanoseconds from the chip select assert to the first clock
+
+	/* The chip select must be deasserted at least 4 tCLK periods after the last clock edge. */
+	/* That is 4*514e-9 = 2.056us */
+	sck-pcs-delay = <2500>; //Delay in nanoseconds from the last clock edge to the chip select
+
+	/* Gap between last clock of each word must be more than tsdecode 9.5.2.9 */
+	/* if CLK is 2.048 MHz, then tSDECODE (4 × tCLK) is 2.056 µs. */
+	transfer-delay = <2500>; //Delay in nanoseconds between last SCK edge of a transfer word and the first SCK edge of the next transfer word.
+ads1298: ads1298@0 {
+	compatible = "ti,ads1298";
+	status = "okay";
+	reg = <0x0>;
+	spi-max-frequency = <10000000>; /* Can go higher */
+//	spi-min-frequency = <500000>; /* Can go higher */
+};
+
 };
 
 //&flexcomm7_lpi2c7 {
