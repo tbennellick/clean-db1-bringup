@@ -13,6 +13,7 @@ void init_pressure(void)
 	if (!device_is_ready(dev)) {
         LOG_ERR("Device %s is not ready\n", dev->name);
         k_sleep(K_MSEC(200));
+        return;
     }
     LOG_WRN("Device ready: %s\n", dev->name);
     k_sleep(K_MSEC(200));
