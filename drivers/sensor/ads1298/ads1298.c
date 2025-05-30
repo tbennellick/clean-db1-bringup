@@ -156,7 +156,6 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint16_t len,
 
     int ret = ads1298_transact(dev, &tx, &rx);
 
-    LOG_HEXDUMP_DBG(rx_bufs[0].buf, rx_bufs[0].len, "read");
     memcpy(val, &rx_bufs[0].buf[2], len);
 	return ret;
 }
@@ -246,22 +245,14 @@ static int ads1298_attr_set(const struct device *dev, enum sensor_channel chan,
 
 static int ads1298_probe(const struct device *dev)
 {
-//	int ret;
-//
-//    uint8_t  buf[7] = {0};
-//    ret = ads1298_read_reg(dev, 0,1, buf);
-//
-//    if (ret) {
-//		return ret;
-//	}
-//    uint8_t status = buf[0];
-//    /* Device valid if Status == 01X0000X */
-//    if ((status & 0xDE) == 0x40)
-//    {
-//        LOG_ERR("Invalid status byte 0x%02x, want 01#0000#", status);
-//        return -ENODEV;
-//    }
-
+    uint8_t  id = 0;
+    int ret = ads1298_read_reg(dev, ADS1298_REG_ID, 1, &id);
+    LOG_DBG("read ID: 0x%02x", id);
+    if( ret != 0 || id != 0x92) /* TODO, there are multiple valid IDs*/
+    {
+        LOG_ERR("Failed to probe ADS1298, ID: 0x%02x with %d", id, ret);
+        return -ENODEV;
+    }
 	return 0;
 }
 
@@ -343,23 +334,11 @@ static int ads1298_init(const struct device *dev)
     ret = ads1298_write_reg(dev, ADS1298_REG_CH7SET, 1, buf);
     ret = ads1298_write_reg(dev, ADS1298_REG_CH8SET, 1, buf);
 
-#define ID_CHECK
-#ifdef ID_CHECK
-    buf[0] = 0x00;
-    ret = ads1298_read_reg(dev, ADS1298_REG_ID, 1, buf);
-    LOG_WRN("read ID: 0x%02x", buf[0]);
-#endif
+    ret = ads1298_probe(dev);
 
     gpio_pin_set_dt(&exg_start_conv, 1);
 
-    k_sleep(K_MSEC(500));
-//    if (ret) {
-//        return ret;
-//    }
-//
-
-	return ads1298_probe(dev);
-//    return 0;
+	return ret;
 }
 
 static DEVICE_API(sensor, ads1298_driver_api) = {
