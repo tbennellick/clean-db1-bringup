@@ -85,6 +85,7 @@ static int abp2_attr_set(const struct device *dev, enum sensor_channel chan,
 	return 0;
 }
 
+__maybe_unused
 static int abp2_probe(const struct device *dev)
 {
 	int ret;
@@ -115,7 +116,7 @@ static int abp2_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-    /* TODO put this back one working */
+    /* TODO put this back once working */
 //	return abp2_probe(dev);
     return 0;
 }

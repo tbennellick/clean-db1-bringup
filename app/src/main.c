@@ -33,8 +33,7 @@ int main(void)
 
     init_imu();
     init_rip();
-//    init_pressure();
-
+    init_pressure();
     init_exg();
     printk("Spam!....\n");
 
