@@ -1,0 +1,7 @@
+sample:
+  name: USB Speed Test
+tests:
+  sample.usb.test:
+    build_only: true
+    platform_allow: frdm_mcxn947_mcxn947_cpu0
+
