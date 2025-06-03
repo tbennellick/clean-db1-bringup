@@ -30,10 +30,23 @@ int main(void)
 
     //    init_power(); Called early in kernel startup
 
-//    init_imu();
+    init_imu();
 
 //    init_rip();
 
+    clock_ip_name_t clk;
+    for(uint8_t i=0; i<10; i++)
+    {
+        LOG_WRN("FC %d, %x", i , SYSCON->FCCLKSEL[i]);
+//        clk = CLOCK_EnableClock(s_lpflexcommClocks[i]);
+
+    }
+    LOG_WRN("");
+    LOG_WRN("FRO DIV %d",SYSCON->FROHFDIV);
+//    LOG_WRN("SCG SGS %d", );
+/* Instance is just the nuber eg 1*/
+//     RESET_ClearPeripheralReset(s_lpflexcommResets[instance]);
+//    LP_FLEXCOMM_SetPeriph(instance, periph, 0);
     init_pressure();
     printk("Spam!....\n");
 
