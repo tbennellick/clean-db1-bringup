@@ -1,0 +1,20 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Launch Build",
+			"device": "NRF5340_XXAA_APP",
+			"cwd": "${workspaceFolder}",
+			"executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+			"preLaunchTask": "Flash SWD - Main",
+			"request": "attach",
+			"type": "cortex-debug",
+			"runToEntryPoint": "main",
+			"servertype": "jlink",
+			"gdbPath": "${workspaceFolder}/venv/tc/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+			"numberOfProcessors": 2,
+			"targetProcessor": 0,
+			"interface": "swd",
+		},
+	]
+}

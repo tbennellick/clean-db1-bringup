@@ -1,0 +1,17 @@
+{
+	"C_Cpp.default.compileCommands": [
+		"${workspaceFolder}/build/compile_commands.json"
+	],
+	"C_Cpp.autocompleteAddParentheses": true,
+	"C_Cpp.default.cppStandard": "c++23",
+	"C_Cpp.default.cStandard": "c23",
+	"C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+	"C_Cpp.default.recursiveIncludes.order": "depthFirst",
+	"C_Cpp.clang_format_fallbackStyle": "Mozilla",
+	"C_Cpp.clang_format_path": "${workspaceFolder}/venv/bin/clang-format",
+	"clang-format.fallbackStyle": "Mozilla",
+	"files.associations": {
+		"*.sample": "bitbake",
+		"log.h": "c"
+	}
+}
