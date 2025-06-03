@@ -12,6 +12,10 @@
 		user-red = &red_led;
 		user-green = &green_led;
 		user-blue = &blue_led;
+		
+		gsm-reset = &gsm_reset;
+		gsm-n-power-enable = &gsm_n_power_enable;
+
 		power-ven-sys-base = &power_ven_sys_base;
 		power-ven-storage = &power_ven_storage;
 		power-ven-ble = &power_ven_ble;
@@ -62,6 +66,16 @@
 		blue_led: blue {
 			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 			label = "Blue LED";
+		};
+		
+		gsm_reset: gsm_reset {
+			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
+			label = "GSM Reset";
+		};
+		
+		gsm_n_power_enable: gsm_n_power_enable {
+			gpios = <&gpio4 19 GPIO_ACTIVE_LOW>;
+			label = "!GSM Power Enable";
 		};
 
 		power_ven_sys_base: power_ven_sys_base {

@@ -5,6 +5,7 @@
 
 #include "debug_leds.h"
 #include "led_manager.h"
+#include "gsm.h"
 #include "power.h"
 #include "imu.h"
 #include "rip.h"
@@ -28,6 +29,9 @@ int main(void)
     led_manager_set(LED_MANAGER_COLOUR_WHITE, LED_MANAGER_MODE_CONT);
     k_sleep(K_MSEC(100));
     led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
+
+	// Init GSM module
+	gsm_init();
 
     //    init_power(); Called early in kernel startup
 
