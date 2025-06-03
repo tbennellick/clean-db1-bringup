@@ -218,6 +218,10 @@ static int frdm_mcxn947_init(void)
 	CLOCK_EnableClock(kCLOCK_Gpio4);
 #endif
 
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(gpio5))
+    __WARN("GPIO clock may not be enabled.")
+#endif
+
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(dac0))
 	SPC_EnableActiveModeAnalogModules(SPC0, kSPC_controlDac0);
 	CLOCK_SetClkDiv(kCLOCK_DivDac0Clk, 1u);
