@@ -10,9 +10,7 @@
 #include "abp2s.h"
 
 #include <zephyr/logging/log.h>
-//LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
-LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
-
+LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
 
 
 static int abp2_read(const struct device *dev, uint8_t *val)
@@ -115,9 +113,7 @@ static int abp2_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-    /* TODO put this back one working */
-//	return abp2_probe(dev);
-    return 0;
+	return abp2_probe(dev);
 }
 
 static DEVICE_API(sensor, abp2_driver_api) = {
