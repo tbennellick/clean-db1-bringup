@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="zephyr_final" type="com.jetbrains.cidr.embedded.customgdbserver.type" factoryName="com.jetbrains.cidr.embedded.customgdbserver.factory" nameIsGenerated="true" PROGRAM_PARAMS="-device MCXN947_M33_0 -strict -timeout 0 -nogui -if swd -speed 4000 -endian little -s" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="app" TARGET_NAME="zephyr_final" CONFIG_NAME="Debug-zephyr0.17.1-rc1" version="1" RUN_TARGET_PROJECT_NAME="app" RUN_TARGET_NAME="zephyr_final">
+    <custom-gdb-server version="1" gdb-connect="tcp:localhost:2331" executable="/usr/bin/JLinkGDBServer" warmup-ms="0" download-type="ALWAYS" reset-cmd="monitor reset" reset-type="AFTER_DOWNLOAD">
+      <debugger toolchainName="zephyr0.17.1-rc1" />
+    </custom-gdb-server>
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>
