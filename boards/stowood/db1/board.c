@@ -143,6 +143,11 @@ static int frdm_mcxn947_init(void)
 	CLOCK_SetClkDiv(kCLOCK_DivPLL1Clk0, 1U);
 #endif
 
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm0))
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom0Clk, 1u);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM0);
+#endif
+
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm1))
 	CLOCK_SetClkDiv(kCLOCK_DivFlexcom1Clk, 1u);
 	CLOCK_AttachClk(kFRO12M_to_FLEXCOMM1);
@@ -153,15 +158,41 @@ static int frdm_mcxn947_init(void)
 	CLOCK_AttachClk(kFRO12M_to_FLEXCOMM2);
 #endif
 
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm3))
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom3Clk, 1u);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM3);
+#endif
+
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm4))
 	CLOCK_SetClkDiv(kCLOCK_DivFlexcom4Clk, 1u);
 	CLOCK_AttachClk(kFRO12M_to_FLEXCOMM4);
+#endif
+
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm5))
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom5Clk, 1u);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM5);
+#endif
+
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm6))
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom6Clk, 1u);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM6);
 #endif
 
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm7))
 	CLOCK_SetClkDiv(kCLOCK_DivFlexcom7Clk, 1u);
 	CLOCK_AttachClk(kFRO12M_to_FLEXCOMM7);
 #endif
+
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm8))
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom8Clk, 1u);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM8);
+#endif
+
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(flexcomm9))
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom9Clk, 1u);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM9);
+#endif
+
 
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(os_timer))
 	CLOCK_AttachClk(kCLK_1M_to_OSTIMER);
@@ -185,6 +216,10 @@ static int frdm_mcxn947_init(void)
 
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(gpio4))
 	CLOCK_EnableClock(kCLOCK_Gpio4);
+#endif
+
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(gpio5))
+    __WARN("GPIO clock may not be enabled.")
 #endif
 
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(dac0))

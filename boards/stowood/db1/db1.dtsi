@@ -12,10 +12,6 @@
 		user-red = &red_led;
 		user-green = &green_led;
 		user-blue = &blue_led;
-		
-		gsm-reset = &gsm_reset;
-		gsm-n-power-enable = &gsm_n_power_enable;
-
 		power-ven-sys-base = &power_ven_sys_base;
 		power-ven-storage = &power_ven_storage;
 		power-ven-ble = &power_ven_ble;
@@ -29,6 +25,10 @@
 //		exg-cs-temp = &exg_cs_temp;
 		exg-cs-temp = &debug_led_3;
 		exg-start-conv = &exg_start_conv;
+
+		gsm-reset = &gsm_reset;
+		gsm-n-power-enable = &gsm_n_power_enable;
+
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -66,16 +66,6 @@
 		blue_led: blue {
 			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 			label = "Blue LED";
-		};
-		
-		gsm_reset: gsm_reset {
-			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
-			label = "GSM Reset";
-		};
-		
-		gsm_n_power_enable: gsm_n_power_enable {
-			gpios = <&gpio4 19 GPIO_ACTIVE_LOW>;
-			label = "!GSM Power Enable";
 		};
 
 		power_ven_sys_base: power_ven_sys_base {
@@ -121,8 +111,16 @@
 		exg_start_conv: exg_start_conv {
 			gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
 			label = "EXG_START_CONV";
+		};		
+		gsm_reset: gsm_reset {
+			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
+			label = "GSM Reset";
 		};
-
+		
+		gsm_n_power_enable: gsm_n_power_enable {
+			gpios = <&gpio4 19 GPIO_ACTIVE_LOW>;
+			label = "!GSM Power Enable";
+		};
 	};
 
 	gpio_keys {
@@ -230,7 +228,6 @@ ads1298: ads1298@0 {
 	pinctrl-names = "default";
 	status = "okay";
 	abp2s: abp2s@0 {
-		zephyr,deferred-init; /* Untill flexcomm issue is sorted */
 		compatible = "honeywell,abp2s";
 		status = "okay";
 		reg = <0x0>;
