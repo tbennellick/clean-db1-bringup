@@ -16,6 +16,8 @@ LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
 #define ABP2S_CMD_NOP 0xF0
 #define ABP2S_CMD_MEASURE 0xAA
 #define ABP2S_MAX_TRX_LEN 7
+#define ABP2S_STATUS_BIT_BUSY (1<<5)
+#define ABP2S_TIMEOUT_MS 5
 
 uint8_t rx_bytes[ABP2S_MAX_TRX_LEN] = {0};
 struct spi_buf rx_buf = { .buf = rx_bytes, .len = sizeof(rx_bytes) };
@@ -56,6 +58,7 @@ static int abp2_status(const struct device *dev, uint8_t *status)
 
     tx_bytes[0] = ABP2S_CMD_NOP;
     tx_buf.len = 1;
+    rx_bytes[0] = 0;
     rx_buf.len = 1;
 
     int ret = spi_transceive_dt(&cfg->bus, &pressure_tx_set, &pressure_rx_set);
@@ -65,27 +68,90 @@ static int abp2_status(const struct device *dev, uint8_t *status)
         return ret;
     }
     *status = rx_bytes[0];
-
-    LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
     return 0;
 }
 
+static int abp2_measurement_start(const struct device *dev)
+{
+    const struct abp2_dev_config *cfg = dev->config;
+
+    tx_bytes[0] = ABP2S_CMD_MEASURE;
+    tx_buf.len = 1;
+    rx_buf.len = 1;
+
+    int ret = spi_transceive_dt(&cfg->bus, &pressure_tx_set, &pressure_rx_set);
+
+    if (ret !=0) {
+        LOG_ERR("Failed to read from SPI device (%d)", ret);
+        return ret;
+    }
+    return 0;
+}
+
+static int abp2_mesurement_get(const struct device *dev, uint8_t *status)
+{
+    const struct abp2_dev_config *cfg = dev->config;
+
+    tx_bytes[0] = ABP2S_CMD_NOP;
+    tx_buf.len = 1;
+    rx_bytes[0] = 0;
+    rx_buf.len = 1;
+
+    int ret = spi_transceive_dt(&cfg->bus, &pressure_tx_set, &pressure_rx_set);
+
+    if (ret !=0) {
+        LOG_ERR("Failed to read from SPI device (%d)", ret);
+        return ret;
+    }
+    *status = rx_bytes[0];
+    return 0;
+}
 
 
 static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
 	struct abp2_data *drv_data = dev->data;
 	int ret;
+    uint8_t status = 0;
 
-	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
+
+    if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
 
-//    uint8_t buf[7] = {0};
-//    ret = abp2_read(dev, buf);
-//    if (ret) {
-//        return ret;
-//    }
+    abp2_status(dev, &status);
+    LOG_DBG("stat = %x", status);
+
+    ret = abp2_measurement_start(dev);
+    if (ret < 0) {
+        LOG_ERR("Failed to start measurement on ABP2S device (%d)", ret);
+        return ret;
+    }
+
+    int64_t start_time = k_uptime_get();
+    uint32_t loop_count =0;
+    while(1)
+    {
+        ret = abp2_status(dev, &status);
+        if (ret < 0) {
+            LOG_ERR("Failed to read status byte from ABP2S device (%d)", ret);
+            return ret;
+        }
+        int64_t elapsed_time = k_uptime_get() - start_time;
+
+        if ((status & ABP2S_STATUS_BIT_BUSY)==0)
+        {
+            LOG_DBG("Ready after %d loops and %lld ms", loop_count, elapsed_time);
+            break;
+        }
+        loop_count++;
+
+        if (elapsed_time > ABP2S_TIMEOUT_MS)
+        {
+            LOG_DBG("Timeout after %d loops and %lld ms", loop_count, elapsed_time);
+            break;
+        }
+    }
 
 
 //    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
@@ -120,7 +186,7 @@ static int abp2_probe(const struct device *dev)
     }
 
     /* Device valid if Status == 01X0000X */
-    if ((status & 0xDE) == 0x40)
+    if ((status & 0xDE) != 0x40)
     {
         LOG_ERR("Invalid status byte 0x%02x, want 01#0000#", status);
         return -ENODEV;
