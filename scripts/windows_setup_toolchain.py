@@ -33,7 +33,7 @@ class WindowsSetupToolchain(WestCommand):
 
     def __init__(self):
         super().__init__(
-            'west-setup-toolchain',               # gets stored as self.name
+            'windows-setup-toolchain',               # gets stored as self.name
             'Setup the toolchain',  # self.help
             # self.description:
             '''\
