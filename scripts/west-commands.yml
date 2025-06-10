@@ -14,5 +14,5 @@ west-commands:
   - file: scripts/windows_setup_toolchain.py
     commands:
       - name: windows-setup-toolchain
-        class: SetupToolchain
+        class: WindowsSetupToolchain
         help: get windows toolchain

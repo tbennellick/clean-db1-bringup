@@ -29,11 +29,11 @@ TOOLCHAIN_HASH = '0d6da84628b86feb9166c6bbf7a50d8ffa9bb9497c37c937f50181b1664e28
 # Update the gcc path
 gcc_path = 'zephyr-sdk-0.17.1-rc1/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc'
 
-class SetupToolchain(WestCommand):
+class WindowsSetupToolchain(WestCommand):
 
     def __init__(self):
         super().__init__(
-            'setup-toolchain',               # gets stored as self.name
+            'west-setup-toolchain',               # gets stored as self.name
             'Setup the toolchain',  # self.help
             # self.description:
             '''\
@@ -107,5 +107,5 @@ class SetupToolchain(WestCommand):
         chdir('..')
 
 if __name__ == "__main__":
-    s = SetupToolchain()
+    s = WindowsSetupToolchain()
     s.do_run(None, None)
