@@ -11,5 +11,5 @@ bool abp2s_check_status(uint8_t status);
 #define OUT_MIN_10 round( UINT24_MAX* 0.1f)
 #define PMAX 1.0f
 #define PMIN -PMAX
-float abp2s_calculate_pressure(uint32_t counts, struct sensor_value *val);
+float abp2s_calculate_pressure(uint32_t counts);
 

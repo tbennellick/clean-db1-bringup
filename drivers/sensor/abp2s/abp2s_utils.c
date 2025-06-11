@@ -24,7 +24,7 @@ bool abp2s_check_status(uint8_t status)
 /* Part is ABP2DANT001PGSA3XX */
 /* That is 1psi gauge */
 /* MCX FPU is single precision */
-float abp2s_calculate_pressure(uint32_t counts, struct sensor_value *val)
+float abp2s_calculate_pressure(uint32_t counts)
 {
     float pressure = (((counts - OUT_MIN_10) * (PMAX - PMIN) ) /
                         (OUT_MAX_90 - OUT_MIN_10) )

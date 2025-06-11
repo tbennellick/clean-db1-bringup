@@ -50,8 +50,7 @@ ZTEST(pressure_sensor, outmin)
 
 ZTEST(pressure_sensor, datasheet_example)
 {
-    struct sensor_value val;
-    float  f = abp2s_calculate_pressure(14260634, &val);
+    float  f = abp2s_calculate_pressure(14260634);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,875, "Example calculation failed, expected 875, got %d", kf);
 }
