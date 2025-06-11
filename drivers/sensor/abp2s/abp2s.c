@@ -219,7 +219,7 @@ static DEVICE_API(sensor, abp2_driver_api) = {
 	static const struct abp2_dev_config abp2_config_##inst = {                           \
 		.bus = SPI_DT_SPEC_INST_GET(                                                       \
 			inst,                                                                      \
-			(SPI_WORD_SET(8) | SPI_TRANSFER_MSB |  SPI_MODE_CPHA), 0),  \
+			(SPI_WORD_SET(8) | SPI_TRANSFER_MSB ), 0),  \
                                                                                                    \
 		IF_ENABLED(CONFIG_ADT7310_TRIGGER,                                                 \
 			   (.int_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, int_gpios, {0}),))};        \
