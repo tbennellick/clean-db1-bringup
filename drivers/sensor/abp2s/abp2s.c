@@ -8,6 +8,7 @@
 #include <zephyr/sys/util.h>
 
 #include "abp2s.h"
+#include "check_status.h"
 
 #include <zephyr/logging/log.h>
 //LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
@@ -185,14 +186,12 @@ static int abp2_probe(const struct device *dev)
         return ret;
     }
 
-    /* Device valid if Status == 01X0000X */
-    if ((status & 0xDE) != 0x40)
-    {
-        LOG_ERR("Invalid status byte 0x%02x, want 01#0000#", status);
-        return -ENODEV;
-    }
     LOG_DBG("Device status byte 0x%02x", status);
-	return 0;
+    if(abp2s_check_status(status))
+    {
+        return 0;
+    }
+    return -ENODEV;
 }
 
 
