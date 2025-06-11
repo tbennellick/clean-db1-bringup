@@ -12,7 +12,7 @@ void test_pressure(const struct device *dev) {
     sensor_sample_fetch_chan(dev, SENSOR_CHAN_PRESS);
     sensor_channel_get(dev, SENSOR_CHAN_PRESS, &p);
 
-    LOG_INF("pressure: %d.%06d\n", p.val1, p.val2);
+    LOG_INF("pressure: %d %d", p.val1, p.val2);
 }
 
 void init_pressure(void)

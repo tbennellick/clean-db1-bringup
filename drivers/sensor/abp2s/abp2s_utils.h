@@ -16,3 +16,4 @@ float abp2s_calculate_pressure(uint32_t counts);
 #define ABP2S_TMIN (-50)
 float abp2s_calculate_temperature(uint32_t counts);
 
+int32_t int24_to_int32(uint8_t b[3]);

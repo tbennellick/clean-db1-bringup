@@ -109,8 +109,10 @@ static int abp2_mesurement_get(const struct device *dev)
         return ret;
     }
     LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
-    drv_data->pressure = (int32_t) sys_get_be24(&rx_bytes[1]);
-    drv_data->temperature = (int32_t) sys_get_be24(&rx_bytes[4]);
+    drv_data->pressure = int24_to_int32(&rx_bytes[1]);
+    drv_data->temperature = int24_to_int32(&rx_bytes[4]);
+    LOG_HEXDUMP_WRN(rx_bytes[1], 3, "PRES");
+
     return 0;
 }
 
@@ -169,6 +171,7 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
     {
             case SENSOR_CHAN_PRESS:
                 float v = abp2s_calculate_pressure(drv_data->pressure);
+                LOG_WRN("Pressure float %f", v);
                 r = sensor_value_from_float(val, v);
                 if (r < 0) {
                     LOG_ERR("Failed to convert pressure value (%d)", r);
@@ -176,16 +179,14 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
                 }
                 break;
             case SENSOR_CHAN_AMBIENT_TEMP:
-
-                val->val1 = drv_data->temperature / 1000;
-                val->val2 = (drv_data->temperature % 1000) * 1000; /* val2 is millionths */
-                return 0;
+                float t = abp2s_calculate_temperature(drv_data->temperature);
+                r = sensor_value_from_float(val, t);
+                break;
         default:
             LOG_ERR("Unsupported channel %d", chan);
             return -ENOTSUP;
 	}
-
-	return 0;
+    return 0;
 }
 
 static int abp2_probe(const struct device *dev)

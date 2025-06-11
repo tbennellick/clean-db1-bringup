@@ -62,6 +62,13 @@ ZTEST(pressure_sensor, datasheet_example_temp)
     zassert_equal(kf, 25000, "Example temperature calculation failed, expected 25000, got %d", kf);
 }
 
+ZTEST(pressure_sensor, i24_to_i32)
+{
+    uint8_t a[3] = {0,0,0};
+    int32_t res = int24_to_int32(a);
+    zassert_equal(res, 0, "int24_to_int32 failed, expected 0, got %d", res);
+
+}
 
 
 

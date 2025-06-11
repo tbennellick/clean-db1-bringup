@@ -38,3 +38,11 @@ float abp2s_calculate_temperature(uint32_t counts) {
             + ABP2S_TMIN;
     return  temp;
 }
+
+
+int32_t int24_to_int32(uint8_t b[3]) {
+    int32_t result = ( (b[0] << 16) | (b[1] << 8) | b[2] );
+    if (b[0] & 0x80)
+        result |= 0xFF000000;
+    return result;
+}
