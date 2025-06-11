@@ -26,8 +26,15 @@ bool abp2s_check_status(uint8_t status)
 /* MCX FPU is single precision */
 float abp2s_calculate_pressure(uint32_t counts)
 {
-    float pressure = (((counts - OUT_MIN_10) * (PMAX - PMIN) ) /
+    float pressure = ((((float)counts - OUT_MIN_10) * (PMAX - PMIN) ) /
                         (OUT_MAX_90 - OUT_MIN_10) )
                         + PMIN;
     return pressure;
+}
+
+float abp2s_calculate_temperature(uint32_t counts) {
+    float temp = ((counts * (ABP2S_TMAX - ABP2S_TMIN)) /
+             (UINT24_MAX - 1))
+            + ABP2S_TMIN;
+    return  temp;
 }

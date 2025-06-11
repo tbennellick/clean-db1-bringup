@@ -12,4 +12,7 @@ bool abp2s_check_status(uint8_t status);
 #define PMAX 1.0f
 #define PMIN -PMAX
 float abp2s_calculate_pressure(uint32_t counts);
+#define ABP2S_TMAX 150
+#define ABP2S_TMIN -50
+float abp2s_calculate_temperature(uint32_t counts);
 

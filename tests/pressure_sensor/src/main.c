@@ -54,13 +54,13 @@ ZTEST(pressure_sensor, datasheet_example)
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,875, "Example calculation failed, expected 875, got %d", kf);
 }
-//
-//ZTEST(pressure_sensor, datasheet_example)
-//{
-//struct sensor_value val;
-//abp2s_calculate_pressure(0x3FFFFF, &val);
-//zassert_equal(abp2s_check_status(0xFF), false, "Check Status failed for MISO high");
-//}
+
+ZTEST(pressure_sensor, datasheet_example_temp)
+{
+    float  f = abp2s_calculate_temperature(6291456);
+    int32_t kf = (int32_t)(f * 1000);
+    zassert_equal(kf, 25000, "Example temperature calculation failed, expected 25000, got %d", kf);
+}
 
 
 

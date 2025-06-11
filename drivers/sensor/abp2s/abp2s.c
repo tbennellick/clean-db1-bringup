@@ -163,14 +163,20 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, struct sensor_value *val)
 {
 	struct abp2_data *drv_data = dev->data;
+    int r=0;
 
     switch (chan)
     {
             case SENSOR_CHAN_PRESS:
-                val->val1 = (drv_data->pressure/1000) >> 16;
-                val->val2 = (drv_data->pressure % 1000) * 1000; /* val2 is millionths */
+                float v = abp2s_calculate_pressure(drv_data->pressure);
+                r = sensor_value_from_float(val, v);
+                if (r < 0) {
+                    LOG_ERR("Failed to convert pressure value (%d)", r);
+                    return r;
+                }
                 break;
             case SENSOR_CHAN_AMBIENT_TEMP:
+
                 val->val1 = drv_data->temperature / 1000;
                 val->val2 = (drv_data->temperature % 1000) * 1000; /* val2 is millionths */
                 return 0;
