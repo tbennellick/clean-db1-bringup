@@ -1,5 +1,6 @@
-#include "check_status.h"
+#include "abp2s_utils.h"
 #include "abp2_bits.h"
+
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ABP2S_STAT, LOG_LEVEL_WRN);
 
@@ -20,4 +21,13 @@ bool abp2s_check_status(uint8_t status)
     return true;
 }
 
-
+/* Part is ABP2DANT001PGSA3XX */
+/* That is 1psi gauge */
+/* MCX FPU is single precision */
+float abp2s_calculate_pressure(uint32_t counts, struct sensor_value *val)
+{
+    float pressure = (((counts - OUT_MIN_10) * (PMAX - PMIN) ) /
+                        (OUT_MAX_90 - OUT_MIN_10) )
+                        + PMIN;
+    return pressure;
+}

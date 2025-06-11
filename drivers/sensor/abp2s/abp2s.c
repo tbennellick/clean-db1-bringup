@@ -8,7 +8,8 @@
 #include <zephyr/sys/util.h>
 
 #include "abp2s.h"
-#include "check_status.h"
+#include "abp2s_utils.h"
+#include "abp2_bits.h"
 
 #include <zephyr/logging/log.h>
 //LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
@@ -17,7 +18,6 @@ LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
 #define ABP2S_CMD_NOP 0xF0
 #define ABP2S_CMD_MEASURE 0xAA
 #define ABP2S_MAX_TRX_LEN 7
-#define ABP2S_STATUS_BIT_BUSY (1<<5)
 #define ABP2S_TIMEOUT_MS 5
 
 uint8_t rx_bytes[ABP2S_MAX_TRX_LEN] = {0};
@@ -77,8 +77,10 @@ static int abp2_measurement_start(const struct device *dev)
     const struct abp2_dev_config *cfg = dev->config;
 
     tx_bytes[0] = ABP2S_CMD_MEASURE;
-    tx_buf.len = 1;
-    rx_buf.len = 1;
+    tx_bytes[1] = 0;
+    tx_bytes[2] = 0;
+    tx_buf.len = 3;
+    rx_buf.len = 3;
 
     int ret = spi_transceive_dt(&cfg->bus, &pressure_tx_set, &pressure_rx_set);
 
@@ -89,14 +91,16 @@ static int abp2_measurement_start(const struct device *dev)
     return 0;
 }
 
-static int abp2_mesurement_get(const struct device *dev, uint8_t *status)
+static int abp2_mesurement_get(const struct device *dev)
 {
     const struct abp2_dev_config *cfg = dev->config;
+    struct abp2_data *drv_data = dev->data;
 
     tx_bytes[0] = ABP2S_CMD_NOP;
-    tx_buf.len = 1;
-    rx_bytes[0] = 0;
-    rx_buf.len = 1;
+    memset(&tx_bytes[1], 0, 6);
+    tx_buf.len = 7;
+    memset(&rx_bytes, 0, 7);
+    rx_buf.len = 7;
 
     int ret = spi_transceive_dt(&cfg->bus, &pressure_tx_set, &pressure_rx_set);
 
@@ -104,7 +108,9 @@ static int abp2_mesurement_get(const struct device *dev, uint8_t *status)
         LOG_ERR("Failed to read from SPI device (%d)", ret);
         return ret;
     }
-    *status = rx_bytes[0];
+    LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
+    drv_data->pressure = (int32_t) sys_get_be24(&rx_bytes[1]);
+    drv_data->temperature = (int32_t) sys_get_be24(&rx_bytes[4]);
     return 0;
 }
 
@@ -119,9 +125,6 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
     if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_PRESS) {
 		return -ENOTSUP;
 	}
-
-    abp2_status(dev, &status);
-    LOG_DBG("stat = %x", status);
 
     ret = abp2_measurement_start(dev);
     if (ret < 0) {
@@ -140,7 +143,7 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
         }
         int64_t elapsed_time = k_uptime_get() - start_time;
 
-        if ((status & ABP2S_STATUS_BIT_BUSY)==0)
+        if ((status & ABP2S_BUSY_BIT)==0)
         {
             LOG_DBG("Ready after %d loops and %lld ms", loop_count, elapsed_time);
             break;
@@ -153,26 +156,28 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
             break;
         }
     }
-
-
-//    drv_data->pressure = (int32_t) sys_get_be24(&buf[1]);
-//    drv_data->temperature = (int32_t ) sys_get_be24(&buf[4]);
-
+    abp2_mesurement_get(dev);
 	return 0;
 }
 
-static int abp2_channel_get(const struct device *dev, enum sensor_channel chan,
-			       struct sensor_value *val)
+static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, struct sensor_value *val)
 {
 	struct abp2_data *drv_data = dev->data;
 
-	if (chan != SENSOR_CHAN_PRESS) {
-		return -ENOTSUP;
+    switch (chan)
+    {
+            case SENSOR_CHAN_PRESS:
+                val->val1 = (drv_data->pressure/1000) >> 16;
+                val->val2 = (drv_data->pressure % 1000) * 1000; /* val2 is millionths */
+                break;
+            case SENSOR_CHAN_AMBIENT_TEMP:
+                val->val1 = drv_data->temperature / 1000;
+                val->val2 = (drv_data->temperature % 1000) * 1000; /* val2 is millionths */
+                return 0;
+        default:
+            LOG_ERR("Unsupported channel %d", chan);
+            return -ENOTSUP;
 	}
-
-    /* TODO Convert to mBar or something  (Datasheet unclear on -ve values) */
-	val->val1 = (drv_data->pressure&& 0xFF0000) >> 16;
-	val->val2 = (drv_data->pressure&& 0x00FFFF);
 
 	return 0;
 }
