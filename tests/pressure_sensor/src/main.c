@@ -68,6 +68,25 @@ ZTEST(pressure_sensor, i24_to_i32)
     int32_t res = int24_to_int32(a);
     zassert_equal(res, 0, "int24_to_int32 failed, expected 0, got %d", res);
 
+    uint8_t b[3] = {0,0x0B,0xB8};
+    res = int24_to_int32(b);
+    zassert_equal(res, 3000, "int24_to_int32 failed, expected 0, got %d", res);
+
+    uint8_t c[3] = {0xff,0xf4,0x48};
+    res = int24_to_int32(c);
+    zassert_equal(res, -3000, "int24_to_int32 failed, expected 0, got %d", res);
+
+    uint8_t d[3] = {0xff,0xff,0xff};
+    res = int24_to_int32(d);
+    zassert_equal(res, -1, "int24_to_int32 failed, expected 0, got %d", res);
+
+    uint8_t e[3] = {0xff,0xff,0xfe};
+    res = int24_to_int32(e);
+    zassert_equal(res, -2, "int24_to_int32 failed, expected 0, got %d", res);
+
+    uint8_t f[3] = {0x7f,0xff,0xff};
+    res = int24_to_int32(f);
+    zassert_equal(res, 838807, "int24_to_int32 failed, expected 0, got %d", res);
 }
 
 
