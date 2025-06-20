@@ -77,7 +77,9 @@ cd devboard1-bringup-zephyr
 west init -l .
 west update
 west windows-setup-toolchain
-# TODO: Build script here.
+cd app
+# TODO: Check if this works:
+python ..\scripts\build.py
 ```
 
 ### Testing TBC
