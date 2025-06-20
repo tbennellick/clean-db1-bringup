@@ -65,7 +65,7 @@ jobs:
       - name: Build firmware
         run: |
           cd app/
-          ./build.sh
+          ../scripts/build.py
 
       - name: Pack Firmware
         run: |
