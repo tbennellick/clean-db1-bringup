@@ -174,10 +174,12 @@
 	};
 };
 
-nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
-	pinctrl-0 = <&pinmux_flexcomm2_lpi2c>;
-	pinctrl-names = "default";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
+&flexcomm3_lpi2c3 {
+	status = "okay";
+		pinctrl-0 = <&pinmux_flexcomm3_lpi2c>;
+		pinctrl-names = "default";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+	/* Device here */
 };
 
 &flexcomm2_lpuart2 {
