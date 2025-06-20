@@ -6,7 +6,7 @@ This is a Zephyr "Workspace"[^1] project based on [example-application]. It is f
 [^1]: https://docs.zephyrproject.org/latest/develop/application/index.html#zephyr-workspace-app
 
 ## Building and running the application
-This project is intended to be built on a modern linux system. It will probably work on other host OS but that is not considered here. 
+This project is intended to be built on a modern linux system. Some support has been added for windows [here](##Building and running on Windows). 
 
 # Local Build
 ## Install prerequisites
@@ -60,6 +60,26 @@ west boards
 west debug
 west build -t menuconfig
 ```
+
+
+## Building and running on Windows
+
+TODO: Add pre-requisites for windows
+
+```bash
+mkdir db1-windows-bringup
+cd db1-windows-bringup
+git clone git@github.com:Stowood/devboard1-bringup-zephyr.git
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r devboard1-bringup-zephyr/requirements.txt
+cd devboard1-bringup-zephyr
+west init -l .
+west update
+west windows-setup-toolchain
+# TODO: Build script here.
+```
+
 ### Testing TBC
 
 ```shell
