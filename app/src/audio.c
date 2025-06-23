@@ -3,13 +3,17 @@
 #include <zephyr/audio/codec.h>
 #include <zephyr/drivers/i2s.h>
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(audio, LOG_LEVEL_DBG);
+
+
 int init_audio(void)
 {
 	const struct device *const codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
 	struct audio_codec_cfg audio_cfg;
 
 	if (!device_is_ready(codec_dev)) {
-		printk("%s is not ready\n", codec_dev->name);
+		LOG_ERR("%s is not ready", codec_dev->name);
 		return -1;
 	}
 
@@ -25,10 +29,10 @@ int init_audio(void)
 
 	int ret = audio_codec_configure(codec_dev, &audio_cfg);
 	if (ret < 0) {
-		printk("Failed to configure audio codec: %d\n", ret);
+		LOG_ERR("Failed to configure audio codec: %d", ret);
 		return ret;
 	}
 
-	printk("Audio codec configured successfully\n");
+	LOG_DBG("Audio codec configured successfully");
 	return 0;
 }

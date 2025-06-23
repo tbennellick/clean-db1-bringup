@@ -201,10 +201,9 @@
 		label = "Ambient Light Sensor";
 		/*int-gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;*/
 	};
-		audio_codec: wm8904@18{
-			compatible = "wolfson,wm8904";
+		audio_codec: max9867@18{
+			compatible = "maxim,max9867";
 			reg = <0x18>;
-			clock-source = "MCLK";
 			clocks = <&syscon MCUX_AUDIO_MCLK>;
 			clock-names = "mclk";
 		};

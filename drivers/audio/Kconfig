@@ -1,0 +1,6 @@
+config AUDIO_CODEC_MAX9867
+	bool "MAX9867 audio codec driver"
+	default y
+	depends on AUDIO_CODEC && I2C
+	help
+	  Enable driver for MAX9867 audio codec.
