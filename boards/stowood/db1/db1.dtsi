@@ -174,13 +174,6 @@
 	};
 };
 
-&flexcomm3_lpi2c3 {
-	status = "okay";
-		pinctrl-0 = <&pinmux_flexcomm3_lpi2c>;
-		pinctrl-names = "default";
-		clock-frequency = <I2C_BITRATE_STANDARD>;
-	/* Device here */
-};
 
 &flexcomm2_lpuart2 {
 	current-speed = <115200>;
@@ -208,6 +201,13 @@
 		label = "Ambient Light Sensor";
 		/*int-gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;*/
 	};
+		audio_codec: wm8904@18{
+			compatible = "wolfson,wm8904";
+			reg = <0x18>;
+			clock-source = "MCLK";
+			clocks = <&syscon MCUX_AUDIO_MCLK>;
+			clock-names = "mclk";
+		};
 };
 
 /* Debug Uart*/

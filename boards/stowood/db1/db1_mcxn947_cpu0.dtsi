@@ -257,9 +257,9 @@ zephyr_udc0: &usb1 {
 	status = "okay";
 };
 
-&sai1 {
-	status = "okay";
-};
-&sai0 {
-	status = "okay";
-};
+//&sai1 {
+//	status = "okay";
+//};
+//&sai0 {
+//	status = "okay";
+//};
