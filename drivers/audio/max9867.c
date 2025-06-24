@@ -57,9 +57,138 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
 	LOG_DBG("Word size: %u bits", data->word_size);
 	LOG_DBG("Channels: %u", data->channels);
 
+    /* TODO: Write all registers to default values as there is no reset procedure.*/
+
     /* TODO Verify this works*/
     /* Set I2S mode */
-    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_DAI_IF_MODE1, MAX9867_TDM_MODE_BIT, 0);
+    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_DAI_IF_MODE1, MAX9867_DAI_IF_MODE1_TDM_MODE_BIT, 0);
+    if (ret < 0) {
+        LOG_ERR("Failed to set I2S mode: %d", ret);
+        return ret;
+    }
+
+    /* TODO: Break these out to functions */
+    /* Assuming 12MHz Mclk for now */
+    /* Set prescaler to 1 */
+    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_SYS_CLK, MAX9867_SYS_CLK_PSCLK_MASK, MAX9867_SYS_CLK_PSCLK_10_20MHZ);
+    if (ret < 0) {
+        LOG_ERR("Failed to set system clock prescaler: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_SYS_CLK, MAX9867_SYS_CLK_FREQ_MASK, 0x08 ); /* From DS Tab4*/
+    if( ret < 0) {
+        LOG_ERR("Failed to set fixed divider: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_SYS_CLK, MAX9867_SYS_CLK_PLL_EN_BIT, 0);
+    if (ret < 0) {
+        LOG_ERR("Failed to disable PLL: %d", ret);
+        return ret;
+    }
+    /* We don't set NI as we are using exact integer mode.*/
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_DAI_IF_MODE1, MAX9867_DAI_IF_MODE1_MAS |
+                                                                    MAX9867_DAI_IF_MODE1_HIZOFF);
+    if (ret < 0) {
+        LOG_ERR("Failed to set DAI mode1: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_DAI_IF_MODE2, MAX9867_DAI_IF_MODE2_LVOLFIX |
+                                                                    MAX9867_DAI_IF_MODE2_BSEL_NORM);
+    if (ret < 0) {
+        LOG_ERR("Failed to set DAI mode2: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_CODEC_FILTER, 0); /* Disable Filters*/
+    if (ret < 0) {
+        LOG_ERR("Failed to disable filters: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_SIDETONE, 0); /* Disable O/P mixer */
+    if (ret < 0) {
+        LOG_ERR("Failed to disable O/P mixer: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_DAC_LEVEL, MAX9867_DAC_LEVEL_DACMUTE); /* Mute DAC */
+    if (ret < 0) {
+        LOG_ERR("Failed to Mute DAC: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_ADC_LEVEL, MAX9867_ADC_LEVEL_0DB & (MAX9867_ADC_LEVEL_0DB<<4)); /* Set ADC to 0dB */
+    if (ret < 0) {
+        LOG_ERR("Failed to Set ADC gain: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_LINE_IN_LEV_L, MAX9867_LINE_IN_LEV_X_MUTE);
+    if (ret < 0) {
+        LOG_ERR("Failed to Mute Line in L: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_LINE_IN_LEV_R, MAX9867_LINE_IN_LEV_X_MUTE);
+    if (ret < 0) {
+        LOG_ERR("Failed to Mute Line in R: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_VOL_L, MAX9867_VOL_X_MUTE);
+    if (ret < 0) {
+        LOG_ERR("Failed to Mute Playback volume L: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_VOL_R, MAX9867_VOL_X_MUTE);
+    if (ret < 0) {
+        LOG_ERR("Failed to Mute Playback volume R: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_MIC_GAIN_L, MAX9867_MIC_GAIN_X_PRE_0DB | MAX9867_MIC_GAIN_X_0DB);
+    if (ret < 0) {
+        LOG_ERR("Failed to Set MIC signal chain L: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_MIC_GAIN_R, MAX9867_MIC_GAIN_X_PRE_0DB | MAX9867_MIC_GAIN_X_0DB);
+    if (ret < 0) {
+        LOG_ERR("Failed to Set MIC signal chain R: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_ADC_IN_CONF, 0); /* Disable ADC Aux input and input mixer */
+    if (ret < 0) {
+        LOG_ERR("Failed to disable ADC input: %d", ret);
+        return ret;
+    }
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_MIC_CONF, 0); /* Disable DMIC input */
+    if (ret < 0) {
+        LOG_ERR("Failed to disable DMIC input: %d", ret);
+        return ret;
+    }
+
+    /* TODO: Jack Det IRQ */
+
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_MODE, 0); /* Disable jack features */
+    if (ret < 0) {
+        LOG_ERR("Failed to disable jack features: %d", ret);
+        return ret;
+    }
+
+    /* TODO: Enable Line in here with switching */
+    ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_SYS_SHDN,  MAX9867_SYS_SHDN_SHDN_ADLEN | MAX9867_SYS_SHDN_SHDN_ADREN);
+    if (ret < 0) {
+        LOG_ERR("Failed to enable ADCs: %d", ret);
+        return ret;
+    }
 
     return 0;
 }
