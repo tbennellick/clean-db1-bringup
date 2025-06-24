@@ -78,8 +78,10 @@ west init -l .
 west update
 west windows-setup-toolchain
 cd app
-# TODO: Check if this works:
 python ..\scripts\build.py
+# To flash:
+python ..\scripts\build.py -f
+
 ```
 
 ### Testing TBC
