@@ -7,8 +7,98 @@
 
 LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
 
+#define I2S_DEV_NODE_RX DT_ALIAS(i2s_node0)
+
+#define NUM_BLOCKS 20
+#define SAMPLE_NO 64
+
+
+#define BLOCK_SIZE (2 * SAMPLE_NO)
+
+#ifdef CONFIG_NOCACHE_MEMORY
+	#define MEM_SLAB_CACHE_ATTR __nocache
+#else
+	#define MEM_SLAB_CACHE_ATTR
+#endif
+
+
+/*
+ * NUM_BLOCKS is the number of blocks used by the test. Some of the drivers,
+ * e.g. i2s_mcux_flexcomm, permanently keep ownership of a few RX buffers. Add a few more
+ * RX blocks to satisfy this requirement
+ */
+
+char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
+	_k_mem_slab_buf_rx_0_mem_slab[(NUM_BLOCKS + 2) * WB_UP(BLOCK_SIZE)];
+STRUCT_SECTION_ITERABLE(k_mem_slab, rx_0_mem_slab) =
+	Z_MEM_SLAB_INITIALIZER(rx_0_mem_slab, _k_mem_slab_buf_rx_0_mem_slab,
+				WB_UP(BLOCK_SIZE), NUM_BLOCKS + 2);
+
+//static const struct device *dev_i2s_rx;
+
+
+#define TIMEOUT          2000
+#define FRAME_CLK_FREQ   44000
+
+static int configure_stream(const struct device *dev_i2s)
+{
+	int ret;
+	struct i2s_config i2s_cfg;
+
+    i2s_cfg.word_size = 16U;
+	i2s_cfg.channels = 2U;
+	i2s_cfg.format = I2S_FMT_DATA_FORMAT_I2S;
+	i2s_cfg.frame_clk_freq = FRAME_CLK_FREQ;
+	i2s_cfg.block_size = BLOCK_SIZE;
+	i2s_cfg.timeout = TIMEOUT;
+
+    i2s_cfg.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
+
+    /* Useful for testing?*/
+    //	i2s_cfg.options |= I2S_OPT_LOOPBACK;
+
+
+    i2s_cfg.mem_slab = &rx_0_mem_slab;
+    ret = i2s_configure(dev_i2s, I2S_DIR_RX, &i2s_cfg);
+    if (ret < 0)
+    {
+        LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
+        return -EIO;
+    }
+	return 0;
+}
+
+void init_i2s(void)
+{
+    void *rx_block;
+    size_t rx_size;
+    static const struct device *dev_i2s = DEVICE_DT_GET_OR_NULL(I2S_DEV_NODE_RX);
+    int ret = configure_stream(dev_i2s);
+    if (ret < 0) {
+        LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
+        return;
+    }
+
+    ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
+    if (ret < 0) {
+        LOG_ERR("Failed to start I2S RX stream (%d)", ret);
+        return;
+    }
+
+    for(uint8_t i =0; i<10; i++) {
+        ret = i2s_read(dev_i2s, &rx_block, &rx_size);
+        if (ret < 0) {
+            LOG_ERR("Failed to read I2S RX stream (%d)", ret);
+            return;
+        }
+        LOG_INF("Received %d bytes from I2S RX stream", rx_size);
+    }
+
+}
+
 
 int init_audio(void) {
+
     const struct device *const codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
     struct audio_codec_cfg audio_cfg;
 
