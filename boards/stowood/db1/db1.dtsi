@@ -391,34 +391,16 @@ ads1298: ads1298@0 {
 	pinctrl-names = "default";
 };
 
-//&sai1 {
-//	pinctrl-0 = <&pinmux_sai1>;
-//	pinctrl-names = "default";
-//};
+&sai1 {
+	pinctrl-0 = <&pinmux_sai1>;
+	pinctrl-names = "default";
+};
 
 //&sai0 {
 //	pinctrl-0 = <&pinmux_sai0>;
 //	pinctrl-names = "default";
 //};
 
-&enet {
-	pinctrl-0 = <&pinmux_enet_qos>;
-	pinctrl-names = "default";
-};
-
-&enet_mac {
-	phy-connection-type = "rmii";
-	zephyr,random-mac-address;
-	phy-handle = <&phy>;
-};
-
-&enet_mdio {
-	phy: ethernet-phy@0 {
-		compatible = "ethernet-phy";
-		reg = <0>;
-		status = "okay";
-	};
-};
 
 &flexpwm1_pwm0 {
 	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;

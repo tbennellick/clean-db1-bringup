@@ -174,15 +174,15 @@
 };
 
 &enet {
-	status = "okay";
+	status = "disabled";
 };
 
 &enet_mac {
-	status = "okay";
+	status = "disabled";
 };
 
 &enet_mdio {
-	status = "okay";
+	status = "disabled";
 };
 
 &wwdt0 {
