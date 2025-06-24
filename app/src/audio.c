@@ -27,15 +27,12 @@ LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
  * e.g. i2s_mcux_flexcomm, permanently keep ownership of a few RX buffers. Add a few more
  * RX blocks to satisfy this requirement
  */
-
+/* There is info on this chaos in i2s.h:285*/
 char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
 	_k_mem_slab_buf_rx_0_mem_slab[(NUM_BLOCKS + 2) * WB_UP(BLOCK_SIZE)];
 STRUCT_SECTION_ITERABLE(k_mem_slab, rx_0_mem_slab) =
 	Z_MEM_SLAB_INITIALIZER(rx_0_mem_slab, _k_mem_slab_buf_rx_0_mem_slab,
 				WB_UP(BLOCK_SIZE), NUM_BLOCKS + 2);
-
-//static const struct device *dev_i2s_rx;
-
 
 #define TIMEOUT          2000
 #define FRAME_CLK_FREQ   44000
@@ -45,14 +42,15 @@ static int configure_stream(const struct device *dev_i2s)
 	int ret;
 	struct i2s_config i2s_cfg;
 
+    /* COnsumed by drivers/i2s/i2s_mcux_sai.c */
     i2s_cfg.word_size = 16U;
 	i2s_cfg.channels = 2U;
 	i2s_cfg.format = I2S_FMT_DATA_FORMAT_I2S;
 	i2s_cfg.frame_clk_freq = FRAME_CLK_FREQ;
 	i2s_cfg.block_size = BLOCK_SIZE;
 	i2s_cfg.timeout = TIMEOUT;
-
     i2s_cfg.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
+
 
     /* Useful for testing?*/
     //	i2s_cfg.options |= I2S_OPT_LOOPBACK;

@@ -394,6 +394,9 @@ ads1298: ads1298@0 {
 &sai1 {
 	pinctrl-0 = <&pinmux_sai1>;
 	pinctrl-names = "default";
+	pre-div = <0>;
+	podf = <19>;
+	clock-mux = <0>;
 };
 
 //&sai0 {
