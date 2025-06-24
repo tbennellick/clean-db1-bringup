@@ -147,16 +147,6 @@
 		};
 	};
 
-//	pinmux_sai0: pinmux_sai0 {
-//		group0 {
-//			pinmux = <SAI0_TXD0_PIO2_2>,
-//				<SAI0_TX_BCLK_PIO2_6>,
-//				<SAI0_TX_FS_PIO2_7>;
-//			drive-strength = "high";
-//			slew-rate = "fast";
-//			input-enable;
-//		};
-//	};
 
 	pinmux_enet_qos: pinmux_enet_qos {
 		mdio_group {
