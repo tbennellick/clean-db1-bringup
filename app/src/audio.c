@@ -49,7 +49,7 @@ static int configure_stream(const struct device *dev_i2s)
 	i2s_cfg.frame_clk_freq = FRAME_CLK_FREQ;
 	i2s_cfg.block_size = BLOCK_SIZE;
 	i2s_cfg.timeout = TIMEOUT;
-    i2s_cfg.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
+    i2s_cfg.options = 0; //I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
 
 
     /* Useful for testing?*/
@@ -77,20 +77,20 @@ void init_i2s(void)
         return;
     }
 
-    ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
-    if (ret < 0) {
-        LOG_ERR("Failed to start I2S RX stream (%d)", ret);
-        return;
-    }
-
-    for(uint8_t i =0; i<10; i++) {
-        ret = i2s_read(dev_i2s, &rx_block, &rx_size);
-        if (ret < 0) {
-            LOG_ERR("Failed to read I2S RX stream (%d)", ret);
-            return;
-        }
-        LOG_INF("Received %d bytes from I2S RX stream", rx_size);
-    }
+//    ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
+//    if (ret < 0) {
+//        LOG_ERR("Failed to start I2S RX stream (%d)", ret);
+//        return;
+//    }
+//
+//    for(uint8_t i =0; i<10; i++) {
+//        ret = i2s_read(dev_i2s, &rx_block, &rx_size);
+//        if (ret < 0) {
+//            LOG_ERR("Failed to read I2S RX stream (%d)", ret);
+//            return;
+//        }
+//        LOG_INF("Received %d bytes from I2S RX stream", rx_size);
+//    }
 
 }
 

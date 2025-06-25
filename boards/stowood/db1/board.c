@@ -133,9 +133,9 @@ static int frdm_mcxn947_init(void)
 		.pllctrl = SCG_SPLLCTRL_SOURCE(1U) | SCG_SPLLCTRL_SELI(3U) |
 				 SCG_SPLLCTRL_SELP(1U),
 		.pllndiv = SCG_SPLLNDIV_NDIV(25U),
-		.pllpdiv = SCG_SPLLPDIV_PDIV(10U),
+		.pllpdiv = SCG_SPLLPDIV_PDIV(20U),
 		.pllmdiv = SCG_SPLLMDIV_MDIV(256U),
-		.pllRate = 24576000U};
+		.pllRate = 12288000U};
 
 	/* Configure PLL1 to the desired values */
 	CLOCK_SetPLL1Freq(&pll1_Setup);
