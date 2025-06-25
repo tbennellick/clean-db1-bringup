@@ -4,7 +4,8 @@
 #include <zephyr/audio/codec.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(max9867, CONFIG_AUDIO_CODEC_LOG_LEVEL);
+//LOG_MODULE_REGISTER(max9867, CONFIG_AUDIO_CODEC_LOG_LEVEL);
+LOG_MODULE_REGISTER(max9867, LOG_LEVEL_DBG);
 
 #include "max9867.h"
 
@@ -43,7 +44,7 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
             return -ENOTSUP;
     }
 
-    if(data->word_size != 16) {
+    if(cfg->dai_cfg.i2s.word_size != 16) {
         LOG_ERR("Only 16-bit word size is supported by MAX9867");
         return -EPFNOSUPPORT;
     }
