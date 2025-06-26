@@ -23,7 +23,7 @@ int init_audio(void)
 	audio_cfg.dai_cfg.i2s.channels = 2;
 	audio_cfg.dai_cfg.i2s.format = I2S_FMT_DATA_FORMAT_I2S;
 	audio_cfg.dai_cfg.i2s.options = I2S_OPT_FRAME_CLK_MASTER | I2S_OPT_BIT_CLK_MASTER;
-	audio_cfg.dai_cfg.i2s.frame_clk_freq = 48000;
+	audio_cfg.dai_cfg.i2s.frame_clk_freq = 8000;
 	audio_cfg.dai_cfg.i2s.mem_slab = NULL;
 	audio_cfg.dai_cfg.i2s.block_size = 0;
 
@@ -32,6 +32,13 @@ int init_audio(void)
 		LOG_ERR("Failed to configure audio codec: %d", ret);
 		return ret;
 	}
+
+    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_ALL, (audio_property_value_t){ .vol = 0x0f });
+    if (ret < 0) {
+        LOG_ERR("Failed to set input volume: %d", ret);
+        return ret;
+    }
 
 	LOG_DBG("Audio codec configured successfully");
 	return 0;
