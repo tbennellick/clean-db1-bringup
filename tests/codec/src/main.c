@@ -48,3 +48,67 @@ ZTEST_F(mic_gain, 0)
     zassert_equal(fixture->mic_gain,0x14, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
 }
 
+ZTEST_F(mic_gain, 1)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,0, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x13, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+
+ZTEST_F(mic_gain, 20)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,0, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x0, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST_F(mic_gain, 21)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,3, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x14, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST_F(mic_gain, 39)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,3, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x01, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST_F(mic_gain, 40)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,3, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x00, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST_F(mic_gain, 41)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,4, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x0A, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST_F(mic_gain, 50)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,4, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x00, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST_F(mic_gain, 70)
+{
+    fixture->val.vol = 0;
+    split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
+    zassert_equal(fixture->preamp_gain,4, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
+    zassert_equal(fixture->mic_gain,0x00, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
