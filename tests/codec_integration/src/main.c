@@ -17,6 +17,15 @@ static void *suite_setup(void)
     struct codec_integration_fixture *fixture = malloc(sizeof(struct codec_integration_fixture));
     fixture->codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
 
+    TC_PRINT("\n\n\n\n\n\n\n\n######################################################\n");
+
+    return fixture;
+}
+
+static void suite_before(void *f)
+{
+    struct codec_integration_fixture *fixture = (struct codec_integration_fixture *)f;
+    zassume_not_null(fixture, NULL);
     fixture->audio_cfg.dai_route = AUDIO_ROUTE_CAPTURE;
     fixture->audio_cfg.dai_type = AUDIO_DAI_TYPE_I2S;
     fixture->audio_cfg.dai_cfg.i2s.word_size = 16;
@@ -27,16 +36,6 @@ static void *suite_setup(void)
     fixture->audio_cfg.dai_cfg.i2s.mem_slab = NULL;
     fixture->audio_cfg.dai_cfg.i2s.block_size = 0;
 
-
-    TC_PRINT("\n\n\n\n\n\n\n\n######################################################\n");
-
-    return fixture;
-}
-
-static void suite_before(void *f)
-{
-    struct codec_integration_fixture *fixture = (struct codec_integration_fixture *)f;
-    zassume_not_null(fixture, NULL);
 
     power_all(false);
     k_sleep(K_MSEC(150)); /* 1.8v audio rail takes  ~100ms to discharge*/
@@ -61,6 +60,31 @@ ZTEST_F(codec_integration, configure_device)
     int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
     zassert_equal(ret, 0, "Failed to configure audio codec: %d", ret);
 }
+
+ZTEST_F(codec_integration, configure_device_unimp_dai_type)
+{
+    fixture->audio_cfg.dai_type = AUDIO_DAI_TYPE_LEFT_JUSTIFIED; // Unsupported DAI type
+    int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
+    zassert_equal(ret, -ENOSYS, "Configuration with unimplemented DAI type should fail");
+}
+
+ZTEST_F(codec_integration, configure_device_bad_dai_type)
+{
+    fixture->audio_cfg.dai_type = AUDIO_DAI_TYPE_PCMA;
+    int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
+    zassert_equal(ret, -ENOTSUP, "Configuration with bad DAI type should fail");
+}
+
+ZTEST_F(codec_integration, configure_device_bad_word_size)
+{
+    fixture->audio_cfg.dai_cfg.i2s.word_size = 24;
+    int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
+    zassert_equal(ret, -EPFNOSUPPORT, "Configuration with unsupported word size should fail ret = %d", ret);
+}
+
+
+
+
 
 ZTEST_F(codec_integration, set_property_input_volume_all_channels_should_fail)
 {
