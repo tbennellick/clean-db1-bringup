@@ -1,3 +1,2 @@
-zephyr_library()
-zephyr_library_sources_ifdef(CONFIG_AUDIO_CODEC_MAX9867 max9867.c)
-#zephyr_library_sources_ifdef(CONFIG_AUDIO_CODEC_MAX9867 max9867_utils.c)
+add_subdirectory_ifdef(CONFIG_AUDIO_CODEC_MAX9867 max9867)
+
