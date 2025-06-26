@@ -35,5 +35,5 @@ ZTEST_SUITE(codec_integration, NULL, suite_setup, suite_before, NULL, suite_tear
 
 ZTEST_F(codec_integration, device_present)
 {
-    zassert_equal(device_is_ready(fixture->codec_dev),0, "Device not ready");
+    zassert_true(device_is_ready(fixture->codec_dev), "Device not ready");
 }
