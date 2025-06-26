@@ -38,6 +38,20 @@ void early_power_up_bodge(void)
     gpio_pin_set_dt(&ven_bat, 1);
 }
 
+void power_all(bool enable)
+{
+    gpio_pin_set_dt(&ven_sys_base, enable);
+    gpio_pin_set_dt(&ven_storage, enable);
+    gpio_pin_set_dt(&ven_ble, enable);
+    gpio_pin_set_dt(&ven_sys, enable);
+    gpio_pin_set_dt(&ven_bat, enable);
+    if (enable) {
+        LOG_INF("Powering up all rails");
+    } else {
+        LOG_INF("Powering down all rails");
+    }
+}
+
 void init_power(void)
 {
 
