@@ -33,13 +33,38 @@ int init_audio(void)
 		return ret;
 	}
 
+    /* This should fail */
+    audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_ALL, (audio_property_value_t){ .vol = 10 });
+
+
     ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                   AUDIO_CHANNEL_ALL, (audio_property_value_t){ .vol = 0x0f });
+                                   AUDIO_CHANNEL_FRONT_LEFT, (audio_property_value_t){ .vol = 0 });
+    if (ret < 0) {
+        LOG_ERR("Failed to set input volume: %d", ret);
+        return ret;
+    }
+    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_FRONT_RIGHT, (audio_property_value_t){ .vol = 0 });
+    if (ret < 0) {
+        LOG_ERR("Failed to set input volume: %d", ret);
+        return ret;
+    }
+    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_REAR_LEFT, (audio_property_value_t){ .vol = 0 });
+    if (ret < 0) {
+        LOG_ERR("Failed to set input volume: %d", ret);
+        return ret;
+    }
+    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_REAR_RIGHT, (audio_property_value_t){ .vol = 0 });
     if (ret < 0) {
         LOG_ERR("Failed to set input volume: %d", ret);
         return ret;
     }
 
-	LOG_DBG("Audio codec configured successfully");
+
+
+    LOG_DBG("Audio codec configured successfully");
 	return 0;
 }

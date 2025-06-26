@@ -5,6 +5,7 @@
 #include <zephyr/sys/util.h>
 
 #include "max9867.h"
+#include "max9867_utils.h"
 
 #include <zephyr/logging/log.h>
 //LOG_MODULE_REGISTER(max9867, CONFIG_AUDIO_CODEC_LOG_LEVEL);
@@ -52,23 +53,23 @@ static int set_line_input_gain(const struct device *dev, audio_channel_t channel
 static int set_mic_input_gain(const struct device *dev, audio_channel_t channel, uint8_t vol ) {
     const struct max9867_config *config = dev->config;
 
-    if (vol < 0 || vol > 1) { /* TODO set correct value*/
+    if (vol < 0 || vol > 50) {
         LOG_ERR("Volume out of range: %d", vol);
         return -EDOM;
     }
     uint8_t preamp_gain, mic_gain;
-//    split_mic_gain((audio_property_value_t){ .vol = vol }, &preamp_gain, &mic_gain);
-
+    split_mic_gain((audio_property_value_t){ .vol = vol }, &preamp_gain, &mic_gain);
+    uint8_t val = ((preamp_gain&0x3) << 5) | (mic_gain & 0x1f);
 
     uint8_t reg = MAX9867_MIC_GAIN_L;
     if (channel == AUDIO_CHANNEL_REAR_RIGHT) {
         reg = MAX9867_MIC_GAIN_R;
     }
-
-
-
-
-
+    int ret = i2c_reg_write_byte_dt(&config->i2c, reg, val);
+    if (ret < 0) {
+        LOG_ERR("Failed to set input gain for Left channel: %d", ret);
+        return ret;
+    }
     return 0;
 }
 
@@ -302,7 +303,6 @@ static const struct audio_codec_api max9867_driver_api = {
 //	.start_output = max9867_start_output,
 //	.stop_output = max9867_stop_output,
 	.set_property = max9867_set_property,
-//	.apply_properties = max9867_apply_properties,
 //        .route_input
 };
 
