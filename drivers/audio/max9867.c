@@ -3,13 +3,13 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/audio/codec.h>
 #include <zephyr/sys/util.h>
-#include <zephyr/logging/log.h>
 
+#include "max9867.h"
+
+#include <zephyr/logging/log.h>
 //LOG_MODULE_REGISTER(max9867, CONFIG_AUDIO_CODEC_LOG_LEVEL);
 LOG_MODULE_REGISTER(max9867, LOG_LEVEL_DBG);
 
-#include "max9867.h"
-#include "otype-to-size.h"
 
 #define DT_DRV_COMPAT maxim_max9867
 
@@ -37,7 +37,7 @@ static int set_line_input_gain(const struct device *dev, audio_channel_t channel
     }
 
     if (vol < 0 || vol > 15) {
-        LOG_ERR("Volume out of range: %d", val.vol);
+        LOG_ERR("Volume out of range: %d", vol);
         return -EDOM;
     }
 
@@ -52,12 +52,12 @@ static int set_line_input_gain(const struct device *dev, audio_channel_t channel
 static int set_mic_input_gain(const struct device *dev, audio_channel_t channel, uint8_t vol ) {
     const struct max9867_config *config = dev->config;
 
-    if (vol < 0 || vol > s) {
+    if (vol < 0 || vol > 1) { /* TODO set correct value*/
         LOG_ERR("Volume out of range: %d", vol);
         return -EDOM;
     }
     uint8_t preamp_gain, mic_gain;
-    split_mic_gain((audio_property_value_t){ .vol = vol }, &preamp_gain, &mic_gain);
+//    split_mic_gain((audio_property_value_t){ .vol = vol }, &preamp_gain, &mic_gain);
 
 
     uint8_t reg = MAX9867_MIC_GAIN_L;
@@ -72,46 +72,6 @@ static int set_mic_input_gain(const struct device *dev, audio_channel_t channel,
     return 0;
 }
 
-
-int old(const struct device *dev, audio_channel_t channel, audio_property_value_t val)
-{
-    int ret;
-
-    switch (channel)
-    {
-
-            ret =  i2c_reg_update_byte_dt(&config->i2c, MAX9867_LINE_IN_LEV_R,
-                                          MAX9867_LINE_IN_LEV_X_GAIN_MASK, 0x0f-val.vol);
-            if (ret < 0) {
-                LOG_ERR("Failed to set input gain for Right channel: %d", ret);
-                return ret;
-            }
-            break;
-        case AUDIO_CHANNEL_REAR_LEFT:
-            uint8_t preamp_gain, mic_gain;
-            ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_MIC_GAIN_L,
-                                          MAX9867_MIC_GAIN_X_PRE_MASK | MAX9867_MIC_GAIN_X_0DB,
-                                          (0x01<<5) | (0x0f-val.vol));
-            if (ret < 0) {
-                LOG_ERR("Failed to set input gain Left mic: %d", ret);
-                return ret;
-            }
-            break;
-        case AUDIO_CHANNEL_REAR_RIGHT:
-            ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_MIC_GAIN_R,
-                                          MAX9867_MIC_GAIN_X_PRE_MASK | MAX9867_MIC_GAIN_X_0DB,
-                                          (0x01<<5) | (0x0f-val.vol));
-            if (ret < 0) {
-                LOG_ERR("Failed to set input gain for Right mic : %d", ret);
-                return ret;
-            }
-            break;
-        default:
-            LOG_ERR("Invalid channel for input gain setting");
-            return -EINVAL;
-    }
-    return 0;
-}
 
 static int max9867_configure(const struct device *dev, struct audio_codec_cfg *cfg)
 {
@@ -303,36 +263,39 @@ static int max9867_stop_output(const struct device *dev)
 __maybe_unused
 static int max9867_set_property(const struct device *dev,
 				 audio_property_t property, audio_channel_t channel,
-				 audio_property_value_t val)
-{
+				 audio_property_value_t val) {
     switch (property)
     {
         case AUDIO_PROPERTY_INPUT_VOLUME:
-            if (channel == AUDIO_CHANNEL_FRONT_LEFT || channel == AUDIO_CHANNEL_FRONT_RIGHT) {
+            if (channel == AUDIO_CHANNEL_FRONT_LEFT || channel == AUDIO_CHANNEL_FRONT_RIGHT)
+            {
                 return set_line_input_gain(dev, channel, val.vol);
             }
-            else if(channel == AUDIO_CHANNEL_REAR_LEFT || channel == AUDIO_CHANNEL_REAR_RIGHT){
-                return set_mic_input_gain(dev, channel, val);
-            } else {
+            else if (channel == AUDIO_CHANNEL_REAR_LEFT || channel == AUDIO_CHANNEL_REAR_RIGHT)
+            {
+                return set_mic_input_gain(dev, channel, val.vol);
+            }
+            else
+            {
                 LOG_ERR("Input volume setting %d not supported ", channel);
                 return -ENOTSUP;
+            }
             break;
         case AUDIO_PROPERTY_INPUT_MUTE:
             LOG_ERR("Property %d not implemented yet", property);
-            return -ETIMEDOUT;
+            return -ENOSYS;
         default:
             LOG_ERR("Property %d not supported", property);
             return -ENOTSUP;
-
     }
 }
 
-__maybe_unused
-static int max9867_apply_properties(const struct device *dev)
-{
-	/* Apply queued properties */
-	return 0;
-}
+//__maybe_unused
+//static int max9867_apply_properties(const struct device *dev)
+//{
+//	/* Apply queued properties */
+//	return 0;
+//}
 
 static const struct audio_codec_api max9867_driver_api = {
 	.configure = max9867_configure,
