@@ -4,5 +4,4 @@ project(codec)
 
 target_include_directories(app PRIVATE ../../drivers/audio/max9867/)
 target_sources(app PRIVATE src/main.c)
-target_sources(app PRIVATE ../../drivers/audio/max9867/max9867_utils.c)
 #target_sources(app PRIVATE src/codec_integration.c)
