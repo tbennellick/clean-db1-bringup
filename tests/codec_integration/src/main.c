@@ -61,3 +61,28 @@ ZTEST_F(codec_integration, configure_device)
     int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
     zassert_equal(ret, 0, "Failed to configure audio codec: %d", ret);
 }
+
+ZTEST_F(codec_integration, set_property_input_volume)
+{
+    int ret;
+
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_ALL, fixture->val);
+    zassert_not_equal(ret, 0, "Setting input volume for all channels should fail");
+
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_FRONT_LEFT, fixture->val);
+    zassert_equal(ret, 0, "Failed to set input volume for front left channel: %d", ret);
+
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_FRONT_RIGHT, fixture->val);
+    zassert_equal(ret, 0, "Failed to set input volume for front right channel: %d", ret);
+
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_REAR_LEFT, fixture->val);
+    zassert_equal(ret, 0, "Failed to set input volume for rear left channel: %d", ret);
+
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_REAR_RIGHT, fixture->val);
+    zassert_equal(ret, 0, "Failed to set input volume for rear right channel: %d", ret);
+}
