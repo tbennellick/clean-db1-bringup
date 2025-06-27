@@ -10,7 +10,8 @@
 #include "imu.h"
 #include "rip.h"
 #include "pressure.h"
-#include "exg.h"
+//#include "exg.h"
+#include "fuel_gauge.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -26,8 +27,9 @@ int main(void)
     init_imu();
     init_rip();
     init_pressure();
-    init_exg();
+//    init_exg();
     gsm_init();
+    init_fuel_gauge();
 
     LOG_INF("Init complete");
 	while (1)
