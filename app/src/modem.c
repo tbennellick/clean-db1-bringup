@@ -5,9 +5,11 @@
 #include <zephyr/drivers/uart.h>
 #include "debug_leds.h"
 
-
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(modem, CONFIG_LOG_DEFAULT_LEVEL);
+
+/* NB, this module requires DTR to be strapped low (R56 pad on translater side) */
+/* To be fixed in the next hardware rev.*/
 
 #define MODEM_RESET DT_ALIAS(modem_reset)
 static const struct gpio_dt_spec pin_lte_reset = GPIO_DT_SPEC_GET(MODEM_RESET, gpios);
@@ -21,9 +23,7 @@ static const struct gpio_dt_spec pin_hs_usb_select = GPIO_DT_SPEC_GET(PIN_HS_USB
 #define UART_DEVICE_NODE DT_ALIAS(modem_uart)
 static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
 
-/* NB, this also requires DTR to be strapped low (R56 pad on translater side) */
 #define MSG_SIZE 32
-K_MSGQ_DEFINE(modem_uart_msgq, MSG_SIZE, 10, sizeof(uint32_t));
 
 static char rx_buf[MSG_SIZE];
 static int rx_buf_pos=0;
@@ -50,7 +50,6 @@ void frame_on_newline(const struct device *dev, void *user_data)
             {break;}
             rx_buf[rx_buf_pos] = '\0';
             LOG_INF("Modem receive: %s", rx_buf);
-            //k_msgq_put(&modem_uart_msgq, &rx_buf, K_NO_WAIT);
             rx_buf_pos = 0;
             rx_buf[0] = '\0';
         }
