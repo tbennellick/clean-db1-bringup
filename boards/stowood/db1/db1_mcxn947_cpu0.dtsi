@@ -127,6 +127,14 @@
 	status = "okay";
 };
 
+&flexcomm6 {
+	status = "okay";
+};
+
+&flexcomm6_lpuart6 {
+	status = "okay";
+};
+
 &flexcomm7 {
 	status = "okay";
 };
