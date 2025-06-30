@@ -1,5 +1,5 @@
 if SENSOR
 rsource "example_sensor/Kconfig"
 rsource "abp2s/Kconfig"
-rsource "ads1298/Kconfig"
+#rsource "ads1298/Kconfig"
 endif

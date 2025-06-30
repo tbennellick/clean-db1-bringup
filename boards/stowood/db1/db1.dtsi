@@ -26,9 +26,11 @@
 		exg-cs-temp = &debug_led_3;
 		exg-start-conv = &exg_start_conv;
 
-		gsm-reset = &gsm_reset;
-		gsm-n-power-enable = &gsm_n_power_enable;
+		modem-uart = &flexcomm6_lpuart6;
+		modem-reset = &modem_reset;
+		modem-on = &modem_on;
 
+		hs-usb-sel = &hs_usb_sel;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -111,15 +113,18 @@
 		exg_start_conv: exg_start_conv {
 			gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
 			label = "EXG_START_CONV";
-		};		
-		gsm_reset: gsm_reset {
-			gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
-			label = "GSM Reset";
 		};
-		
-		gsm_n_power_enable: gsm_n_power_enable {
+		modem_reset: modem_reset { /* Assert to reset */
+			gpios = <&gpio4 17 GPIO_ACTIVE_HIGH>;
+			label = "modem Reset";
+		};
+		modem_on: modem_on { /* Assert to power on */
 			gpios = <&gpio4 19 GPIO_ACTIVE_LOW>;
-			label = "!GSM Power Enable";
+			label = "modem Power Enable";
+		};
+        hs_usb_sel: hs_usb_sel {
+			gpios = <&gpio1 16 GPIO_ACTIVE_HIGH>;
+			label = "HS USB Mux Select";
 		};
 	};
 
@@ -203,7 +208,20 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	pinctrl-names = "default";
 };
 
-
+&flexcomm6_lpuart6 {
+	current-speed = <115200>;
+	hw-flow-control;
+	pinctrl-0 = <&pinmux_flexcomm6_lpuart>;
+	pinctrl-names = "default";
+	/*
+	modem: modem {
+		   compatible = "u-blox,lara-r6";
+		   mdm-power-gpios = <&gpio4 19 GPIO_ACTIVE_LOW>;
+		   mdm-reset-gpios = <&gpio4 17 GPIO_ACTIVE_LOW>;
+		   status = "okay";
+		};
+	*/
+};
 
 &flexcomm7_lpspi7 {
 	pinctrl-0 = <&pinmux_flexcomm7_lpspi>;

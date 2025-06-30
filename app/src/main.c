@@ -5,7 +5,7 @@
 
 #include "debug_leds.h"
 #include "led_manager.h"
-#include "gsm.h"
+#include "modem.h"
 #include "power.h"
 #include "imu.h"
 #include "rip.h"
@@ -28,8 +28,8 @@ int main(void)
     init_rip();
     init_pressure();
 //    init_exg();
-    gsm_init();
     init_fuel_gauge();
+    init_modem();
 
     LOG_INF("Init complete");
 	while (1)
