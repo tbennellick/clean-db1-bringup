@@ -64,7 +64,11 @@ west build -t menuconfig
 
 ## Building and running on Windows
 
-TODO: Add pre-requisites for windows
+### Prerequisites
+There are some prerequisites for building on Windows. They were not captured during initial development.
+If this is ever used again. They should be captured the next time this is built on a clean Windows machine. 
+
+It is probably just to install python.
 
 ```bash
 mkdir db1-windows-bringup
