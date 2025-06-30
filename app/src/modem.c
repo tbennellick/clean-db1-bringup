@@ -60,7 +60,8 @@ void frame_on_newline(const struct device *dev, void *user_data)
     }
 }
 
-/* Weird problems? is the input PSU current limiting? */
+/* If you came here trying to debug non-deterministic start up problems with the modem,
+ * perhaps it is a bench PSU current limit? The modem has high in-rush */
 void modem_reset()
 {
     gpio_pin_set_dt(&pin_lte_n_power_on, 0);
