@@ -110,6 +110,15 @@
 	status = "okay";
 };
 
+&flexcomm3 {
+	status = "okay";
+};
+
+&flexcomm3_lpi2c3 {
+	status = "okay";
+};
+
+
 &flexcomm4 {
 	status = "okay";
 };
