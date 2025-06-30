@@ -11,3 +11,8 @@ west-commands:
         class: SetupToolchain
         help: get or configure toolchain
 
+  - file: scripts/windows_setup_toolchain.py
+    commands:
+      - name: windows-setup-toolchain
+        class: WindowsSetupToolchain
+        help: get windows toolchain
