@@ -57,6 +57,12 @@ void frame_on_newline(const struct device *dev, void *user_data)
         {
             rx_buf[rx_buf_pos++] = c;
         }
+        else
+        {
+            LOG_ERR("Modem receive buffer overflow");
+            rx_buf_pos = 0;
+            rx_buf[0] = '\0';
+        }
     }
 }
 
