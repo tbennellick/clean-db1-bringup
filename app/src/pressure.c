@@ -27,7 +27,7 @@ void init_pressure(void)
     while(1)
     {
         test_pressure(dev);
-        k_sleep(K_MSEC(200));
+        k_sleep(K_MSEC(800));
     }
 
 }

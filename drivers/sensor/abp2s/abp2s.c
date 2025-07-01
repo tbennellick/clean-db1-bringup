@@ -96,10 +96,11 @@ static int abp2_mesurement_get(const struct device *dev)
     const struct abp2_dev_config *cfg = dev->config;
     struct abp2_data *drv_data = dev->data;
 
+    memset(&tx_bytes, 0, sizeof(tx_bytes));
+    memset(&rx_bytes, 0, sizeof(rx_bytes));
+
     tx_bytes[0] = ABP2S_CMD_NOP;
-    memset(&tx_bytes[1], 0, 6);
     tx_buf.len = 7;
-    memset(&rx_bytes, 0, 7);
     rx_buf.len = 7;
 
     int ret = spi_transceive_dt(&cfg->bus, &pressure_tx_set, &pressure_rx_set);
@@ -109,10 +110,27 @@ static int abp2_mesurement_get(const struct device *dev)
         return ret;
     }
     LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
-    drv_data->pressure = int24_to_int32(&rx_bytes[1]);
-    drv_data->temperature = int24_to_int32(&rx_bytes[4]);
-    LOG_HEXDUMP_WRN(rx_bytes[1], 3, "PRES");
+    drv_data->pressure = rx_bytes[1]<<16 | rx_bytes[2]<<8 | rx_bytes[3];
+    LOG_HEXDUMP_WRN(&rx_bytes[1], 3, "PRES");
+    LOG_ERR("Pressure raw: %d", drv_data->pressure);
+    int32_t mid = (16777216/2);
+    LOG_ERR("Pressure mid: %d", drv_data->pressure- mid);
 
+    uint8_t * data = rx_bytes;
+
+    double outputmax = 15099494; // output at maximum pressure [counts]
+    double outputmin = 1677722; // output at minimum pressure [counts]
+    double pmax = 1; // maximum value of pressure range [bar, psi, kPa, etc.]
+    double pmin = 0; // minimum value of pressure range [bar, psi, kP
+
+    double press_counts = (double)((int32_t)data[3]+(int32_t)data[2]*(int32_t)256+(int32_t)data[1]*(int32_t)65536);
+    double percentage = (press_counts / 16777215) * 100; // calculate pressure as percentage of full scale
+    //calculation of pressure value according to equation 2 of datasheet
+    double pressure = ((press_counts - outputmin) * (pmax - pmin)) / (outputmax - outputmin) + pmin;
+
+    LOG_WRN("Pressure double %g psi", pressure);
+    LOG_WRN("Pressure double: %f mbar", (pressure*68.94));
+    
     return 0;
 }
 
@@ -171,7 +189,9 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
     {
             case SENSOR_CHAN_PRESS:
                 float v = abp2s_calculate_pressure(drv_data->pressure);
-                LOG_WRN("Pressure float %f", v);
+                LOG_WRN("Pressure float %f psi", v);
+                LOG_WRN("Pressure float: %f mbar", (v*68.94));
+
                 r = sensor_value_from_float(val, v);
                 if (r < 0) {
                     LOG_ERR("Failed to convert pressure value (%d)", r);
