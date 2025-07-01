@@ -13,7 +13,7 @@ int init_als(void)
     struct sensor_value val;
 
     if (!device_is_ready(dev)) {
-        printk("sensor: ALS not ready.\n");
+        LOG_ERR("sensor: ALS not ready.");
         return 0;
     }
 
@@ -23,7 +23,7 @@ int init_als(void)
     }
 
     if (sensor_channel_get(dev, SENSOR_CHAN_LIGHT, &val) < 0) {
-        printf("Cannot read VEML6030 value\n");
+        LOG_ERR("Cannot read VEML6030 value");
         return 0;
     }
 
