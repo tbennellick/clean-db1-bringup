@@ -110,7 +110,8 @@ static int abp2_mesurement_get(const struct device *dev)
         return ret;
     }
     LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
-    drv_data->pressure = rx_bytes[1]<<16 | rx_bytes[2]<<8 | rx_bytes[3];
+    drv_data->pressure = ((int32_t)rx_bytes[3]+(int32_t)rx_bytes[2]*(int32_t)256+(int32_t)rx_bytes[1]*(int32_t)65536);
+
     LOG_HEXDUMP_WRN(&rx_bytes[1], 3, "PRES");
     LOG_ERR("Pressure raw: %d", drv_data->pressure);
     int32_t mid = (16777216/2);
@@ -130,7 +131,7 @@ static int abp2_mesurement_get(const struct device *dev)
 
     LOG_WRN("Pressure double %g psi", pressure);
     LOG_WRN("Pressure double: %f mbar", (pressure*68.94));
-    
+
     return 0;
 }
 

@@ -24,15 +24,25 @@ bool abp2s_check_status(uint8_t status)
 /* Part is ABP2DANT001PGSA3XX */
 /* That is 1psi gauge */
 /* MCX FPU is single precision */
-float abp2s_calculate_pressure(uint32_t counts)
+float abp2s_calculate_pressure(int32_t counts)
 {
-    float pressure = ((((float)counts - (float)OUT_MIN_10) * (PMAX - PMIN) ) /
-                        (OUT_MAX_90 - OUT_MIN_10) )
-                        + PMIN;
-    return pressure;
+
+    double outputmax = 15099494; // output at maximum pressure [counts]
+    double outputmin = 1677722; // output at minimum pressure [counts]
+    double pmax = 1; // maximum value of pressure range [bar, psi, kPa, etc.]
+    double pmin = 0; // minimum value of pressure range [bar, psi, kP
+
+    //calculation of pressure value according to equation 2 of datasheet
+    double pressure = ((counts - outputmin) * (pmax - pmin)) / (outputmax - outputmin) + pmin;
+
+//
+//    float pressure = ((((float)counts - (float)OUT_MIN_10) * (PMAX - PMIN) ) /
+//                        (OUT_MAX_90 - OUT_MIN_10) )
+//                        + PMIN;
+    return (float)pressure;
 }
 
-float abp2s_calculate_temperature(uint32_t counts) {
+float abp2s_calculate_temperature(int32_t counts) {
     float temp = (((float)counts * (ABP2S_TMAX - ABP2S_TMIN)) /
              (UINT24_MAX - 1))
             + ABP2S_TMIN;
