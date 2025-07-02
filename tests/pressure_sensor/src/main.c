@@ -3,7 +3,7 @@
 #include <abp2s_utils.h>
 #include "stdbool.h"
 
-ZTEST(pressure_sensor, test_no_responce)
+ZTEST(pressure_sensor, test_no_response)
 {
     zassert_equal(abp2s_check_status(0), false, "Check Status failed for device response");
 }

@@ -119,7 +119,7 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 
         if ((status & ABP2S_BUSY_BIT)==0)
         {
-            LOG_DBG("Ready after %d loops and %lld ms", loop_count, elapsed_time);
+            LOG_DBG("Ready after %u loops and %lld ms", loop_count, elapsed_time);
             break;
         }
         loop_count++;
