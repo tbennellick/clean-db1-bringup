@@ -28,31 +28,6 @@ uint8_t tx_bytes[ABP2S_MAX_TRX_LEN] = {0};
 struct spi_buf tx_buf = { .buf = tx_bytes, .len = sizeof(tx_bytes) };
 const struct spi_buf_set pressure_tx_set = { .buffers = &tx_buf, .count = 1 };
 
-
-//
-//static int abp2_read(const struct device *dev, uint8_t *val)
-//{
-//	const struct abp2_dev_config *cfg = dev->config;
-//
-//	uint8_t cmd_buf[7] = {0};
-//
-//	const struct spi_buf rx_buf = { .buf = cmd_buf, .len = sizeof(cmd_buf) };
-//	const struct spi_buf_set rx = { .buffers = &rx_buf, .count = 1 };
-//
-//	int ret = spi_read_dt(&cfg->bus, &rx);
-//
-//	if (ret !=0) {
-//        LOG_ERR("Failed to read from SPI device (%d)", ret);
-//		return ret;
-//	}
-//
-//    LOG_HEXDUMP_DBG(cmd_buf, sizeof(cmd_buf), "read");
-//    memcpy(val, cmd_buf, sizeof(cmd_buf));
-//
-//	return 0;
-//}
-
-
 static int abp2_status(const struct device *dev, uint8_t *status)
 {
     const struct abp2_dev_config *cfg = dev->config;
@@ -109,39 +84,14 @@ static int abp2_mesurement_get(const struct device *dev)
         LOG_ERR("Failed to read from SPI device (%d)", ret);
         return ret;
     }
-    LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
-    drv_data->pressure = ((int32_t)rx_bytes[3]+(int32_t)rx_bytes[2]*(int32_t)256+(int32_t)rx_bytes[1]*(int32_t)65536);
-    int32_t check = sys_get_be24(&rx_bytes[1]);
-
-    LOG_WRN("Compare pressure %d with %d", drv_data->pressure, check);
-
-    LOG_HEXDUMP_WRN(&rx_bytes[1], 3, "PRES");
-    LOG_ERR("Pressure raw: %d", drv_data->pressure);
-    int32_t mid = (16777216/2);
-    LOG_ERR("Pressure mid: %d", drv_data->pressure- mid);
-
-    uint8_t * data = rx_bytes;
-
-    double outputmax = 15099494; // output at maximum pressure [counts]
-    double outputmin = 1677722; // output at minimum pressure [counts]
-    double pmax = 1; // maximum value of pressure range [bar, psi, kPa, etc.]
-    double pmin = 0; // minimum value of pressure range [bar, psi, kP
-
-    double press_counts = (double)((int32_t)data[3]+(int32_t)data[2]*(int32_t)256+(int32_t)data[1]*(int32_t)65536);
-//    double percentage = (press_counts / 16777215) * 100; // calculate pressure as percentage of full scale
-//    //calculation of pressure value according to equation 2 of datasheet
-    double pressure = ((press_counts - outputmin) * (pmax - pmin)) / (outputmax - outputmin) + pmin;
-
-    LOG_WRN("Pressure double %g psi", pressure);
-    LOG_WRN("Pressure double: %f mbar", (pressure*68.94));
-
+    drv_data->pressure_counts = sys_get_be24(&rx_bytes[1]);
+    drv_data->temperature_counts = sys_get_be24(&rx_bytes[4]);
     return 0;
 }
 
 
 static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
-//	struct abp2_data *drv_data = dev->data;
 	int ret;
     uint8_t status = 0;
 
@@ -193,18 +143,22 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
     switch (chan)
     {
             case SENSOR_CHAN_PRESS:
-            v = abp2s_calculate_pressure(drv_data->pressure, CONFIG_ABP2_MIN_PRESSURE/1000.0f, CONFIG_ABP2_MAX_PRESSURE/1000.0f);
-                LOG_WRN("Pressure float %g psi", (double)v);
+                v = abp2s_calculate_pressure_psi(drv_data->pressure_counts, CONFIG_ABP2_MIN_PRESSURE / 1000.0f,
+                                             CONFIG_ABP2_MAX_PRESSURE / 1000.0f);
 
-                r = sensor_value_from_float(val, v);
+                r = sensor_value_from_float(val, psi_to_mbar(v));
                 if (r < 0) {
                     LOG_ERR("Failed to convert pressure value (%d)", r);
                     return r;
                 }
                 break;
-            case SENSOR_CHAN_AMBIENT_TEMP:
-                float t = abp2s_calculate_temperature(drv_data->temperature);
-                r = sensor_value_from_float(val, t);
+            case SENSOR_CHAN_GAUGE_TEMP:
+                v = abp2s_calculate_temperature(drv_data->temperature_counts);
+                r = sensor_value_from_float(val, v);
+                if (r < 0) {
+                    LOG_ERR("Failed to convert temperature value (%d)", r);
+                    return r;
+                }
                 break;
         default:
             LOG_ERR("Unsupported channel %d", chan);

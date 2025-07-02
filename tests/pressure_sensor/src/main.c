@@ -36,17 +36,40 @@ ZTEST(pressure_sensor, MISO_HIGH)
 /* Example in 8.11 of datasheet, note it is for a -1 to 1 psi sensor*/
 ZTEST(pressure_sensor, datasheet_example_datasheet_maths)
 {
-    float  f = abp2s_calculate_pressure(14260634, -1, 1);
+    float  f = abp2s_calculate_pressure_psi(14260634, -1, 1);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,875, "Example calculation failed, expected 875, got %d", kf);
 }
 
 ZTEST(pressure_sensor, min_counts)
 {
-    float  f = abp2s_calculate_pressure(1677722, 0, 1);
+    float  f = abp2s_calculate_pressure_psi(1677722, 0, 1);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,0, "Example calculation failed, expected 0, got %d", kf);
 }
+
+ZTEST(pressure_sensor, max_counts)
+{
+    float  f = abp2s_calculate_pressure_psi(15099494, 0, 1);
+    int32_t kf = (int32_t)(f * 1000);
+    zassert_equal(kf,1000, "Example calculation failed, expected 1000, got %d", kf);
+}
+
+ZTEST(pressure_sensor, unit_conversion_zero)
+{
+    float  f = psi_to_mbar(0);
+    int32_t kf = (int32_t)(f * 1000);
+    zassert_equal(kf,0, "Example calculation failed, expected 1000, got %d", kf);
+}
+
+ZTEST(pressure_sensor, unit_conversion_100mbar)
+{
+    float  f = psi_to_mbar(1.45038f);
+    int32_t kf = (int32_t)(f * 1000);
+    zassert_equal(kf,100000, "Example calculation failed, expected 1000, got %d", kf);
+}
+
+
 
 
 

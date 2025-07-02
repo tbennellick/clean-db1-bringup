@@ -21,10 +21,10 @@ bool abp2s_check_status(uint8_t status)
     return true;
 }
 
-/* Part current is ABP2DANT001PGSA3XX */
+/* Part is currently ABP2DANT001PGSA3XX */
 /* That is 0 - 1psi gauge */
 /* MCX FPU is single precision */
-float abp2s_calculate_pressure(int32_t counts, float pmin, float pmax)
+float abp2s_calculate_pressure_psi(int32_t counts, float pmin, float pmax)
 {
     /* Eqn 2 section 8.11 of abp2 datasheet */
     float counts_float = (float)counts;
@@ -32,7 +32,11 @@ float abp2s_calculate_pressure(int32_t counts, float pmin, float pmax)
     return pressure;
 }
 
-float abp2s_calculate_temperature(int32_t counts) {
+float psi_to_mbar(float psi) {
+    return psi * 68.9476f;
+}
+
+float abp2s_calculate_temperature(uint32_t counts) {
     float temp = (((float)counts * (ABP2S_TMAX - ABP2S_TMIN)) /
              (UINT24_MAX - 1))
             + ABP2S_TMIN;
