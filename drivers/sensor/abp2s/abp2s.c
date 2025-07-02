@@ -20,13 +20,13 @@ LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
 #define ABP2S_MAX_TRX_LEN 7
 #define ABP2S_TIMEOUT_MS 5
 
-uint8_t rx_bytes[ABP2S_MAX_TRX_LEN] = {0};
-struct spi_buf rx_buf = { .buf = rx_bytes, .len = sizeof(rx_bytes) };
-const struct spi_buf_set pressure_rx_set = { .buffers = &rx_buf, .count = 1 };
+static uint8_t rx_bytes[ABP2S_MAX_TRX_LEN] = {0};
+static struct spi_buf rx_buf = { .buf = rx_bytes, .len = sizeof(rx_bytes) };
+static const struct spi_buf_set pressure_rx_set = { .buffers = &rx_buf, .count = 1 };
 
-uint8_t tx_bytes[ABP2S_MAX_TRX_LEN] = {0};
-struct spi_buf tx_buf = { .buf = tx_bytes, .len = sizeof(tx_bytes) };
-const struct spi_buf_set pressure_tx_set = { .buffers = &tx_buf, .count = 1 };
+static uint8_t tx_bytes[ABP2S_MAX_TRX_LEN] = {0};
+static struct spi_buf tx_buf = { .buf = tx_bytes, .len = sizeof(tx_bytes) };
+static const struct spi_buf_set pressure_tx_set = { .buffers = &tx_buf, .count = 1 };
 
 static int abp2_status(const struct device *dev, uint8_t *status)
 {
@@ -126,7 +126,7 @@ static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 
         if (elapsed_time > ABP2S_TIMEOUT_MS)
         {
-            LOG_DBG("Timeout after %d loops and %lld ms", loop_count, elapsed_time);
+            LOG_DBG("Timeout after %u loops and %lld ms", loop_count, elapsed_time);
             break;
         }
     }
