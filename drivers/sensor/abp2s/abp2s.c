@@ -111,6 +111,9 @@ static int abp2_mesurement_get(const struct device *dev)
     }
     LOG_HEXDUMP_DBG(rx_bytes, sizeof(rx_bytes), "read");
     drv_data->pressure = ((int32_t)rx_bytes[3]+(int32_t)rx_bytes[2]*(int32_t)256+(int32_t)rx_bytes[1]*(int32_t)65536);
+    int32_t check = sys_get_be24(&rx_bytes[1]);
+
+    LOG_WRN("Compare pressure %d with %d", drv_data->pressure, check);
 
     LOG_HEXDUMP_WRN(&rx_bytes[1], 3, "PRES");
     LOG_ERR("Pressure raw: %d", drv_data->pressure);
@@ -125,8 +128,8 @@ static int abp2_mesurement_get(const struct device *dev)
     double pmin = 0; // minimum value of pressure range [bar, psi, kP
 
     double press_counts = (double)((int32_t)data[3]+(int32_t)data[2]*(int32_t)256+(int32_t)data[1]*(int32_t)65536);
-    double percentage = (press_counts / 16777215) * 100; // calculate pressure as percentage of full scale
-    //calculation of pressure value according to equation 2 of datasheet
+//    double percentage = (press_counts / 16777215) * 100; // calculate pressure as percentage of full scale
+//    //calculation of pressure value according to equation 2 of datasheet
     double pressure = ((press_counts - outputmin) * (pmax - pmin)) / (outputmax - outputmin) + pmin;
 
     LOG_WRN("Pressure double %g psi", pressure);
@@ -138,7 +141,7 @@ static int abp2_mesurement_get(const struct device *dev)
 
 static int abp2_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
-	struct abp2_data *drv_data = dev->data;
+//	struct abp2_data *drv_data = dev->data;
 	int ret;
     uint8_t status = 0;
 
@@ -185,13 +188,13 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
 {
 	struct abp2_data *drv_data = dev->data;
     int r=0;
+    float v = 0.0f;
 
     switch (chan)
     {
             case SENSOR_CHAN_PRESS:
-                float v = abp2s_calculate_pressure(drv_data->pressure);
-                LOG_WRN("Pressure float %f psi", v);
-                LOG_WRN("Pressure float: %f mbar", (v*68.94));
+            v = abp2s_calculate_pressure(drv_data->pressure, CONFIG_ABP2_MIN_PRESSURE/1000.0f, CONFIG_ABP2_MAX_PRESSURE/1000.0f);
+                LOG_WRN("Pressure float %g psi", (double)v);
 
                 r = sensor_value_from_float(val, v);
                 if (r < 0) {
