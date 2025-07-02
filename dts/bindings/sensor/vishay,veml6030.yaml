@@ -1,0 +1,32 @@
+description: |
+    Vishay VEML6030 Ambient Light Sensor With I2C Interface.
+
+compatible: "vishay,veml6030"
+
+include: [sensor-device.yaml, i2c-device.yaml]
+
+properties:
+#  int-gpios:
+#    type: phandle-array
+#    description: |
+#      The INT signal defaults to active low open drain, so requires a
+#      pull-up on the board or in the flags cell of this entry.
+  psm-mode:
+    type: int
+    default: 0x00
+    description: |
+      Power saving mode as described in the datasheet on page 8.
+      The initial power on register value for the PSM register is 0
+      (power saving mode is disabled) which is the default value.
+      Possible values are:
+        0x00 = Disable power saving mode
+        0x01 = Mode 1 (0001b)
+        0x03 = Mode 2 (0011b)
+        0x05 = Mode 3 (0101b)
+        0x07 = Mode 4 (0111b)
+    enum:
+      - 0x00
+      - 0x01
+      - 0x03
+      - 0x05
+      - 0x07

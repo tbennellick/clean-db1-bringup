@@ -1,0 +1,9 @@
+# Vishay VEML6030 ambient light sensor driver options.
+
+config VEML6030
+	bool "Vishay VEML6030 ambient light sensor"
+	default y
+	depends on DT_HAS_VISHAY_VEML6030_ENABLED
+	select I2C
+	help
+	  Enable Vishay VEML6030 ambient light sensor driver.

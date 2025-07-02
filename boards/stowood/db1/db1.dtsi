@@ -199,6 +199,13 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 		taper-current = <45>;
 		terminate-voltage = <3000>;
 	};
+	veml6030@10 {
+		compatible = "vishay,veml6030";
+		reg = <0x10>;
+		status = "okay";
+		label = "Ambient Light Sensor";
+		/*int-gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;*/
+	};
 };
 
 /* Debug Uart*/
