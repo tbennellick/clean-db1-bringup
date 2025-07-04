@@ -95,7 +95,7 @@
 };
 
 &flexcomm2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &flexcomm2_lpi2c2 {

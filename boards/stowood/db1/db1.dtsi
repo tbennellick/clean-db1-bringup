@@ -409,12 +409,9 @@ ads1298: ads1298@0 {
 	/* Configure RX as sync (slave to TX) - uses TX clocks */
 	nxp,rx-sync-mode; /* property present = kSAI_ModeSync */
 
-	/* Ensure both TX and RX DMA channels are properly assigned */
-	nxp,tx-dma-channel = <2>;
-	nxp,rx-dma-channel = <3>;
-
-
-
+//	/* Ensure both TX and RX DMA channels are properly assigned */
+//	nxp,tx-dma-channel = <2>;
+//	nxp,rx-dma-channel = <3>;
 };
 
 //&sai0 {
