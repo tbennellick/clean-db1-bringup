@@ -61,18 +61,14 @@
 			label = "Debug LED 3";
 		};
 
-		/* HACK - DONT MERGE led parked on dead pin*/
 		red_led: red {
-			gpios = <&gpio0 26 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio3 18 GPIO_ACTIVE_LOW>;
 			label = "Red LED";
 		};
-		/* HACK - DONT MERGE led parked on dead pin*/
 		green_led: green {
-			gpios = <&gpio0 27 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio3 19 GPIO_ACTIVE_LOW>;
 			label = "Green LED";
 		};
-
-
 		blue_led: blue {
 			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 			label = "Blue LED";
