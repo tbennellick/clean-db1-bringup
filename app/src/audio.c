@@ -157,13 +157,11 @@ void init_i2s(void)
 //    for(uint8_t i = 0; i < 10; i++)
 
 
-    while(1)
+    for(uint32_t i = 0; i < 1000; i++)
     {
-        /* Continue feeding TX to maintain clocks */
         ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_MSEC(100));
         if (ret == 0)
         {
-//            generate_sine_wave((int16_t *) tx_block, BLOCK_SIZE / 2, 1000, FRAME_CLK_FREQ);
             ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
             if (ret < 0)
             {
@@ -177,6 +175,7 @@ void init_i2s(void)
             k_sleep(K_MSEC(100));
         }
     }
+    LOG_INF("TX stuffing ended");
 
 
 
