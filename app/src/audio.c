@@ -61,23 +61,23 @@ void init_i2s(void)
         return;
     }
 
-#ifdef SAI_TX
-//    /* Configure TX stream (master - generates clocks) */
-//    i2s_cfg_tx.word_size = 16U;
-//    i2s_cfg_tx.channels = 2U;
-//    i2s_cfg_tx.format = I2S_FMT_DATA_FORMAT_I2S;
-//    i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
-//    i2s_cfg_tx.block_size = BLOCK_SIZE;
-//    i2s_cfg_tx.timeout = TIMEOUT;
-//    i2s_cfg_tx.options = 0; /* TX will be master (generates bit clock and word clock) */
-//    i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
-//
-//    ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
-//    if (ret < 0) {
-//        LOG_ERR("Failed to configure I2S TX stream (%d)", ret);
-//        return;
-//    }
-#endif
+//#ifdef SAI_TX
+    /* Configure TX stream (master - generates clocks) */
+    i2s_cfg_tx.word_size = 16U;
+    i2s_cfg_tx.channels = 2U;
+    i2s_cfg_tx.format = I2S_FMT_DATA_FORMAT_I2S;
+    i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
+    i2s_cfg_tx.block_size = BLOCK_SIZE;
+    i2s_cfg_tx.timeout = TIMEOUT;
+    i2s_cfg_tx.options = 0; /* TX will be master (generates bit clock and word clock) */
+    i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
+
+    ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
+    if (ret < 0) {
+        LOG_ERR("Failed to configure I2S TX stream (%d)", ret);
+        return;
+    }
+//#endif
 
     /* Configure RX stream  */
     i2s_cfg_rx.word_size = 16U;

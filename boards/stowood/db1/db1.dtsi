@@ -407,8 +407,8 @@ ads1298: ads1298@0 {
 	/* TX generates bit clock and word clock (async mode) */
 	/* RX receives data synchronized to TX clocks (sync mode) */
 
-	/* Configure TX as async (master) - generates clocks */
-	/* nxp,tx-sync-mode property absent = kSAI_ModeAsync */
+	/* Configure TX to follow RX (use bclk and sync)*/
+	 nxp,tx-sync-mode;
 
 	/* Configure RX as sync (slave to TX) - uses TX clocks */
 	/* property present = kSAI_ModeSync */
