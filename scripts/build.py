@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-import os, subprocess, sys, platform
+import os
+import subprocess
+import sys
+
+# Add the parent directory to sys.path to allow importing from scripts
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.setup_env import main as setup_main
 
 if __name__ == "__main__":
-    tc_path = "../../toolchain/tc/" if platform.system() != "Windows" else "../toolchain/sdk/"
-    os.environ["ZEPHYR_SDK_INSTALL_DIR"] = tc_path
+    # Setup the build environment
+    setup_main()
 
-    build_cmd = ["west", "build", "-b", "db1/mcxn947/cpu0"]
+    build_cmd = ["west", "build", "-b", "db1/mcxn947/cpu0", "app/"]
     if any(arg in ["-p", "--pristine"] for arg in sys.argv[1:]):
         build_cmd.append("-p")
     subprocess.run(build_cmd, check=True)

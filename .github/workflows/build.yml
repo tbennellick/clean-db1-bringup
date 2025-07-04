@@ -10,6 +10,7 @@ jobs:
       id-token: 'write'
     env:
       CMAKE_PREFIX_PATH: /opt/zephyr-sdk
+      BUILD_DIR: build/db1/mcxn947/cpu0/app/
 
     steps:
       - name: Checkout
@@ -48,39 +49,35 @@ jobs:
       - name: Name the build
         id: step_one
         run: |
-            echo "build_name=$(date -Iseconds | tr ':' '.')_${GITHUB_SHA}" >> "$GITHUB_ENV"
+          short_hash=$(git rev-parse --short HEAD)
+          echo "build_name=$(date -Iseconds | tr ':' '.')_${short_hash}" >> "$GITHUB_ENV"
 
 # If this step fails, it may be because there are no tags in the repo. (git tag v0.0.0)
       - name: Git Describe
         run: |
-          cd app/
           git describe --tags --dirty --abbrev=7
 
       - name: Set up repo, dependencies and toolchain
         run: |
-          west init -l .
-          west update --fetch-opt=--filter=tree:0
-          west setup-toolchain
+          source scripts/setup_env.sh
 
       - name: Build firmware
         run: |
-          cd app/
-          ../scripts/build.py
+          scripts/build.py
 
       - name: Pack Firmware
         run: |
-          cd app/
-          tar cJf "${build_name}.tar" build/
-          cp build/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf" 
+          tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
+          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf" 
 
       - name: Archive firmware
         uses: actions/upload-artifact@v4
         with:
           name: db1-bu-firmware-${{ env.build_name }}
           path: |
-            app/${{ env.build_name }}.tar
-            app/build/zephyr/zephyr.*
-            app/${{ env.build_name }}.db1-bu-zephyr.elf
+            ${{ env.build_name }}.tar
+            ${{ env.BUILD_DIR }}/zephyr/zephyr.*
+            ${{ env.build_name }}.db1-bu-zephyr.elf
           if-no-files-found: error
 
 #      - id: 'auth'
@@ -103,8 +100,7 @@ jobs:
       - name: Pack Firmware on failure
         if: failure()
         run: |
-          cd app/
-          tar cJf "fail-${build_name}.tar" build/
+          tar cJf "fail-${build_name}.tar" ${{ env.BUILD_DIR }}
 
       - name: Archive build on failure
         if: failure()
