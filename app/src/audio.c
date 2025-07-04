@@ -25,33 +25,29 @@ LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
 #endif
 
 
-/*
- * NUM_BLOCKS is the number of blocks used by the test. Some of the drivers,
- * e.g. i2s_mcux_flexcomm, permanently keep ownership of a few RX buffers. Add a few more
- * RX blocks to satisfy this requirement
- */
-/* There is info on this chaos in i2s.h:285*/
 char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
 	_k_mem_slab_buf_rx_0_mem_slab[(NUM_BLOCKS + 2) * WB_UP(BLOCK_SIZE)];
 STRUCT_SECTION_ITERABLE(k_mem_slab, rx_0_mem_slab) =
 	Z_MEM_SLAB_INITIALIZER(rx_0_mem_slab, _k_mem_slab_buf_rx_0_mem_slab,
 				WB_UP(BLOCK_SIZE), NUM_BLOCKS + 2);
 
-/* TX memory slab for outgoing audio data */
-char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
-	_k_mem_slab_buf_tx_0_mem_slab[NUM_BLOCKS * WB_UP(BLOCK_SIZE)];
-STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
-	Z_MEM_SLAB_INITIALIZER(tx_0_mem_slab, _k_mem_slab_buf_tx_0_mem_slab,
-				WB_UP(BLOCK_SIZE), NUM_BLOCKS);
 
 #define TIMEOUT          2000
 #define FRAME_CLK_FREQ   8000
 
 #define BRD_REV_62_2 /* Replace with board config from ENG-37*/
 #ifdef BRD_REV_62_2
-/* TX thread stack and priority */
+
 #define TX_THREAD_STACK_SIZE 1024
 #define TX_THREAD_PRIORITY 5
+
+/* TX memory slab for outgoing audio data */
+char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
+        _k_mem_slab_buf_tx_0_mem_slab[NUM_BLOCKS * WB_UP(BLOCK_SIZE)];
+STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
+        Z_MEM_SLAB_INITIALIZER(tx_0_mem_slab, _k_mem_slab_buf_tx_0_mem_slab,
+                               WB_UP(BLOCK_SIZE), NUM_BLOCKS);
+
 
 static struct k_thread tx_thread_data;
 K_THREAD_STACK_DEFINE(tx_thread_stack, TX_THREAD_STACK_SIZE);
@@ -89,68 +85,45 @@ void tx_thread_func(void *p1, void *p2, void *p3)
         }
     }
 }
-#endif
 
-void init_i2s(void)
+static int configure_and_start_tx(const struct device *dev_i2s)
 {
-    void *rx_block, *tx_block;
-    size_t rx_size;
-    static const struct device *dev_i2s = DEVICE_DT_GET_OR_NULL(I2S_DEV_NODE_RX);
-    struct i2s_config i2s_cfg_tx, i2s_cfg_rx;
+    struct i2s_config i2s_cfg_tx;
+    void *tx_block;
     int ret;
-    
-    if (!device_is_ready(dev_i2s)) {
-        LOG_ERR("I2S device not ready");
-        return;
-    }
 
-
-    /* Configure RX stream  */
-    i2s_cfg_rx.word_size = 16U;
-    i2s_cfg_rx.channels = 2U;
-    i2s_cfg_rx.format = I2S_FMT_DATA_FORMAT_I2S;
-    i2s_cfg_rx.frame_clk_freq = FRAME_CLK_FREQ;
-    i2s_cfg_rx.block_size = BLOCK_SIZE;
-    i2s_cfg_rx.timeout = TIMEOUT;
-    i2s_cfg_rx.options = 0;
-//    /* Enable loopback for testing - connects TX output to RX input internally */
-//    i2s_cfg_rx.options |= I2S_OPT_LOOPBACK;
-    i2s_cfg_rx.mem_slab = &rx_0_mem_slab;
-
-    ret = i2s_configure(dev_i2s, I2S_DIR_RX, &i2s_cfg_rx);
-    if (ret < 0) {
-        LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
-        return;
-    }
-
-#ifdef BRD_REV_62_2
-
-    /* Datasheet */
-//    If both the transmitter and receiver use the receiver bit clock and frame sync:
-//    • Configure the receiver for asynchronous operation and the transmitter for synchronous operation.
-//    • Enable the transmitter in Synchronous mode only after configuring both the receiver and transmitter.
-//    • Enable the receiver last and disable the receiver first.
-
-//    for (int i = 0; i < 3; i++) {
-
-
-//#ifdef SAI_TX
-    /* Configure TX stream (master - generates clocks) */
     i2s_cfg_tx.word_size = 16U;
     i2s_cfg_tx.channels = 2U;
     i2s_cfg_tx.format = I2S_FMT_DATA_FORMAT_I2S;
     i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
     i2s_cfg_tx.block_size = BLOCK_SIZE;
     i2s_cfg_tx.timeout = TIMEOUT;
-//    i2s_cfg_tx.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
-    i2s_cfg_tx.options = 0;
-
     i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
+    i2s_cfg_tx.options = 0;
 
     ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
     if (ret < 0) {
         LOG_ERR("Failed to configure I2S TX stream (%d)", ret);
-        return;
+        return ret;
+    }
+
+    ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_NO_WAIT);
+    if (ret != 0) {
+        LOG_ERR("Failed to allocate TX buffer (%d)", ret);
+        return ret;
+    }
+
+    ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
+    if (ret < 0) {
+        LOG_ERR("Failed to write initial TX buffer (%d)", ret);
+        k_mem_slab_free(&tx_0_mem_slab, tx_block);
+        return ret;
+    }
+
+    ret = i2s_trigger(dev_i2s, I2S_DIR_TX, I2S_TRIGGER_START);
+    if (ret < 0) {
+        LOG_ERR("Failed to start I2S TX stream (%d)", ret);
+        return ret;
     }
 
     LOG_INF("TX stream started");
@@ -162,14 +135,55 @@ void init_i2s(void)
                     (void *)dev_i2s, NULL, NULL,
                     TX_THREAD_PRIORITY, 0, K_NO_WAIT);
 
-    ret = i2s_trigger(dev_i2s, I2S_DIR_TX, I2S_TRIGGER_START);
-    if (ret < 0) {
-        LOG_ERR("Failed to start I2S TX stream (%d)", ret);
+    return 0;
+}
+#endif
+
+void init_i2s(void)
+{
+    void *rx_block;
+    size_t rx_size;
+    static const struct device *dev_i2s = DEVICE_DT_GET_OR_NULL(I2S_DEV_NODE_RX);
+    struct i2s_config i2s_cfg_rx;
+    int ret;
+    
+    if (!device_is_ready(dev_i2s)) {
+        LOG_ERR("I2S device not ready");
         return;
     }
 
+    i2s_cfg_rx.word_size = 16U;
+    i2s_cfg_rx.channels = 2U;
+    i2s_cfg_rx.format = I2S_FMT_DATA_FORMAT_I2S;
+    i2s_cfg_rx.frame_clk_freq = FRAME_CLK_FREQ;
+    i2s_cfg_rx.block_size = BLOCK_SIZE;
+    i2s_cfg_rx.timeout = TIMEOUT;
+    i2s_cfg_rx.options = 0;
+//    i2s_cfg_rx.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
+//    i2s_cfg_rx.options |= I2S_OPT_LOOPBACK;
 
+    i2s_cfg_rx.mem_slab = &rx_0_mem_slab;
+
+    ret = i2s_configure(dev_i2s, I2S_DIR_RX, &i2s_cfg_rx);
+    if (ret < 0) {
+        LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
+        return;
+    }
+
+#ifdef BRD_REV_62_2
+    /* Datasheet */
+//    If both the transmitter and receiver use the receiver bit clock and frame sync:
+//    • Configure the receiver for asynchronous operation and the transmitter for synchronous operation.
+//    • Enable the transmitter in Synchronous mode only after configuring both the receiver and transmitter.
+//    • Enable the receiver last and disable the receiver first.
+
+    ret = configure_and_start_tx(dev_i2s);
+    if (ret < 0) {
+        LOG_ERR("Failed to configure and start TX stream (%d)", ret);
+        return;
+    }
 #endif
+
 
     ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
     if (ret < 0) {

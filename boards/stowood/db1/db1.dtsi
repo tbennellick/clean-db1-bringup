@@ -404,19 +404,11 @@ ads1298: ads1298@0 {
 	clock-mux = <0>;
 
 	/* SAI Configuration for Simultaneous TX/RX Operation */
-	/* TX generates bit clock and word clock (async mode) */
-	/* RX receives data synchronized to TX clocks (sync mode) */
+	/* Configure RX as async (Master to TX and generate bclk and sync) */
+	//	nxp,rx-sync-mode; /* property present = kSAI_ModeSync */
 
-	/* Configure TX to follow RX (use bclk and sync)*/
-	 nxp,tx-sync-mode;
-
-	/* Configure RX as sync (slave to TX) - uses TX clocks */
-	/* property present = kSAI_ModeSync */
-	//	cheese nxp,rx-sync-mode;
-
-//	/* Ensure both TX and RX DMA channels are properly assigned */
-//	nxp,tx-dma-channel = <2>;
-//	nxp,rx-dma-channel = <3>;
+	/* Configure TX as synchronous (Slave to RX bclk and sync) */
+	 nxp,tx-sync-mode; 	/* TX to follow RX (use bclk and sync)*/
 };
 
 //&sai0 {
