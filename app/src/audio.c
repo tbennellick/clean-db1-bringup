@@ -54,6 +54,13 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
 static struct k_thread tx_thread_data;
 K_THREAD_STACK_DEFINE(tx_thread_stack, TX_THREAD_STACK_SIZE);
 
+/* We are currently using the SAI TX clocks because that is how the hardware is wired.
+ * Even when operating synchronously(slave to RX), It seems that the TX section will
+ * only generate frame sync when the FIFO is non-empty hence we have this thread filling
+ * The TX FIFO continuously.
+ * See DS: 67.6.1.8 - TCR4:ONDEM description
+ * This will be dropped with the next board rev. */
+void tx_thread_func(void *p1, void *p2, void *p3)
 void tx_thread_func(void *p1, void *p2, void *p3)
 {
     const struct device *dev_i2s = (const struct device *)p1;
