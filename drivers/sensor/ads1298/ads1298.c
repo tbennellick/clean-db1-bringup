@@ -156,7 +156,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint16_t len,
 
     int ret = ads1298_transact(dev, &tx, &rx);
 
-    memcpy(val, &rx_bufs[0].buf[2], len);
+//    memcpy(val, &rx_bufs[0].buf[2], len);
 	return ret;
 }
 

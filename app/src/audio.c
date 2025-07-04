@@ -3,6 +3,9 @@
 #include <zephyr/audio/codec.h>
 #include <zephyr/drivers/i2s.h>
 #include "max9867.h"
+#include <math.h>
+//#include <zephyr/sys/iterable_sections.h>
+
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
@@ -34,66 +37,156 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, rx_0_mem_slab) =
 	Z_MEM_SLAB_INITIALIZER(rx_0_mem_slab, _k_mem_slab_buf_rx_0_mem_slab,
 				WB_UP(BLOCK_SIZE), NUM_BLOCKS + 2);
 
+/* TX memory slab for outgoing audio data */
+char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
+	_k_mem_slab_buf_tx_0_mem_slab[NUM_BLOCKS * WB_UP(BLOCK_SIZE)];
+STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
+	Z_MEM_SLAB_INITIALIZER(tx_0_mem_slab, _k_mem_slab_buf_tx_0_mem_slab,
+				WB_UP(BLOCK_SIZE), NUM_BLOCKS);
+
 #define TIMEOUT          2000
 #define FRAME_CLK_FREQ   44000
 
-static int configure_stream(const struct device *dev_i2s)
+static void generate_sine_wave(int16_t *buffer, size_t samples, uint32_t frequency, uint32_t sample_rate)
 {
-	int ret;
-	struct i2s_config i2s_cfg;
-
-    /* COnsumed by drivers/i2s/i2s_mcux_sai.c */
-    i2s_cfg.word_size = 16U;
-	i2s_cfg.channels = 2U;
-	i2s_cfg.format = I2S_FMT_DATA_FORMAT_I2S;
-	i2s_cfg.frame_clk_freq = FRAME_CLK_FREQ;
-	i2s_cfg.block_size = BLOCK_SIZE;
-	i2s_cfg.timeout = TIMEOUT;
-    i2s_cfg.options = 0; //I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
-
-
-    /* Useful for testing?*/
-    //	i2s_cfg.options |= I2S_OPT_LOOPBACK;
-
-
-    i2s_cfg.mem_slab = &rx_0_mem_slab;
-    ret = i2s_configure(dev_i2s, I2S_DIR_RX, &i2s_cfg);
-    if (ret < 0)
-    {
-        LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
-        return -EIO;
+    static uint32_t phase = 0;
+    
+    for (size_t i = 0; i < samples; i += 2) {
+        /* Generate sine wave sample */
+        int32_t sample = (int32_t)(32767.0f * sinf(2.0f * 3.14159f * frequency * phase / sample_rate));
+        
+        /* Stereo - same sample for both channels */
+        buffer[i] = (int16_t)sample;     /* Left channel */
+        buffer[i + 1] = (int16_t)sample; /* Right channel */
+        
+        phase++;
+        if (phase >= sample_rate) {
+            phase = 0;
+        }
     }
-	return 0;
 }
 
 void init_i2s(void)
 {
-    void *rx_block;
+    void *rx_block, *tx_block;
     size_t rx_size;
     static const struct device *dev_i2s = DEVICE_DT_GET_OR_NULL(I2S_DEV_NODE_RX);
-    int ret = configure_stream(dev_i2s);
+    struct i2s_config i2s_cfg_tx, i2s_cfg_rx;
+    int ret;
+    
+    if (!device_is_ready(dev_i2s)) {
+        LOG_ERR("I2S device not ready");
+        return;
+    }
+
+    /* Configure TX stream (master - generates clocks) */
+    i2s_cfg_tx.word_size = 16U;
+    i2s_cfg_tx.channels = 2U;
+    i2s_cfg_tx.format = I2S_FMT_DATA_FORMAT_I2S;
+    i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
+    i2s_cfg_tx.block_size = BLOCK_SIZE;
+    i2s_cfg_tx.timeout = TIMEOUT;
+    i2s_cfg_tx.options = 0; /* TX will be master (generates bit clock and word clock) */
+    i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
+
+    ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
+    if (ret < 0) {
+        LOG_ERR("Failed to configure I2S TX stream (%d)", ret);
+        return;
+    }
+
+    /* Configure RX stream (slave - uses TX clocks) */
+    i2s_cfg_rx.word_size = 16U;
+    i2s_cfg_rx.channels = 2U;
+    i2s_cfg_rx.format = I2S_FMT_DATA_FORMAT_I2S;
+    i2s_cfg_rx.frame_clk_freq = FRAME_CLK_FREQ;
+    i2s_cfg_rx.block_size = BLOCK_SIZE;
+    i2s_cfg_rx.timeout = TIMEOUT;
+    i2s_cfg_rx.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE; /* RX slave to TX clocks */
+    /* Enable loopback for testing - connects TX output to RX input internally */
+    i2s_cfg_rx.options |= I2S_OPT_LOOPBACK;
+    i2s_cfg_rx.mem_slab = &rx_0_mem_slab;
+
+    ret = i2s_configure(dev_i2s, I2S_DIR_RX, &i2s_cfg_rx);
     if (ret < 0) {
         LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
         return;
     }
 
-//    ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
-//    if (ret < 0) {
-//        LOG_ERR("Failed to start I2S RX stream (%d)", ret);
-//        return;
-//    }
-//
-//    for(uint8_t i =0; i<10; i++) {
-//        ret = i2s_read(dev_i2s, &rx_block, &rx_size);
-//        if (ret < 0) {
-//            LOG_ERR("Failed to read I2S RX stream (%d)", ret);
-//            return;
-//        }
-//        LOG_INF("Received %d bytes from I2S RX stream", rx_size);
-//    }
+    /* Pre-fill TX buffers with sine wave data to maintain clock generation */
+    for (int i = 0; i < 3; i++) {
+        ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_NO_WAIT);
+        if (ret != 0) {
+            LOG_ERR("Failed to allocate TX buffer (%d)", ret);
+            return;
+        }
+        
+        /* Generate 1kHz sine wave for testing */
+        generate_sine_wave((int16_t*)tx_block, BLOCK_SIZE/2, 1000, FRAME_CLK_FREQ);
+        
+        ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
+        if (ret < 0) {
+            LOG_ERR("Failed to write initial TX buffer (%d)", ret);
+            k_mem_slab_free(&tx_0_mem_slab, tx_block);
+            return;
+        }
+    }
 
+    /* Start TX first (this will generate the bit clock and word clock) */
+    ret = i2s_trigger(dev_i2s, I2S_DIR_TX, I2S_TRIGGER_START);
+    if (ret < 0) {
+        LOG_ERR("Failed to start I2S TX stream (%d)", ret);
+        return;
+    }
+    
+    LOG_INF("TX stream started - generating bit clock and word clock");
+
+    /* Give TX a moment to stabilize clock generation */
+    k_msleep(10);
+
+    /* Start RX (this will use the clocks generated by TX) */
+    ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
+    if (ret < 0) {
+        LOG_ERR("Failed to start I2S RX stream (%d)", ret);
+        return;
+    }
+    
+    LOG_INF("RX stream started - receiving data using TX clocks");
+
+    /* Test simultaneous TX/RX operation */
+    for(uint8_t i = 0; i < 10; i++) {
+        /* Continue feeding TX to maintain clocks */
+        ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_MSEC(100));
+        if (ret == 0) {
+            generate_sine_wave((int16_t*)tx_block, BLOCK_SIZE/2, 1000, FRAME_CLK_FREQ);
+            ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
+            if (ret < 0) {
+                LOG_ERR("Failed to write TX buffer (%d)", ret);
+                k_mem_slab_free(&tx_0_mem_slab, tx_block);
+            }
+        }
+        
+        /* Read RX data */
+        ret = i2s_read(dev_i2s, &rx_block, &rx_size);
+        if (ret < 0) {
+            LOG_ERR("Failed to read I2S RX stream (%d)", ret);
+            return;
+        }
+        LOG_INF("Received %d bytes from I2S RX stream", rx_size);
+        
+        /* Validate first few samples of received data for loopback verification */
+        if (rx_size >= 8) {
+            int16_t *rx_data = (int16_t*)rx_block;
+            LOG_INF("RX samples: [0]=%d [1]=%d [2]=%d [3]=%d", 
+                    rx_data[0], rx_data[1], rx_data[2], rx_data[3]);
+        }
+        
+        /* Process or log RX data as needed */
+        k_mem_slab_free(&rx_0_mem_slab, rx_block);
+    }
+    
+    LOG_INF("Audio streams configured for simultaneous TX/RX operation");
 }
-
 
 int init_audio(void) {
 

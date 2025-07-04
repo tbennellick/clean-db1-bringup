@@ -136,11 +136,19 @@
 	};
 	
 	pinmux_sai1: pinmux_sai1 {
+		/* TX BCLK, FS, and data pins - configured as outputs for master mode */
 		group0 {
 			pinmux = <SAI1_TX_BCLK_PIO1_0>,
 				<SAI1_TX_FS_PIO1_1>,
-				<SAI1_RXD0_PIO3_21>,
+				<SAI1_TXD0_PIO1_2>,
 				<SAI1_MCLK_PIO1_21>;
+			drive-strength = "high";
+			slew-rate = "fast";
+			/* No input-enable - these are outputs */
+		};
+		/* RX data pin - configured as input */
+		group1 {
+			pinmux = <SAI1_RXD0_PIO3_21>;
 			drive-strength = "high";
 			slew-rate = "fast";
 			input-enable;
