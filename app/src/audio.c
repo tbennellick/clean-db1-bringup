@@ -47,6 +47,8 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
 #define TIMEOUT          2000
 #define FRAME_CLK_FREQ   8000
 
+#define BRD_REV_62_2 /* Replace with board config from ENG-37*/
+#ifdef BRD_REV_62_2
 /* TX thread stack and priority */
 #define TX_THREAD_STACK_SIZE 1024
 #define TX_THREAD_PRIORITY 5
@@ -60,7 +62,6 @@ K_THREAD_STACK_DEFINE(tx_thread_stack, TX_THREAD_STACK_SIZE);
  * The TX FIFO continuously.
  * See DS: 67.6.1.8 - TCR4:ONDEM description
  * This will be dropped with the next board rev. */
-void tx_thread_func(void *p1, void *p2, void *p3)
 void tx_thread_func(void *p1, void *p2, void *p3)
 {
     const struct device *dev_i2s = (const struct device *)p1;
@@ -88,6 +89,7 @@ void tx_thread_func(void *p1, void *p2, void *p3)
         }
     }
 }
+#endif
 
 void init_i2s(void)
 {
@@ -102,25 +104,6 @@ void init_i2s(void)
         return;
     }
 
-//#ifdef SAI_TX
-    /* Configure TX stream (master - generates clocks) */
-    i2s_cfg_tx.word_size = 16U;
-    i2s_cfg_tx.channels = 2U;
-    i2s_cfg_tx.format = I2S_FMT_DATA_FORMAT_I2S;
-    i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
-    i2s_cfg_tx.block_size = BLOCK_SIZE;
-    i2s_cfg_tx.timeout = TIMEOUT;
-//    i2s_cfg_tx.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
-    i2s_cfg_tx.options = 0;
-
-    i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
-
-    ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
-    if (ret < 0) {
-        LOG_ERR("Failed to configure I2S TX stream (%d)", ret);
-        return;
-    }
-//#endif
 
     /* Configure RX stream  */
     i2s_cfg_rx.word_size = 16U;
@@ -140,6 +123,8 @@ void init_i2s(void)
         return;
     }
 
+#ifdef BRD_REV_62_2
+
     /* Datasheet */
 //    If both the transmitter and receiver use the receiver bit clock and frame sync:
 //    • Configure the receiver for asynchronous operation and the transmitter for synchronous operation.
@@ -147,25 +132,27 @@ void init_i2s(void)
 //    • Enable the receiver last and disable the receiver first.
 
 //    for (int i = 0; i < 3; i++) {
-        ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_NO_WAIT);
-        if (ret != 0) {
-            LOG_ERR("Failed to allocate TX buffer (%d)", ret);
-            return;
-        }
 
-        ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
-        if (ret < 0) {
-            LOG_ERR("Failed to write initial TX buffer (%d)", ret);
-            k_mem_slab_free(&tx_0_mem_slab, tx_block);
-            return;
-        }
 
-    ret = i2s_trigger(dev_i2s, I2S_DIR_TX, I2S_TRIGGER_START);
+//#ifdef SAI_TX
+    /* Configure TX stream (master - generates clocks) */
+    i2s_cfg_tx.word_size = 16U;
+    i2s_cfg_tx.channels = 2U;
+    i2s_cfg_tx.format = I2S_FMT_DATA_FORMAT_I2S;
+    i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
+    i2s_cfg_tx.block_size = BLOCK_SIZE;
+    i2s_cfg_tx.timeout = TIMEOUT;
+//    i2s_cfg_tx.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
+    i2s_cfg_tx.options = 0;
+
+    i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
+
+    ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
     if (ret < 0) {
-        LOG_ERR("Failed to start I2S TX stream (%d)", ret);
+        LOG_ERR("Failed to configure I2S TX stream (%d)", ret);
         return;
     }
-    
+
     LOG_INF("TX stream started");
 
     /* Start TX thread to continuously fill TX queue */
@@ -175,8 +162,14 @@ void init_i2s(void)
                     (void *)dev_i2s, NULL, NULL,
                     TX_THREAD_PRIORITY, 0, K_NO_WAIT);
 
+    ret = i2s_trigger(dev_i2s, I2S_DIR_TX, I2S_TRIGGER_START);
+    if (ret < 0) {
+        LOG_ERR("Failed to start I2S TX stream (%d)", ret);
+        return;
+    }
 
 
+#endif
 
     ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
     if (ret < 0) {
