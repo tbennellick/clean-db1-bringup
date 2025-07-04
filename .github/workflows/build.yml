@@ -2,12 +2,24 @@ name: Build FW
 
 on: [push]
 jobs:
+  coding_standard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check code style
+        id: format_check
+        uses: jidicula/clang-format-action@v4.15.0
+        continue-on-error: true # TODO: Remove once all files are formatted
+        with:
+          clang-format-version: "20"
+
   build:
     runs-on: ubuntu-latest
     container: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: "read"
+      id-token: "write"
     env:
       CMAKE_PREFIX_PATH: /opt/zephyr-sdk
       BUILD_DIR: build/db1/mcxn947/cpu0/app/
@@ -18,33 +30,54 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Workaround actions/cache relative path
+        run: |
+          echo "workspace_path=$(realpath ..)" >> $GITHUB_ENV
+
+      - name: Cache zephyr
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.workspace_path }}/zephyr
+          key: zephyr-${{ hashFiles('west.yml') }}
+          restore-keys: |
+            zephyr-
+
+      - name: Cache modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.workspace_path }}/modules
+          key: modules-${{ hashFiles('west.yml') }}
+          restore-keys: |
+            modules-
+
       - name: Mark git repo as not dubious ownership
         run: |
           git config --global --add safe.directory $GITHUB_WORKSPACE
           # Without this, git commands during the build fail.
 
-#      - name: Clone Submodules BEL
-#        if: github.repository_owner == 'tbennellick'
-#        uses: actions/checkout@v4
-#        with:
-#          repository: "tbennellick/client-mobile-gateway-common"
-#          path: app/repo
-#          ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
-#          persist-credentials: true
-#
-#      - name: Clone Submodules STS
-#        if: github.repository_owner == 'Stowood'
-#        uses: actions/checkout@v4
-#        with:
-#          repository: "Stowood/repo"
-#          path: app/repo
-#          ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
-#          persist-credentials: true
-#
-#      - name: checkout submodule
-#        run: |
-#          git submodule init
-#          git submodule update
+      # - name: Clone Submodules BEL
+      #   if: github.repository_owner == 'tbennellick'
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: "tbennellick/client-mobile-gateway-common"
+      #     path: app/repo
+      #     ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
+      #     persist-credentials: true
+      #
+      # - name: Clone Submodules STS
+      #   if: github.repository_owner == 'Stowood'
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: "Stowood/repo"
+      #     path: app/repo
+      #     ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
+      #     persist-credentials: true
+      #
+      # - name: checkout submodule
+      #   run: |
+      #     git submodule init
+      #     git submodule update
 
       - name: Name the build
         id: step_one
@@ -52,7 +85,7 @@ jobs:
           short_hash=$(git rev-parse --short HEAD)
           echo "build_name=$(date -Iseconds | tr ':' '.')_${short_hash}" >> "$GITHUB_ENV"
 
-# If this step fails, it may be because there are no tags in the repo. (git tag v0.0.0)
+      # If this step fails, it may be because there are no tags in the repo. (git tag v0.0.0)
       - name: Git Describe
         run: |
           git describe --tags --dirty --abbrev=7
@@ -68,7 +101,7 @@ jobs:
       - name: Pack Firmware
         run: |
           tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
-          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf" 
+          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf"
 
       - name: Archive firmware
         uses: actions/upload-artifact@v4
@@ -80,17 +113,17 @@ jobs:
             ${{ env.build_name }}.db1-bu-zephyr.elf
           if-no-files-found: error
 
-#      - id: 'auth'
-#        name: 'Authenticate to Google Cloud'
-#        uses: 'google-github-actions/auth@v1'
-#        with:
-#          credentials_json: '${{ secrets.GCS_WRITER_SERVICE_ACCOUNT }}'
-#      - id: 'upload-file'
-#        uses: 'google-github-actions/upload-cloud-storage@v1'
-#        with:
-#          process_gcloudignore: false
-#          path: app/${{ env.build_name }}.tar
-#          destination: "ble-hub-binaries/"
+      # - id: 'auth'
+      #   name: 'Authenticate to Google Cloud'
+      #   uses: 'google-github-actions/auth@v1'
+      #   with:
+      #     credentials_json: '${{ secrets.GCS_WRITER_SERVICE_ACCOUNT }}'
+      # - id: 'upload-file'
+      #   uses: 'google-github-actions/upload-cloud-storage@v1'
+      #   with:
+      #     process_gcloudignore: false
+      #     path: app/${{ env.build_name }}.tar
+      #     destination: "ble-hub-binaries/"
 
       - name: Dump on Failure
         if: failure()
@@ -100,7 +133,7 @@ jobs:
       - name: Pack Firmware on failure
         if: failure()
         run: |
-          tar cJf "fail-${build_name}.tar" ${{ env.BUILD_DIR }}
+          tar cJf "fail-${{ env.build_name }}.tar" ${{ env.BUILD_DIR }}
 
       - name: Archive build on failure
         if: failure()
@@ -108,6 +141,5 @@ jobs:
         with:
           name: firmware
           path: |
-            app/fail-${{ env.build_name }}.tar
+            fail-${{ env.build_name }}.tar
           if-no-files-found: error
-
