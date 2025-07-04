@@ -47,6 +47,40 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
 #define TIMEOUT          2000
 #define FRAME_CLK_FREQ   8000
 
+/* TX thread stack and priority */
+#define TX_THREAD_STACK_SIZE 1024
+#define TX_THREAD_PRIORITY 5
+
+static struct k_thread tx_thread_data;
+K_THREAD_STACK_DEFINE(tx_thread_stack, TX_THREAD_STACK_SIZE);
+
+void tx_thread_func(void *p1, void *p2, void *p3)
+{
+    const struct device *dev_i2s = (const struct device *)p1;
+    void *tx_block;
+    int ret;
+    
+    LOG_INF("TX thread started");
+    
+    while(1)
+    {
+        ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_MSEC(100));
+        if (ret == 0)
+        {
+            ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
+            if (ret < 0)
+            {
+                LOG_ERR("Failed to write TX buffer (%d)", ret);
+                k_mem_slab_free(&tx_0_mem_slab, tx_block);
+            }
+        }
+        else
+        {
+            LOG_ERR("Failed to allocate TX buffer (%d)", ret);
+            k_sleep(K_MSEC(100));
+        }
+    }
+}
 
 void init_i2s(void)
 {
@@ -69,7 +103,9 @@ void init_i2s(void)
     i2s_cfg_tx.frame_clk_freq = FRAME_CLK_FREQ;
     i2s_cfg_tx.block_size = BLOCK_SIZE;
     i2s_cfg_tx.timeout = TIMEOUT;
-    i2s_cfg_tx.options = 0; /* TX will be master (generates bit clock and word clock) */
+//    i2s_cfg_tx.options = I2S_OPT_FRAME_CLK_SLAVE | I2S_OPT_BIT_CLK_SLAVE;
+    i2s_cfg_tx.options = 0;
+
     i2s_cfg_tx.mem_slab = &tx_0_mem_slab;
 
     ret = i2s_configure(dev_i2s, I2S_DIR_TX, &i2s_cfg_tx);
@@ -97,63 +133,47 @@ void init_i2s(void)
         return;
     }
 
+    /* Datasheet */
+//    If both the transmitter and receiver use the receiver bit clock and frame sync:
+//    • Configure the receiver for asynchronous operation and the transmitter for synchronous operation.
+//    • Enable the transmitter in Synchronous mode only after configuring both the receiver and transmitter.
+//    • Enable the receiver last and disable the receiver first.
 
-#ifdef SAI_TX
-
-    //    /* Pre-fill TX buffers with sine wave data to maintain clock generation */
 //    for (int i = 0; i < 3; i++) {
         ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_NO_WAIT);
         if (ret != 0) {
             LOG_ERR("Failed to allocate TX buffer (%d)", ret);
             return;
         }
-//
-////        /* Generate 1kHz sine wave for testing */
-////        generate_sine_wave((int16_t*)tx_block, BLOCK_SIZE/2, 1000, FRAME_CLK_FREQ);
-//
+
         ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
         if (ret < 0) {
             LOG_ERR("Failed to write initial TX buffer (%d)", ret);
             k_mem_slab_free(&tx_0_mem_slab, tx_block);
             return;
         }
-//    }
 
-    /* Start TX first (this will generate the bit clock and word clock) */
     ret = i2s_trigger(dev_i2s, I2S_DIR_TX, I2S_TRIGGER_START);
     if (ret < 0) {
         LOG_ERR("Failed to start I2S TX stream (%d)", ret);
         return;
     }
     
-    LOG_INF("TX stream started - generating bit clock and word clock");
+    LOG_INF("TX stream started");
+
+    /* Start TX thread to continuously fill TX queue */
+    k_thread_create(&tx_thread_data, tx_thread_stack,
+                    K_THREAD_STACK_SIZEOF(tx_thread_stack),
+                    tx_thread_func,
+                    (void *)dev_i2s, NULL, NULL,
+                    TX_THREAD_PRIORITY, 0, K_NO_WAIT);
 
 
-    for(uint32_t i = 0; i < 1000; i++)
-    {
-        ret = k_mem_slab_alloc(&tx_0_mem_slab, &tx_block, K_MSEC(100));
-        if (ret == 0)
-        {
-            ret = i2s_write(dev_i2s, tx_block, BLOCK_SIZE);
-            if (ret < 0)
-            {
-                LOG_ERR("Failed to write TX buffer (%d)", ret);
-                k_mem_slab_free(&tx_0_mem_slab, tx_block);
-            }
-        }
-        else
-        {
-            LOG_ERR("Failed to allocate TX buffer (%d)", ret);
-            k_sleep(K_MSEC(100));
-        }
-    }
-    LOG_INF("TX stuffing ended");
 
-#endif
 
     ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
     if (ret < 0) {
-        LOG_ERR("Failed to start I2S TX stream (%d)", ret);
+        LOG_ERR("Failed to start I2S RX stream (%d)", ret);
         return;
     }
 
