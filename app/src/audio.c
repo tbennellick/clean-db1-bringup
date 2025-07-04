@@ -45,7 +45,7 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, tx_0_mem_slab) =
 				WB_UP(BLOCK_SIZE), NUM_BLOCKS);
 
 #define TIMEOUT          2000
-#define FRAME_CLK_FREQ   44000
+#define FRAME_CLK_FREQ   8000
 
 static void generate_sine_wave(int16_t *buffer, size_t samples, uint32_t frequency, uint32_t sample_rate)
 {
