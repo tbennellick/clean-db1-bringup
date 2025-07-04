@@ -6,6 +6,7 @@ Environment setup script for Zephyr development
 import configparser
 import os
 from pathlib import Path
+import platform
 import subprocess
 
 
@@ -23,7 +24,12 @@ def run_command(cmd) -> bool:
 
 def setup_virtual_environment(venv_dir: Path):
     """Setup and activate virtual environment"""
-    venv_bin = venv_dir / "bin"
+    if platform.system() == "Windows":
+        venv_bin = venv_dir / "Scripts"
+        path_separator = ";"
+    else:
+        venv_bin = venv_dir / "bin"
+        path_separator = ":"
 
     # Check if we're already in a virtual environment
     current_venv = os.environ.get("VIRTUAL_ENV")
@@ -48,11 +54,11 @@ def setup_virtual_environment(venv_dir: Path):
             print("Failed to create virtual environment")
             return False
 
-    # # Activate virtual environment (set environment variables)
+    # Activate virtual environment (set environment variables)
     if not current_venv:
         print(f"Activating venv at: {venv_dir}")
         os.environ["VIRTUAL_ENV"] = str(venv_dir)
-        os.environ["PATH"] = f"{venv_bin}:{os.environ.get('PATH', '')}"
+        os.environ["PATH"] = f"{venv_bin}{path_separator}{os.environ.get('PATH', '')}"
 
     return True
 
@@ -99,6 +105,11 @@ def setup_west(project_dir: Path):
     # West setup toolchain
     if not run_command("west setup-toolchain"):
         print("Failed to setup west toolchain")
+        return False
+
+    # zephyr folder exists now -> install base requirements
+    if not run_command(f"pip install -r {project_dir / ".." / "zephyr" / "scripts" / "requirements-base.txt"}"):
+        print("Failed to install base requirements")
         return False
 
     return True

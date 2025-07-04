@@ -10,10 +10,13 @@ This project is intended to be built on a modern linux system. Some support has 
 
 # Local Build
 ## Install prerequisites
+* Fedora:
 ```shell
 sudo dnf install -y wget2-2.1.0 wget2-wget-2.1.0 git-2.46.0 cmake-3.28.2 ninja-build-1.12.1 xz-5.4.6 python3-devel-3.12.4 perl-Digest-SHA-1:6.04 protobuf-compiler-3.19.6
-pip install --no-cache-dir wget==3.2 filehash==0.2.dev1 west==1.2.0 pyelftools==0.30 grpcio-tools==1.62.0 protobuf==4.25.3
-# Later versions will probably work fine. These are the versions used in CI build.
+```
+* Ubuntu:
+```shell
+sudo apt install -y wget2 wget git cmake ninja-build xz-utils python3-dev perl libdigest-sha-perl protobuf-compiler
 ```
 
 ## Get source, dependencies and toolchain
@@ -21,9 +24,9 @@ pip install --no-cache-dir wget==3.2 filehash==0.2.dev1 west==1.2.0 pyelftools==
 Note that the repository is not cloned directly. Instead, the zephyr tool west is used to manage dependencies.
 ```shell
 west init -m git@github.com:Stowood/devboard1-bringup-zephyr.git --mr main db1-bringup
-cd db1-bringup
-west update
-west setup-toolchain
+# OR: git clone git@github.com:Stowood/devboard1-bringup-zephyr.git db1-bringup/devboard1-bringup-zephyr
+cd db1-bringup/devboard1-bringup-zephyr.git
+source scripts/setup_env.sh
 ```
 
 ### Building and running
@@ -31,10 +34,13 @@ west setup-toolchain
 To build, run the following command:
 
 ```shell
-cd db1-bringup.git/
-cd app/
-./build.sh
-./flash.sh
+cd devboard1-bringup-zephyr.git/
+scripts/build.py # or west build app/
+```
+
+To flash on the device:
+```shell
+west flash -d build/db1/mcxn947/cpu0/app
 ```
 
 --------------------------------------------------------
@@ -81,10 +87,9 @@ cd devboard1-bringup-zephyr
 west init -l .
 west update
 west windows-setup-toolchain
-cd app
-python ..\scripts\build.py
+python scripts\build.py
 # To flash:
-python ..\scripts\build.py -f
+python scripts\build.py -f
 
 ```
 
