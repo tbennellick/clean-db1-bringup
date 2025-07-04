@@ -10,7 +10,7 @@
 
 LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
 
-#define I2S_DEV_NODE_RX DT_ALIAS(i2s_node0)
+#define I2S_DEV_NODE_RX DT_NODELABEL(sai1)
 
 
 
