@@ -23,46 +23,46 @@ ZTEST(pressure_sensor, test_maxhigh)
     zassert_equal(abp2s_check_status(0x61), true, "Check Status failed for max high");
 }
 
-ZTEST(pressure_sensor, integrity)
+ZTEST(pressure_sensor, test_integrity)
 {
     zassert_equal(abp2s_check_status(1<<2), false, "Check Status failed for power only");
 }
 
-ZTEST(pressure_sensor, MISO_HIGH)
+ZTEST(pressure_sensor, test_MISO_HIGH)
 {
     zassert_equal(abp2s_check_status(0xFF), false, "Check Status failed for MISO high");
 }
 
 /* Example in 8.11 of datasheet, note it is for a -1 to 1 psi sensor*/
-ZTEST(pressure_sensor, datasheet_example_datasheet_maths)
+ZTEST(pressure_sensor, test_datasheet_example_datasheet_maths)
 {
     float  f = abp2s_calculate_pressure_psi(14260634, -1, 1);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,875, "Example calculation failed, expected 875, got %d", kf);
 }
 
-ZTEST(pressure_sensor, min_counts)
+ZTEST(pressure_sensor, test_min_counts)
 {
     float  f = abp2s_calculate_pressure_psi(1677722, 0, 1);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,0, "Example calculation failed, expected 0, got %d", kf);
 }
 
-ZTEST(pressure_sensor, max_counts)
+ZTEST(pressure_sensor, test_max_counts)
 {
     float  f = abp2s_calculate_pressure_psi(15099494, 0, 1);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,1000, "Example calculation failed, expected 1000, got %d", kf);
 }
 
-ZTEST(pressure_sensor, unit_conversion_zero)
+ZTEST(pressure_sensor, test_unit_conversion_zero)
 {
     float  f = psi_to_mbar(0);
     int32_t kf = (int32_t)(f * 1000);
     zassert_equal(kf,0, "Example calculation failed, expected 1000, got %d", kf);
 }
 
-ZTEST(pressure_sensor, unit_conversion_100mbar)
+ZTEST(pressure_sensor, test_unit_conversion_100mbar)
 {
     float  f = psi_to_mbar(1.45038f);
     int32_t kf = (int32_t)(f * 1000);
@@ -73,7 +73,7 @@ ZTEST(pressure_sensor, unit_conversion_100mbar)
 
 
 
-ZTEST(pressure_sensor, datasheet_example_temp)
+ZTEST(pressure_sensor, test_datasheet_example_temp)
 {
     float  f = abp2s_calculate_temperature(6291456);
     int32_t kf = (int32_t)(f * 1000);
