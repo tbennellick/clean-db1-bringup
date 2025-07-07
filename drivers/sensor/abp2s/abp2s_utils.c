@@ -24,7 +24,7 @@ bool abp2s_check_status(uint8_t status)
 /* Part is currently ABP2DANT001PGSA3XX */
 /* That is 0 - 1psi gauge */
 /* MCX FPU is single precision */
-float abp2s_calculate_pressure_psi(int32_t counts, float pmin, float pmax)
+float abp2s_calculate_pressure_psi(uint32_t counts, float pmin, float pmax)
 {
     /* Eqn 2 section 8.11 of abp2 datasheet */
     float counts_float = (float)counts;

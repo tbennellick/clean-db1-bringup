@@ -13,6 +13,8 @@ struct abp2_data
 
 struct abp2_dev_config {
 	struct spi_dt_spec bus;
+	int32_t min_pressure_millipsi;
+	int32_t max_pressure_millipsi;
 };
 
 #endif

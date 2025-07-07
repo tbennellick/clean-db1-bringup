@@ -3,3 +3,17 @@ description: High Accuracy, Compensated/Amplified Pressure sensor
 compatible: "honeywell,abp2s"
 
 include: [sensor-device.yaml, spi-device.yaml]
+
+properties:
+  min-pressure-millipsi:
+    type: int
+    default: 0
+    description: |
+      The "10%" value in the datasheet that represents the minimum pressure.
+      It can be negative. Value is in milliPSI (1/1000 PSI).
+  max-pressure-millipsi:
+    type: int
+    default: 1000
+    description: |
+      The "90%" value in the datasheet that represents the maximum pressure.
+      It can be negative. Value is in milliPSI (1/1000 PSI).

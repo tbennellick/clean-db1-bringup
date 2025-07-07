@@ -5,19 +5,3 @@ menuconfig ABP2S
 	select SPI
 	help
 	  Enable the driver for Honeywell ABP2 pressure Sensors.
-
-config ABP2_MIN_PRESSURE
-	int "Minimum Pressure (milliPSI)"
-	default 0
-	range  -1000000 1000000
-	help
-	  The "10%" value in the datasheet that represents the minimum pressure.
-	  It can be negative.
-
-config ABP2_MAX_PRESSURE
-    int "Maximum Pressure (milliPSI)"
-    default 1000
-    range  -1000000 1000000
-    help
-      The "90%" value in the datasheet that represents the maximum pressure.
-      It can be negative.

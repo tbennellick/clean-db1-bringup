@@ -12,8 +12,7 @@
 #include "abp2_bits.h"
 
 #include <zephyr/logging/log.h>
-//LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
-LOG_MODULE_REGISTER(ABP2S, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(ABP2S, CONFIG_SENSOR_LOG_LEVEL);
 
 #define ABP2S_CMD_NOP 0xF0
 #define ABP2S_CMD_MEASURE 0xAA
@@ -143,8 +142,11 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
     switch (chan)
     {
             case SENSOR_CHAN_PRESS:
-                v = abp2s_calculate_pressure_psi(drv_data->pressure_counts, CONFIG_ABP2_MIN_PRESSURE / 1000.0f,
-                                             CONFIG_ABP2_MAX_PRESSURE / 1000.0f);
+                {
+                    const struct abp2_dev_config *cfg = dev->config;
+                    v = abp2s_calculate_pressure_psi(drv_data->pressure_counts, (float)cfg->min_pressure_millipsi / 1000.0f,
+                                                     (float)cfg->max_pressure_millipsi / 1000.0f);
+                }
 
                 r = sensor_value_from_float(val, psi_to_mbar(v));
                 if (r < 0) {
@@ -210,6 +212,8 @@ static DEVICE_API(sensor, abp2_driver_api) = {
 		.bus = SPI_DT_SPEC_INST_GET(                                                       \
 			inst,                                                                      \
 			(SPI_WORD_SET(8) | SPI_TRANSFER_MSB ), 0),  \
+		.min_pressure_millipsi = DT_INST_PROP(inst, min_pressure_millipsi),               \
+		.max_pressure_millipsi = DT_INST_PROP(inst, max_pressure_millipsi),               \
                                                                                                    \
 		IF_ENABLED(CONFIG_ADT7310_TRIGGER,                                                 \
 			   (.int_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, int_gpios, {0}),))};        \

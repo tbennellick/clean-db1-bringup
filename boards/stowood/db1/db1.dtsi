@@ -276,6 +276,8 @@ ads1298: ads1298@0 {
 		status = "okay";
 		reg = <0x0>;
 		spi-max-frequency = <200000>; /* Can go higher */
+		min-pressure-millipsi = <0>;
+		max-pressure-millipsi = <1000>;
 	};
 
 };
