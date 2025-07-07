@@ -4,3 +4,4 @@ project(pressure_sensor_test)
 
 target_include_directories(app PRIVATE ../../drivers/sensor/abp2s/)
 target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE ../../drivers/sensor/abp2s/abp2s_utils.c)

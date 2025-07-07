@@ -7,4 +7,4 @@ common:
     - native_sim
     - qemu_x86
 tests:
-  pressure_status.test_no_responce: {}
+  pressure_status.test_no_response: {}
