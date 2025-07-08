@@ -152,13 +152,3 @@ ZTEST_F(codec_integration, set_property_input_volume_rear_too_high)
                                    AUDIO_CHANNEL_REAR_LEFT, fixture->val);
     zassert_equal(ret, -EDOM, "Failed to set input volume for rear left channel: %d", ret);
 }
-
-ZTEST(codec_integration, test_mclk_get_rate)
-{
-    const struct device *codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
-    zassert_true(device_is_ready(codec_dev), "Codec device not ready");
-
-    uint32_t mclk_rate;
-    get_mclk_rate(codec_dev, &mclk_rate);
-    zassert_equal(mclk_rate, 12288000, "MCLK rate should be 12.288MHz, got %d", mclk_rate);
-}

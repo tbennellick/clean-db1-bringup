@@ -41,6 +41,7 @@ static void suite_teardown(void *f)
 }
 
 ZTEST_SUITE(mic_gain, NULL, suite_setup, suite_before, NULL, suite_teardown);
+ZTEST_SUITE(clock_setup, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST_F(mic_gain, 0)
 {
@@ -122,4 +123,22 @@ ZTEST_F(mic_gain, 70)
     split_mic_gain(fixture->val, &fixture->preamp_gain, &fixture->mic_gain);
     zassert_equal(fixture->preamp_gain,4, "Preamp %d wrong at vol=%d", fixture->preamp_gain, fixture->val.vol);
     zassert_equal(fixture->mic_gain,0x00, "Mic gain %d wrong at vol=%d", fixture->mic_gain, fixture->val.vol);
+}
+
+ZTEST(clock_setup, test_ni_calculation_fast)
+{
+    uint32_t pmclk = 12288000; // 12MHz
+    uint32_t fs = 48000; // 48kHz
+    uint32_t ni = calculate_ni(pmclk, fs);
+    uint32_t expected_ni = 0x6000; // Table 5 DS
+    zassert_equal(ni, expected_ni, "NI calculation failed: expected %d got %d", expected_ni, ni);
+}
+
+ZTEST(clock_setup, test_ni_calculation_used)
+{
+    uint32_t pmclk = 12288000; // 12MHz
+    uint32_t fs = 8000; // 48kHz
+    uint32_t ni = calculate_ni(pmclk, fs);
+    uint32_t expected_ni = 0x1000; // Table 5 DS
+    zassert_equal(ni, expected_ni, "NI calculation failed: expected %d got %d", expected_ni, ni);
 }

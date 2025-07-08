@@ -72,13 +72,9 @@ typedef enum
 
 struct max9867_config {
 	struct i2c_dt_spec i2c;
-	const struct device *mclk_dev;
-    clock_control_subsys_t clk_sub_sys;
-//    const struct device *ccm_dev;
+    uint32_t mclk_rate;
 };
 
 struct max9867_data {
 	uint32_t sample_rate;
 };
-
-void get_mclk_rate(const struct device *dev, uint32_t *mclk);

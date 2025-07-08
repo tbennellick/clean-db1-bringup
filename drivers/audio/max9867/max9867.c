@@ -89,34 +89,18 @@ int set_registers_default(const struct device *dev)
 }
 
 
-void get_mclk_rate(const struct device *dev, uint32_t *mclk)
-{
+
+static int max9867_configure(const struct device *dev, struct audio_codec_cfg *cfg) {
     const struct max9867_config *dev_cfg = dev->config;
-    const struct device *ccm_dev = dev_cfg->mclk_dev;
-    clock_control_subsys_t clk_sub_sys = dev_cfg->clk_sub_sys;
-    uint32_t rate = 0;
-
-    if (device_is_ready(ccm_dev)) {
-        clock_control_get_rate(ccm_dev, clk_sub_sys, &rate);
-    } else {
-        LOG_ERR("CCM driver is not installed");
-        *mclk = rate;
-        return;
-    }
-    *mclk = rate;
-}
-
-static int max9867_configure(const struct device *dev, struct audio_codec_cfg *cfg)
-{
-    const struct max9867_config *config = dev->config;
     struct max9867_data *data = dev->data;
-	int ret;
+    int ret;
 
-    switch (cfg->dai_type) {
+    switch (cfg->dai_type)
+    {
         case AUDIO_DAI_TYPE_I2S:
             LOG_DBG("Configuring I2S DAI");
             break;
-        /* Codec also supports TDM, but it's not in audio_dai_type_t currently*/
+            /* Codec also supports TDM, but it's not in audio_dai_type_t currently*/
         case AUDIO_DAI_TYPE_LEFT_JUSTIFIED:
             LOG_ERR("Left justified DAI type supported in MAX9867, not yet implemented in this driver");
             return -ENOSYS;
@@ -125,32 +109,53 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
             return -ENOTSUP;
     }
 
-    if(cfg->dai_cfg.i2s.word_size != 16) {
+    if (cfg->dai_cfg.i2s.word_size != 16)
+    {
         LOG_ERR("Only 16-bit word size is supported by MAX9867");
         return -EPFNOSUPPORT;
+    }
+
+    if (dev_cfg->mclk_rate % cfg->dai_cfg.i2s.frame_clk_freq != 0)
+    {
+        LOG_ERR("MCLK rate (%u) is not a multiple of frame clock frequency (%u)",
+                dev_cfg->mclk_rate, cfg->dai_cfg.i2s.frame_clk_freq);
+        LOG_ERR("Driver does not currently support PLL");
+        return -EINVAL;
     }
 
 
     data->sample_rate = cfg->dai_cfg.i2s.frame_clk_freq;
 
     ret = set_registers_default(dev);
-    if (ret < 0) {
+    if (ret < 0)
+    {
         LOG_ERR("Failed to reset registers: %d", ret);
         return ret;
     }
 
+    uint8_t pre_scaler = 0;
+    if (dev_cfg->mclk_rate < 10e6 || dev_cfg->mclk_rate > 20e6)
+    {
+        LOG_ERR("Driver currently only supports MCLK rate (%u) between 10 and 20MHz", dev_cfg->mclk_rate);
+        return -EINVAL;
+    }
+    else
+    {
+        pre_scaler = MAX9867_SYS_CLK_PSCLK_10_20MHZ;
+    }
+    uint32_t divisor = dev_cfg->mclk_rate/cfg->dai_cfg.i2s.frame_clk_freq;
 
-//
-//
-//    /* TODO: Break these out to functions */
-//    /* Assuming 12MHz Mclk for now */
-//    /* Set prescaler to 1 */
-//    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_SYS_CLK, MAX9867_SYS_CLK_PSCLK_MASK, MAX9867_SYS_CLK_PSCLK_10_20MHZ);
-//    if (ret < 0) {
-//        LOG_ERR("Failed to set system clock prescaler: %d", ret);
-//        return ret;
-//    }
-//
+    ret = i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_SYS_CLK, pre_scaler);
+    if (ret < 0) {
+        LOG_ERR("Failed to set system clock prescaler: %d", ret);
+        return ret;
+    }
+
+
+
+
+    /*Set PLL bit 0*/
+
 //    ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_SYS_CLK, MAX9867_SYS_CLK_FREQ_MASK, 0x08 ); /* From DS Tab4*/
 //    if( ret < 0) {
 //        LOG_ERR("Failed to set fixed divider: %d", ret);
@@ -357,9 +362,8 @@ static int max9867_init(const struct device *dev)
 											\
 	static const struct max9867_config max9867_config_##inst = {			\
 		.i2c = I2C_DT_SPEC_INST_GET(inst),					\
-		.mclk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),         \
-    .clk_sub_sys =(clock_control_subsys_t)DT_INST_CLOCKS_CELL_BY_IDX(inst, 0, name), \
-	};										\
+        .mclk_rate = DT_INST_PROP(inst, mclk_rate),        \
+        };										\
 											\
 	DEVICE_DT_INST_DEFINE(inst, max9867_init, NULL,				\
 			      &max9867_data_##inst, &max9867_config_##inst,		\
