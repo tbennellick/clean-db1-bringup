@@ -40,8 +40,10 @@ static void suite_before(void *f)
     power_all(false);
     k_sleep(K_MSEC(150)); /* 1.8v audio rail takes  ~100ms to discharge*/
     power_all(true);
+    k_sleep(K_MSEC(10));
 
     fixture->val.vol = 255;
+
 }
 static void suite_teardown(void *f)
 {

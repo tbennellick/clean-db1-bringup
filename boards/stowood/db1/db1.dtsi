@@ -211,7 +211,7 @@
 
 /* Debug Uart*/
 &flexcomm4_lpuart4 {
-	current-speed = <115200>;
+	current-speed = <1000000>;
 	pinctrl-0 = <&pinmux_flexcomm4_lpuart>;
 	pinctrl-names = "default";
 };
