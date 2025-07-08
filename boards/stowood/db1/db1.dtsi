@@ -32,6 +32,8 @@
 
 		hs-usb-sel = &hs_usb_sel;
 
+		i2s-codec-tx = &sai1;
+
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
 		sdhc0 = &usdhc0;

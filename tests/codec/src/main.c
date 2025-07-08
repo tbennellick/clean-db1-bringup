@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <zephyr/ztest.h>
 #include "max9867_utils.h"
+#include "max9867.h"
 #include "stdbool.h"
 
 #include <zephyr/kernel.h>
@@ -9,6 +10,7 @@
 #include <zephyr/audio/codec.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/drivers/clock_control.h>
 #include <stdlib.h>
 
 
