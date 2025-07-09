@@ -30,30 +30,58 @@ static int max9867_reg_write(const struct device *dev, uint8_t reg, uint8_t val)
 }
 
 
-/* This assumes channel is pre-sanitised */
 static int set_line_input_gain(const struct device *dev, audio_channel_t channel, uint8_t vol ) {
     const struct max9867_config *config = dev->config;
-
-    uint8_t reg = MAX9867_LINE_IN_LEV_L;
-    if (channel == AUDIO_CHANNEL_FRONT_RIGHT) {
-        reg = MAX9867_LINE_IN_LEV_R;
-    }
-
+    int ret;
+    uint8_t level[2];
     if (vol < 0 || vol > 15) {
         LOG_ERR("Volume out of range: %d", vol);
         return -EDOM;
     }
 
-    int ret = i2c_reg_update_byte_dt(&config->i2c, reg, MAX9867_LINE_IN_LEV_X_GAIN_MASK, 0x0f - vol);
-    if (ret < 0) {
-        LOG_ERR("Failed to set input gain for Left channel: %d", ret);
-        return ret;
+    switch (channel) {
+        case AUDIO_CHANNEL_FRONT_LEFT:
+            ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_LINE_IN_LEV_L, MAX9867_LINE_IN_LEV_X_GAIN_MASK, 0x0f - vol);
+            if (ret < 0) {
+                LOG_ERR("Failed to set input gain for Left Line in: %d", ret);
+                return ret;
+            }
+            break;
+        case AUDIO_CHANNEL_FRONT_RIGHT:
+            ret = i2c_reg_update_byte_dt(&config->i2c, MAX9867_LINE_IN_LEV_R, MAX9867_LINE_IN_LEV_X_GAIN_MASK, 0x0f - vol);
+            if (ret < 0) {
+                LOG_ERR("Failed to set input gain for Right Line in: %d", ret);
+                return ret;
+            }
+            break;
+        case AUDIO_CHANNEL_ALL:
+            level[0] = 0x0f - vol;
+            level[1] = 0x0f - vol;
+            ret = i2c_burst_write_dt(&config->i2c, MAX9867_LINE_IN_LEV_L, level, sizeof(level));
+            if (ret < 0) {
+                LOG_ERR("Failed to set input gain for both Line ins: %d", ret);
+                return ret;
+            }
+
+            break;
+        default:
+            LOG_ERR("Invalid channel: %d", channel);
+            return -EINVAL;
     }
+    uint8_t reg = MAX9867_LINE_IN_LEV_L;
+    if (channel == AUDIO_CHANNEL_FRONT_RIGHT) {
+        reg = MAX9867_LINE_IN_LEV_R;
+    }
+
+
     return 0;
 }
 
 static int set_mic_input_gain(const struct device *dev, audio_channel_t channel, uint8_t vol ) {
     const struct max9867_config *config = dev->config;
+    int ret;
+    uint8_t level[2];
+
 
     if (vol < 0 || vol > 50) {
         LOG_ERR("Volume out of range: %d", vol);
@@ -61,16 +89,33 @@ static int set_mic_input_gain(const struct device *dev, audio_channel_t channel,
     }
     uint8_t preamp_gain, mic_gain;
     split_mic_gain((audio_property_value_t){ .vol = vol }, &preamp_gain, &mic_gain);
-    uint8_t val = ((preamp_gain&0x3) << 5) | (mic_gain & 0x1f);
+    level[0] = level[1] =  ((preamp_gain&0x3) << 5) | (mic_gain & 0x1f);
 
-    uint8_t reg = MAX9867_MIC_GAIN_L;
-    if (channel == AUDIO_CHANNEL_FRONT_RIGHT) {
-        reg = MAX9867_MIC_GAIN_R;
-    }
-    int ret = i2c_reg_write_byte_dt(&config->i2c, reg, val);
-    if (ret < 0) {
-        LOG_ERR("Failed to set input gain for Left channel: %d", ret);
-        return ret;
+    switch (channel) {
+        case AUDIO_CHANNEL_FRONT_LEFT:
+            ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_MIC_GAIN_L, level[0]);
+            if (ret < 0) {
+                LOG_ERR("Failed to set input gain for Left Mic in : %d", ret);
+                return ret;
+            }
+            break;
+        case AUDIO_CHANNEL_FRONT_RIGHT:
+            ret = i2c_reg_write_byte_dt(&config->i2c, MAX9867_MIC_GAIN_R, level[0]);
+            if (ret < 0) {
+                LOG_ERR("Failed to set input gain for Right Mic in : %d", ret);
+                return ret;
+            }
+            break;
+        case AUDIO_CHANNEL_ALL:
+            ret = i2c_burst_write_dt(&config->i2c, MAX9867_MIC_GAIN_L, level, sizeof(level));
+            if (ret < 0) {
+                LOG_ERR("Failed to set input gain for both Mic inputs: %d", ret);
+                return ret;
+            }
+            return 0;
+        default:
+            LOG_ERR("Invalid channel: %d", channel);
+            return -EINVAL;
     }
     return 0;
 }
@@ -177,12 +222,20 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
         return -EPFNOSUPPORT;
     }
 
-    if (dev_cfg->mclk_rate % cfg->dai_cfg.i2s.frame_clk_freq != 0)
+    if (cfg->dai_cfg.i2s.frame_clk_freq < 8000 || cfg->dai_cfg.i2s.frame_clk_freq > 48000)
+    {
+        LOG_ERR("Frame clock frequency (%u) is out of range (8000-48000Hz)",
+                cfg->dai_cfg.i2s.frame_clk_freq);
+        return -EINVAL;
+    }
+
+
+        if (dev_cfg->mclk_rate % cfg->dai_cfg.i2s.frame_clk_freq != 0)
     {
         LOG_ERR("MCLK rate (%u) is not a multiple of frame clock frequency (%u)",
                 dev_cfg->mclk_rate, cfg->dai_cfg.i2s.frame_clk_freq);
         LOG_ERR("Driver does not currently support PLL");
-        return -EINVAL;
+        return -EPROTO;
     }
 
     data->sample_rate = cfg->dai_cfg.i2s.frame_clk_freq;
@@ -199,7 +252,7 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
     if (dev_cfg->mclk_rate < 10e6 || dev_cfg->mclk_rate > 20e6)
     {
         LOG_ERR("Driver currently only supports MCLK rate (%u) between 10 and 20MHz", dev_cfg->mclk_rate);
-        return -EINVAL;
+        return -ENOSR;
     }
     else
     {
@@ -240,10 +293,8 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
     }
 
 
-    set_mic_input_gain(dev, AUDIO_CHANNEL_FRONT_LEFT, 0);
-    set_mic_input_gain(dev, AUDIO_CHANNEL_FRONT_RIGHT, 0);
-    set_line_input_gain(dev, AUDIO_CHANNEL_FRONT_LEFT, 0);
-    set_line_input_gain(dev, AUDIO_CHANNEL_FRONT_RIGHT, 0);
+    set_mic_input_gain(dev, AUDIO_CHANNEL_ALL, 0);
+    set_line_input_gain(dev, AUDIO_CHANNEL_ALL, 0);
 
     ret = i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_VOL_L, MAX9867_VOL_X_MUTE);
     if (ret < 0) {
@@ -257,15 +308,12 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
         return ret;
     }
 
-    /* TODO: Jack Det IRQ ?*/
-
     select_source(dev, MAX9867_INPUT_MIC); /* Default to Mic input */
 
     return 0;
 }
 
 
-__maybe_unused
 static int max9867_set_property(const struct device *dev,
 				 audio_property_t property, audio_channel_t channel,
 				 audio_property_value_t val) {
@@ -314,7 +362,10 @@ static int max9867_route_input(const struct device *dev, audio_channel_t channel
     int ret;
 
 
-    if (channel != AUDIO_CHANNEL_FRONT_LEFT && channel != AUDIO_CHANNEL_FRONT_RIGHT) {
+    if (channel != AUDIO_CHANNEL_FRONT_LEFT &&
+        channel != AUDIO_CHANNEL_FRONT_RIGHT &&
+        channel != AUDIO_CHANNEL_ALL)
+    {
         LOG_ERR("Invalid channel: %d", channel);
         return -EINVAL;
     }

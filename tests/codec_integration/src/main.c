@@ -18,8 +18,6 @@ static void *suite_setup(void)
     struct codec_integration_fixture *fixture = malloc(sizeof(struct codec_integration_fixture));
     fixture->codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
 
-    TC_PRINT("\n\n\n\n\n\n\n\n######################################################\n");
-
     return fixture;
 }
 
@@ -58,6 +56,8 @@ ZTEST_F(codec_integration, device_present)
     zassert_true(device_is_ready(fixture->codec_dev), "Device not ready");
 }
 
+/* Configure */
+
 ZTEST_F(codec_integration, configure_device)
 {
     int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
@@ -85,70 +85,100 @@ ZTEST_F(codec_integration, configure_device_bad_word_size)
     zassert_equal(ret, -EPFNOSUPPORT, "Configuration with unsupported word size should fail ret = %d", ret);
 }
 
+ZTEST_F(codec_integration, test_configure_other_fclk)
+{
+    fixture->audio_cfg.dai_cfg.i2s.frame_clk_freq = 0;
+    int ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
+    zassert_equal(ret, -EINVAL, "Configuration with fclk %d should fail, ret = %d",
+                  fixture->audio_cfg.dai_cfg.i2s.frame_clk_freq, ret);
+
+    fixture->audio_cfg.dai_cfg.i2s.frame_clk_freq = 8001;
+    ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
+    zassert_equal(ret, -EPROTO, "Configuration with fclk %d should fail, ret = %d",
+                  fixture->audio_cfg.dai_cfg.i2s.frame_clk_freq, ret);
+
+    fixture->audio_cfg.dai_cfg.i2s.frame_clk_freq = 48000;
+    ret = audio_codec_configure(fixture->codec_dev, &fixture->audio_cfg);
+    zassert_equal(ret, 0, "Configuration with fclk %d should pass, ret = %d",
+                  fixture->audio_cfg.dai_cfg.i2s.frame_clk_freq, ret);
+}
+
+
+/* route input (combo with vol)*/
+ZTEST_F(codec_integration, route_input)
+{
+    int ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_ALL, MAX9867_INPUT_MIC);
+    zassert_equal(ret, 0, "Routing for mic");
+    ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_FRONT_LEFT, MAX9867_INPUT_MIC);
+    zassert_equal(ret, 0, "Routing for mic");
+    ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_FRONT_RIGHT, MAX9867_INPUT_MIC);
+    zassert_equal(ret, 0, "Routing for mic");
+    ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_ALL, MAX9867_INPUT_LINE_IN);
+    zassert_equal(ret, 0, "Routing for line in");
+
+    ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_FRONT_LEFT, 20);
+    zassert_equal(ret, -EINVAL, "Invalid routing");
+    ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_REAR_LEFT, MAX9867_INPUT_MIC);
+    zassert_equal(ret, -EINVAL, "Invald channel routing for mic");
+
+}
 
 
 
-
+/* Set property*/
 ZTEST_F(codec_integration, set_property_input_volume_all_channels_should_fail)
 {
+    /* Select routing for MIC */
+    int ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_ALL, MAX9867_INPUT_MIC);
+    zassert_equal(ret, 0, "Routing for mic");
+
     fixture->val.vol = 10;
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
                                        AUDIO_CHANNEL_ALL, fixture->val);
-    zassert_not_equal(ret, 0, "Setting input volume for all channels should fail");
-}
-
-ZTEST_F(codec_integration, set_property_input_volume_front_left)
-{
-    fixture->val.vol = 10;
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                       AUDIO_CHANNEL_FRONT_LEFT, fixture->val);
-    zassert_equal(ret, 0, "Failed to set input volume for front left channel: %d", ret);
-}
-
-ZTEST_F(codec_integration, set_property_input_volume_front_right)
-{
-    fixture->val.vol = 10;
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                       AUDIO_CHANNEL_FRONT_RIGHT, fixture->val);
-    zassert_equal(ret, 0, "Failed to set input volume for front right channel: %d", ret);
-}
-
-ZTEST_F(codec_integration, set_property_input_volume_rear_left)
-{
-    fixture->val.vol = 10;
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                       AUDIO_CHANNEL_REAR_LEFT, fixture->val);
-    zassert_equal(ret, 0, "Failed to set input volume for rear left channel: %d", ret);
-}
-
-ZTEST_F(codec_integration, set_property_input_volume_rear_right)
-{
-    fixture->val.vol = 10;
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                       AUDIO_CHANNEL_REAR_RIGHT, fixture->val);
-    zassert_equal(ret, 0, "Failed to set input volume for rear right channel: %d", ret);
-}
-
-ZTEST_F(codec_integration, set_property_input_volume_front_too_high)
-{
-    fixture->val.vol = 16; /* Max gain is 15*/
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                       AUDIO_CHANNEL_FRONT_LEFT, fixture->val);
-    zassert_equal(ret, -EDOM, "Failed to set input volume for front left channel: %d", ret);
-
+    zassert_equal(ret, 0, "Setting input volume for mic");
+    fixture->val.vol = 4;
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_FRONT_LEFT, fixture->val);
+    zassert_equal(ret, 0, "Setting input volume for mic");
+    fixture->val.vol = 40;
     ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
                                    AUDIO_CHANNEL_FRONT_RIGHT, fixture->val);
-    zassert_equal(ret, -EDOM, "Failed to set input volume for front right channel: %d", ret);
-}
+    zassert_equal(ret, 0, "Setting input volume for mic");
 
 
-ZTEST_F(codec_integration, set_property_input_volume_rear_too_high)
-{
-    fixture->val.vol = 51; /* Max gain is 50*/
-    int ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                       AUDIO_CHANNEL_REAR_RIGHT, fixture->val);
-    zassert_equal(ret, -EDOM, "Failed to set input volume for rear right channel: %d", ret);
+    fixture->val.vol = 16; /* Invalid for line, ok for mic*/
     ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                   AUDIO_CHANNEL_REAR_LEFT, fixture->val);
-    zassert_equal(ret, -EDOM, "Failed to set input volume for rear left channel: %d", ret);
+                                   AUDIO_CHANNEL_ALL, fixture->val);
+    zassert_equal(ret, 0, "Setting input volume for mic");
+    fixture->val.vol = 51;
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_ALL, fixture->val);
+    zassert_equal(ret, -EDOM, "Setting excess input volume for mic");
+
+
+    /* Select for testing Line*/
+    ret = audio_codec_route_input(fixture->codec_dev, AUDIO_CHANNEL_ALL, MAX9867_INPUT_LINE_IN);
+    zassert_equal(ret, 0, "Routing for Line");
+
+    fixture->val.vol = 10;
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                       AUDIO_CHANNEL_ALL, fixture->val);
+    zassert_equal(ret, 0, "Set Line volume for all channels");
+    fixture->val.vol = 4;
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_FRONT_LEFT, fixture->val);
+    zassert_equal(ret, 0, "Set Line volume for front left channel");
+    fixture->val.vol = 12;
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_FRONT_RIGHT, fixture->val);
+    zassert_equal(ret, 0, "Set Line volume for front right channel");
+    fixture->val.vol = 16; /* Invalid for mic */
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+                                   AUDIO_CHANNEL_ALL, fixture->val);
+    zassert_equal(ret, -EDOM, "Setting excess input volume for Line");
+
+    ret = audio_codec_set_property(fixture->codec_dev, AUDIO_PROPERTY_INPUT_MUTE,
+                                   AUDIO_CHANNEL_ALL, fixture->val);
+    zassert_equal(ret, -ENOSYS, "Setting input mute should fail, not implemented");
 }
+
