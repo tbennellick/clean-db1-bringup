@@ -10,8 +10,7 @@
 
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/clock_control.h>
-//LOG_MODULE_REGISTER(max9867, CONFIG_AUDIO_CODEC_LOG_LEVEL);
-LOG_MODULE_REGISTER(max9867, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(max9867, CONFIG_AUDIO_CODEC_LOG_LEVEL);
 
 
 #define DT_DRV_COMPAT maxim_max9867
@@ -68,12 +67,6 @@ static int set_line_input_gain(const struct device *dev, audio_channel_t channel
             LOG_ERR("Invalid channel: %d", channel);
             return -EINVAL;
     }
-    uint8_t reg = MAX9867_LINE_IN_LEV_L;
-    if (channel == AUDIO_CHANNEL_FRONT_RIGHT) {
-        reg = MAX9867_LINE_IN_LEV_R;
-    }
-
-
     return 0;
 }
 
@@ -318,7 +311,6 @@ static int max9867_set_property(const struct device *dev,
 				 audio_property_t property, audio_channel_t channel,
 				 audio_property_value_t val) {
 
-    const struct max9867_config *dev_cfg = dev->config;
     struct max9867_data *data = dev->data;
 
 
@@ -347,18 +339,8 @@ static int max9867_set_property(const struct device *dev,
     }
 }
 
-//__maybe_unused
-//static int max9867_apply_properties(const struct device *dev)
-//{
-//	/* Apply queued properties */
-//	return 0;
-//}
-
 static int max9867_route_input(const struct device *dev, audio_channel_t channel, uint32_t input)
 {
-    struct max9867_config *dev_cfg = dev->config;
-    struct max9867_data *data = dev->data;
-
     int ret;
 
 
