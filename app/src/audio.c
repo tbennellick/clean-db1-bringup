@@ -2,7 +2,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/audio/codec.h>
 #include <zephyr/drivers/i2s.h>
-
+#include "max9867.h"
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(audio, LOG_LEVEL_DBG);
 
@@ -14,7 +14,7 @@ int init_audio(void)
 
 	if (!device_is_ready(codec_dev)) {
 		LOG_ERR("%s is not ready", codec_dev->name);
-		return -1;
+		return -ENODEV;
 	}
 
 	audio_cfg.dai_route = AUDIO_ROUTE_CAPTURE;
@@ -33,38 +33,17 @@ int init_audio(void)
 		return ret;
 	}
 
-    /* This should fail */
-    audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
+    ret = audio_codec_route_input(codec_dev, AUDIO_CHANNEL_ALL, MAX9867_INPUT_MIC);
+    if (ret < 0) {
+        LOG_ERR("Failed to route input: %d", ret);
+        return ret;
+    }
+    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
                                    AUDIO_CHANNEL_ALL, (audio_property_value_t){ .vol = 10 });
-
-
-    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                   AUDIO_CHANNEL_FRONT_LEFT, (audio_property_value_t){ .vol = 0 });
     if (ret < 0) {
         LOG_ERR("Failed to set input volume: %d", ret);
         return ret;
     }
-    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                   AUDIO_CHANNEL_FRONT_RIGHT, (audio_property_value_t){ .vol = 0 });
-    if (ret < 0) {
-        LOG_ERR("Failed to set input volume: %d", ret);
-        return ret;
-    }
-    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                   AUDIO_CHANNEL_REAR_LEFT, (audio_property_value_t){ .vol = 0 });
-    if (ret < 0) {
-        LOG_ERR("Failed to set input volume: %d", ret);
-        return ret;
-    }
-    ret = audio_codec_set_property(codec_dev, AUDIO_PROPERTY_INPUT_VOLUME,
-                                   AUDIO_CHANNEL_REAR_RIGHT, (audio_property_value_t){ .vol = 0 });
-    if (ret < 0) {
-        LOG_ERR("Failed to set input volume: %d", ret);
-        return ret;
-    }
-
-
-
     LOG_DBG("Audio codec configured successfully");
 	return 0;
 }

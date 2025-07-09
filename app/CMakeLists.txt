@@ -17,3 +17,7 @@ target_sources(app PRIVATE src/gpio_init.c)
 target_sources(app PRIVATE src/fuel_gauge.c)
 target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
+
+# This exposes the audio codec routing enum to the app,
+# it seems that there is not a nice way to handle this.
+target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
