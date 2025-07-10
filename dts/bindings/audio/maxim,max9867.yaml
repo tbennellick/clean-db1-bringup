@@ -5,8 +5,5 @@ compatible: "maxim,max9867"
 include: [i2c-device.yaml]
 
 properties:
-    mclk-rate:
-#        required: true
-        type: int
-        default: 12288000
-        description: Master clock rate in Hz
+  clocks:
+    required: true

@@ -204,7 +204,8 @@
 	audio_codec: max9867@18{
 		compatible = "maxim,max9867";
 		reg = <0x18>;
-		mclk-rate = <12288000>; /* Ideally this would come via syscon but that seems to be broken */
+		clocks = <&syscon MCUX_AUDIO_MCLK>; /* Ideally this would come via syscon but that seems to be broken */
+		clock-names = "mclk";
 	};
 };
 
