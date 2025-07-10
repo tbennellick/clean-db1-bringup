@@ -8,4 +8,3 @@ target_sources(app PRIVATE ../../app/src/power.c)
 target_sources(app PRIVATE ../../app/src/gpio_init.c)
 
 target_sources(app PRIVATE src/main.c)
-#target_sources(app PRIVATE src/codec_integration.c)
