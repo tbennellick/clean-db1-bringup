@@ -76,12 +76,14 @@ typedef enum
 #define MAX9867_SYS_SHDN_SHDN_ADREN (1<<0)
 
 
-struct max9867_config {
+struct max9867_config
+{
     struct i2c_dt_spec i2c;
     uint32_t mclk_rate;
 };
 
-struct max9867_data {
+struct max9867_data
+{
     uint32_t sample_rate;
     max9867_input_t input_source;
 };

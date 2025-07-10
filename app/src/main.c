@@ -17,9 +17,8 @@
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
-int main(void)
-{
-	LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
+int main(void) {
+    LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
     init_debug_leds();
     debug_led_on();
     led_manager_init();
@@ -36,12 +35,12 @@ int main(void)
     init_audio();
 
     LOG_INF("Init complete");
-	while (1)
-        {
-            k_sleep(K_SECONDS(1));
-            printk(".");
-            debug_led_toggle();
-        }
-	return 0;
+    while (1)
+    {
+        k_sleep(K_SECONDS(1));
+        printk(".");
+        debug_led_toggle();
+    }
+    return 0;
 }
 
