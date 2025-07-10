@@ -99,15 +99,11 @@
 };
 
 &flexcomm2_lpi2c2 {
-	status = "okay";
+	status = "disabled";
 };
 
-/*
- *LPFLEXCOMM supports UART and I2C on the same instance, enable this for
- * LFLEXCOMM2
- */
 &flexcomm2_lpuart2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &flexcomm3 {
@@ -262,9 +258,9 @@ zephyr_udc0: &usb1 {
 	status = "okay";
 };
 
-//&sai1 {
-//	status = "okay";
-//};
-//&sai0 {
-//	status = "okay";
-//};
+&sai1 {
+	status = "disabled";
+};
+&sai0 {
+	status = "disabled";
+};
