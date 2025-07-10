@@ -20,4 +20,5 @@ manifest:
           - cmsis      # required by the ARM port
           - hal_nxp
           - hal_st
+          - fatfs
 
