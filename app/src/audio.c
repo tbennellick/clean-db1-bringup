@@ -4,7 +4,7 @@
 #include <zephyr/drivers/i2s.h>
 #include "max9867.h"
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(audio, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
 
 
 int init_audio(void)
