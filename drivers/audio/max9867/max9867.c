@@ -5,7 +5,7 @@
 #include <zephyr/sys/util.h>
 
 #include "max9867.h"
-#include "max9867_reg.h"
+#include "max9867_private.h"
 #include "max9867_utils.h"
 
 #include <zephyr/logging/log.h>

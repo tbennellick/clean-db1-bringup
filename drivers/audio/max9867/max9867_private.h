@@ -1,12 +1,20 @@
 #pragma once
 
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
-#include <zephyr/audio/codec.h>
-#include <zephyr/drivers/clock_control.h>
-
 #include "max9867.h"
+
+struct max9867_config
+{
+    struct i2c_dt_spec i2c;
+    uint32_t mclk_rate;
+};
+
+struct max9867_data
+{
+    uint32_t sample_rate;
+    max9867_input_t input_source;
+};
+
 
 /* MAX9867 Register Addresses */
 typedef enum
@@ -76,14 +84,3 @@ typedef enum
 #define MAX9867_SYS_SHDN_SHDN_ADREN (1<<0)
 
 
-struct max9867_config
-{
-    struct i2c_dt_spec i2c;
-    uint32_t mclk_rate;
-};
-
-struct max9867_data
-{
-    uint32_t sample_rate;
-    max9867_input_t input_source;
-};
