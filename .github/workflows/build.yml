@@ -56,29 +56,6 @@ jobs:
           git config --global --add safe.directory $GITHUB_WORKSPACE
           # Without this, git commands during the build fail.
 
-      # - name: Clone Submodules BEL
-      #   if: github.repository_owner == 'tbennellick'
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: "tbennellick/client-mobile-gateway-common"
-      #     path: app/repo
-      #     ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
-      #     persist-credentials: true
-      #
-      # - name: Clone Submodules STS
-      #   if: github.repository_owner == 'Stowood'
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: "Stowood/repo"
-      #     path: app/repo
-      #     ssh-key: ${{ secrets.SUBMODULE_SSH_KEY }}
-      #     persist-credentials: true
-      #
-      # - name: checkout submodule
-      #   run: |
-      #     git submodule init
-      #     git submodule update
-
       - name: Name the build
         id: step_one
         run: |
@@ -112,18 +89,6 @@ jobs:
             ${{ env.BUILD_DIR }}/zephyr/zephyr.*
             ${{ env.build_name }}.db1-bu-zephyr.elf
           if-no-files-found: error
-
-      # - id: 'auth'
-      #   name: 'Authenticate to Google Cloud'
-      #   uses: 'google-github-actions/auth@v1'
-      #   with:
-      #     credentials_json: '${{ secrets.GCS_WRITER_SERVICE_ACCOUNT }}'
-      # - id: 'upload-file'
-      #   uses: 'google-github-actions/upload-cloud-storage@v1'
-      #   with:
-      #     process_gcloudignore: false
-      #     path: app/${{ env.build_name }}.tar
-      #     destination: "ble-hub-binaries/"
 
       - name: Dump on Failure
         if: failure()

@@ -16,16 +16,15 @@ sudo dnf install -y wget2-2.1.0 wget2-wget-2.1.0 git-2.46.0 cmake-3.28.2 ninja-b
 ```
 * Ubuntu:
 ```shell
-sudo apt install -y wget2 wget git cmake ninja-build xz-utils python3-dev perl libdigest-sha-perl protobuf-compiler
+sudo apt install -y wget2=2.2.0+ds-1 wget=1.24.5-2ubuntu1 git=1:2.48.1-0ubuntu1 cmake=3.31.6-1ubuntu1 ninja-build=1.12.1-1 xz-utils=5.6.4-1ubuntu1 python3.12-dev=3.12.7-1ubuntu2 perl=5.40.1-2ubuntu0.1 libdigest-sha-perl=6.04-1build4 protobuf-compiler=3.21.12-10build2
 ```
 
 ## Get source, dependencies and toolchain
 
 Note that the repository is not cloned directly. Instead, the zephyr tool west is used to manage dependencies.
 ```shell
-west init -m git@github.com:Stowood/devboard1-bringup-zephyr.git --mr main db1-bringup
-# OR: git clone git@github.com:Stowood/devboard1-bringup-zephyr.git db1-bringup/devboard1-bringup-zephyr
-cd db1-bringup/devboard1-bringup-zephyr.git
+git clone git@github.com:Stowood/devboard1-bringup-zephyr.git db1-bringup/devboard1-bringup-zephyr
+cd db1-bringup/devboard1-bringup-zephyr
 source scripts/setup_env.sh
 ```
 
@@ -40,7 +39,7 @@ scripts/build.py # or west build app/
 
 To flash on the device:
 ```shell
-west flash -d build/db1/mcxn947/cpu0/app
+scripts/build.py -f
 ```
 
 --------------------------------------------------------
@@ -59,8 +58,8 @@ The standard west commands are available as with any other zephyr/ncs build. Inc
 export ZEPHYR_SDK_INSTALL_DIR=../../toolchain/tc/
 # or 
 export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk/zephyr-sdk-0.17.1-rc1/
-west build -b frdm_mcxn947/mcxn947/cpu0
-west flash --runner=jlink
+west build -b frdm_mcxn947/mcxn947/cpu0 samples/usb-test
+west flash --runner=jlink -d build/frdm_mcxn947/mcxn947/cpu0/samples/usb-test
 
 west boards
 west debug
@@ -82,7 +81,7 @@ cd db1-windows-bringup
 git clone git@github.com:Stowood/devboard1-bringup-zephyr.git
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r devboard1-bringup-zephyr/requirements.txt
+pip install -r devboard1-bringup-zephyr/scripts/requirements.txt
 cd devboard1-bringup-zephyr
 west init -l .
 west update

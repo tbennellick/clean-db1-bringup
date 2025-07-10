@@ -10,20 +10,7 @@ import platform
 import subprocess
 
 
-def run_command(cmd) -> bool:
-    """Run a command and handle errors"""
-    print(f"Running command: {cmd}")
-
-    try:
-        subprocess.run(cmd, shell=True, check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed: {cmd}: {e}")
-        return False
-
-
-def setup_virtual_environment(venv_dir: Path):
-    """Setup and activate virtual environment"""
+def setup_virtual_environment(venv_dir: Path) -> bool:
     if platform.system() == "Windows":
         venv_bin = venv_dir / "Scripts"
         path_separator = ";"
@@ -47,14 +34,13 @@ def setup_virtual_environment(venv_dir: Path):
             print("Please deactivate the current virtual environment first")
             return False
 
-    # Check if venv directory exists
     if not venv_bin.exists():
         print(f"Initialising venv at: {venv_dir}")
-        if not run_command(f"python -m venv {venv_dir} --prompt db1-bringup"):
-            print("Failed to create virtual environment")
-            return False
+        subprocess.run(
+            f"python -m venv {venv_dir} --prompt db1-bringup", shell=True, check=True
+        )
 
-    # Activate virtual environment (set environment variables)
+    # set venv environment vars so the rest of the script can use it
     if not current_venv:
         print(f"Activating venv at: {venv_dir}")
         os.environ["VIRTUAL_ENV"] = str(venv_dir)
@@ -64,77 +50,45 @@ def setup_virtual_environment(venv_dir: Path):
 
 
 def install_requirements(requirements_file: Path):
-    """Install Python requirements"""
-    if not requirements_file.exists():
-        print(f"Requirements file not found: {requirements_file}")
-        return False
-
     print(f"Installing requirements from {requirements_file}")
-    return run_command(f"pip install -r {requirements_file}")
+    subprocess.run(f"pip install -r {requirements_file}", shell=True, check=True)
 
 
-def setup_west(project_dir: Path):
+def setup_west(project_dir: Path) -> bool:
     print("Setting up west and zephyr sdk/toolchain...")
 
     west_config_path = project_dir / ".." / ".west" / "config"
     if not west_config_path.exists():
-        if not run_command("west init -l ."):
-            print("Failed to run west init")
-            return False
+        subprocess.run("west init -l .", shell=True, check=True)
 
         config = configparser.ConfigParser()
         config.read(west_config_path)
 
-        # Add build directory configuration
         if "build" not in config:
             config["build"] = {}
         config["build"]["dir-fmt"] = "build/{board}/{source_dir}"
         config["build"]["board"] = "db1/mcxn947/cpu0"
 
-        # Write the updated configuration back to file
         with open(west_config_path, "w") as configfile:
             config.write(configfile)
 
         print("Updated .west/config with build directory and board configuration")
 
-    # West update
-    if not run_command("west update --fetch-opt=--filter=tree:0"):
-        print("Failed to run west update")
-        return False
-
-    # West setup toolchain
-    if not run_command("west setup-toolchain"):
-        print("Failed to setup west toolchain")
-        return False
-
-    # zephyr folder exists now -> install base requirements
-    if not run_command(f"pip install -r {project_dir / ".." / "zephyr" / "scripts" / "requirements-base.txt"}"):
-        print("Failed to install base requirements")
-        return False
-
-    return True
+    subprocess.run("west update --fetch-opt=--filter=tree:0", shell=True, check=True)
+    subprocess.run("west setup-toolchain", shell=True, check=True)
 
 
 def main():
-    """Main function"""
-    # Get script directory and venv directory
     project_dir = Path(__file__).parent.parent.absolute()
     venv_dir = project_dir / ".venv"
 
-    # Setup virtual environment
     if not setup_virtual_environment(venv_dir):
         exit(1)
 
-    # Install main requirements
-    requirements_file = project_dir / "requirements.txt"
+    requirements_file = project_dir / "scripts" / "requirements.txt"
+    install_requirements(requirements_file)
 
-    if not install_requirements(requirements_file):
-        print("Failed to install requirements")
-        exit(1)
-
-    # Setup west toolchain
-    if not setup_west(project_dir):
-        exit(1)
+    setup_west(project_dir)
 
     print("Environment setup completed successfully!")
 
