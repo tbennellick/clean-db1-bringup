@@ -1,2 +1,3 @@
 zephyr_library()
-zephyr_library_sources(abp2s.c)
+file(GLOB SRC_FILES *.c)
+zephyr_library_sources(${SRC_FILES})

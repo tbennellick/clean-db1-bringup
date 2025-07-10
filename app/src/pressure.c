@@ -10,9 +10,12 @@ void test_pressure(const struct device *dev) {
     struct sensor_value p;
 
     sensor_sample_fetch_chan(dev, SENSOR_CHAN_PRESS);
-    sensor_channel_get(dev, SENSOR_CHAN_PRESS, &p);
 
-    LOG_INF("pressure: %d.%06d\n", p.val1, p.val2);
+    sensor_channel_get(dev, SENSOR_CHAN_PRESS, &p);
+    LOG_INF("pressure: %fmbar", (double)sensor_value_to_float(&p));
+
+    sensor_channel_get(dev, SENSOR_CHAN_GAUGE_TEMP, &p);
+    LOG_INF("temperature: %f°c", (double)sensor_value_to_float(&p));
 }
 
 void init_pressure(void)
@@ -26,6 +29,5 @@ void init_pressure(void)
     }
 
     test_pressure(dev);
-
 
 }
