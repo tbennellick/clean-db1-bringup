@@ -259,7 +259,7 @@ zephyr_udc0: &usb1 {
 };
 
 &sai1 {
-	status = "disabled";
+	status = "okay";
 };
 &sai0 {
 	status = "disabled";

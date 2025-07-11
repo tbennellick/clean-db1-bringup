@@ -10,6 +10,9 @@
 
 LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
 
+#define TIMEOUT          2000
+#define SAMPLE_RATE   8000
+
 #define I2S_DEV_NODE_RX DT_NODELABEL(sai1)
 
 
