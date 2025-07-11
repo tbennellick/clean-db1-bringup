@@ -204,7 +204,10 @@
 	audio_codec: max9867@18{
 		compatible = "maxim,max9867";
 		reg = <0x18>;
-		clocks = <&syscon MCUX_AUDIO_MCLK>; /* Ideally this would come via syscon but that seems to be broken */
+		/* Ideally mclk would come via clock control api but that is missing for this clock,
+		on this MCU at the moment, so it will fall back to the default. */
+		mclk-default = <12288000>; 
+		clocks = <&syscon MCUX_AUDIO_MCLK>; /* once MCX clock controll api is fixed */
 		clock-names = "mclk";
 	};
 };

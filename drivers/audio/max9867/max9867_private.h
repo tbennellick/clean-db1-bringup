@@ -7,6 +7,7 @@
 struct max9867_config {
   struct i2c_dt_spec i2c;
   int clock_source;
+  int mclk_default;
   const struct device *mclk_dev;
   clock_control_subsys_t mclk_name;
 };

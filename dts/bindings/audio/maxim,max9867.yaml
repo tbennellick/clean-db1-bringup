@@ -7,3 +7,9 @@ include: [i2c-device.yaml]
 properties:
   clocks:
     required: true
+
+  mclk-default:
+#   required: true
+    type: int
+    default: 12288000
+    description: Master clock rate in Hz
