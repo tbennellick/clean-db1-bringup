@@ -1,0 +1,2 @@
+add_subdirectory_ifdef(CONFIG_AUDIO_CODEC_MAX9867 max9867)
+

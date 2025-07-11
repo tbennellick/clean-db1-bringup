@@ -174,17 +174,12 @@
 	};
 };
 
-nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
-	pinctrl-0 = <&pinmux_flexcomm2_lpi2c>;
-	pinctrl-names = "default";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-};
 
-&flexcomm2_lpuart2 {
-	current-speed = <115200>;
-	pinctrl-0 = <&pinmux_flexcomm2_lpuart>;
-	pinctrl-names = "default";
-};
+//&flexcomm2_lpuart2 {
+//	current-speed = <115200>;
+//	pinctrl-0 = <&pinmux_flexcomm2_lpuart>;
+//	pinctrl-names = "default";
+//};
 
 &flexcomm3_lpi2c3 {
 	pinctrl-0 = <&pinmux_flexcomm3_lpi2c>;
@@ -206,11 +201,17 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 		label = "Ambient Light Sensor";
 		/*int-gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;*/
 	};
+	audio_codec: max9867@18{
+		compatible = "maxim,max9867";
+		reg = <0x18>;
+		clocks = <&syscon MCUX_AUDIO_MCLK>; /* Ideally this would come via syscon but that seems to be broken */
+		clock-names = "mclk";
+	};
 };
 
 /* Debug Uart*/
 &flexcomm4_lpuart4 {
-	current-speed = <115200>;
+	current-speed = <1000000>;
 	pinctrl-0 = <&pinmux_flexcomm4_lpuart>;
 	pinctrl-names = "default";
 };
@@ -391,10 +392,10 @@ ads1298: ads1298@0 {
 //	pinctrl-names = "default";
 //};
 
-&sai0 {
-	pinctrl-0 = <&pinmux_sai0>;
-	pinctrl-names = "default";
-};
+//&sai0 {
+//	pinctrl-0 = <&pinmux_sai0>;
+//	pinctrl-names = "default";
+//};
 
 &enet {
 	pinctrl-0 = <&pinmux_enet_qos>;

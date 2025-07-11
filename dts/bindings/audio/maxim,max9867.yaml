@@ -1,0 +1,9 @@
+description: Maxim MAX9867 Audio Codec
+
+compatible: "maxim,max9867"
+
+include: [i2c-device.yaml]
+
+properties:
+  clocks:
+    required: true
