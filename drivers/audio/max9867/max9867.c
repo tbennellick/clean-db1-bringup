@@ -216,6 +216,50 @@ static int get_mclk(const struct max9867_config *dev_cfg, uint32_t *mclk_rate) {
     return 0;
 }
 
+static void uint8_to_binary(uint8_t val, char *buf)
+{
+    for (int i = 7; i >= 0; i--) {
+        buf[7 - i] = (val & (1 << i)) ? '1' : '0';
+    }
+    buf[8] = '\0';
+}
+
+void dump_registers(const struct device *dev)
+{
+    const struct max9867_config *config = dev->config;
+    uint8_t reg[MAX9867_SYS_SHDN+1];
+    int ret = i2c_burst_read_dt(&config->i2c, MAX9867_STATUS, reg, sizeof(reg));
+    if (ret < 0) {
+        LOG_ERR("Failed to read registers: %d", ret);
+        return;
+    }
+    LOG_INF("MAX9867 Registers:");
+    for (int i = 0; i < sizeof(reg); i += 4) {
+        if (i + 3 < sizeof(reg)) {
+            LOG_INF("\033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m  \033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m  \033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m  \033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m",
+                    MAX9867_STATUS + i, reg[i],
+                    MAX9867_STATUS + i + 1, reg[i + 1],
+                    MAX9867_STATUS + i + 2, reg[i + 2],
+                    MAX9867_STATUS + i + 3, reg[i + 3]);
+            char bin0[9], bin1[9], bin2[9], bin3[9];
+            uint8_to_binary(reg[i], bin0);
+            uint8_to_binary(reg[i + 1], bin1);
+            uint8_to_binary(reg[i + 2], bin2);
+            uint8_to_binary(reg[i + 3], bin3);
+            LOG_INF("  %s  | %s  | %s  | %s", bin0, bin1, bin2, bin3);
+        } else {
+            // Handle remaining registers if not divisible by 4
+            for (int j = i; j < sizeof(reg); j++) {
+                LOG_INF("\033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m", MAX9867_STATUS + j, reg[j]);
+                char bin[9];
+                uint8_to_binary(reg[j], bin);
+                LOG_INF("      %s", bin);
+            }
+        }
+    }
+
+}
+
 static int max9867_configure(const struct device *dev, struct audio_codec_cfg *cfg)
 {
     const struct max9867_config *dev_cfg = dev->config;
@@ -311,8 +355,8 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
         return ret;
     }
 
-    set_mic_input_gain(dev, AUDIO_CHANNEL_ALL, 0);
-    set_line_input_gain(dev, AUDIO_CHANNEL_ALL, 0);
+    set_mic_input_gain(dev, AUDIO_CHANNEL_ALL, 50);
+    set_line_input_gain(dev, AUDIO_CHANNEL_ALL, 15);
 
     ret = i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_VOL_L, MAX9867_VOL_X_MUTE);
     if (ret < 0) {
@@ -327,6 +371,10 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
     }
 
     select_source(dev, MAX9867_INPUT_MIC); /* Default to Mic input */
+
+    i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_DAI_IF_MODE1, 0x08);
+
+    dump_registers(dev);
 
     return 0;
 }
