@@ -171,7 +171,7 @@ static int configure_and_start_tx(const struct device *dev_i2s)
 }
 #endif
 
-void init_i2s(void)
+int init_i2s(void)
 {
     static const struct device *dev_i2s = DEVICE_DT_GET_OR_NULL(I2S_DEV_NODE_RX);
     struct i2s_config i2s_cfg_rx;
@@ -179,7 +179,7 @@ void init_i2s(void)
     
     if (!device_is_ready(dev_i2s)) {
         LOG_ERR("I2S device not ready");
-        return;
+        return -ENODEV;
     }
 
     i2s_cfg_rx.word_size = 16U;
@@ -197,7 +197,7 @@ void init_i2s(void)
     ret = i2s_configure(dev_i2s, I2S_DIR_RX, &i2s_cfg_rx);
     if (ret < 0) {
         LOG_ERR("Failed to configure I2S RX stream (%d)", ret);
-        return;
+        return ret;
     }
 
 #ifdef BRD_REV_62_2
@@ -210,7 +210,7 @@ void init_i2s(void)
     ret = configure_and_start_tx(dev_i2s);
     if (ret < 0) {
         LOG_ERR("Failed to configure and start TX stream (%d)", ret);
-        return;
+        return ret;
     }
 #endif
 
@@ -218,7 +218,7 @@ void init_i2s(void)
     ret = i2s_trigger(dev_i2s, I2S_DIR_RX, I2S_TRIGGER_START);
     if (ret < 0) {
         LOG_ERR("Failed to start I2S RX stream (%d)", ret);
-        return;
+        return ret;
     }
 
     /* Start RX thread to handle incoming audio data */
@@ -229,13 +229,11 @@ void init_i2s(void)
                     RX_THREAD_PRIORITY, 0, K_NO_WAIT);
 
     LOG_INF("Audio system initialized - RX and TX threads running");
+    return 0;
 
 }
 
-int init_audio(void) {
-
-    init_i2s();
-
+int init_codec() {
     const struct device *const codec_dev = DEVICE_DT_GET(DT_NODELABEL(audio_codec));
     struct audio_codec_cfg audio_cfg;
 
@@ -278,3 +276,20 @@ int init_audio(void) {
     LOG_DBG("Audio codec configured successfully");
     return 0;
 }
+
+
+int init_audio(void) {
+    int ret = init_i2s();
+    if (ret < 0) {
+        LOG_ERR("Failed to initialize I2S: %d", ret);
+        return ret;
+    }
+
+    ret = init_codec();
+    if (ret < 0) {
+        LOG_ERR("Failed to initialize audio codec: %d", ret);
+        return ret;
+    }
+    return 0;
+}
+
