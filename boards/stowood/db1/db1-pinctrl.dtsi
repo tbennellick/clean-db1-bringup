@@ -204,7 +204,6 @@
 				<CLKOUT_PIO0_6>;
 			drive-strength = "low";
 			slew-rate = "fast";
-			slew-rate = "fast";
 			input-enable;
 		};
 	};
