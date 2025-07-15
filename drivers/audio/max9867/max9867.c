@@ -224,6 +224,7 @@ static void uint8_to_binary(uint8_t val, char *buf)
     buf[8] = '\0';
 }
 
+__maybe_unused
 void dump_registers(const struct device *dev)
 {
     const struct max9867_config *config = dev->config;
@@ -374,7 +375,7 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
 
     i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_DAI_IF_MODE1, 0x08);
 
-    dump_registers(dev);
+//    dump_registers(dev);
 
     return 0;
 }
