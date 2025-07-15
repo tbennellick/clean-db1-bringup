@@ -24,6 +24,17 @@
 			drive-open-drain;
 		};
 	};
+	pinmux_flexcomm3_lpi2c: pinmux_flexcomm3_lpi2c {
+		group0 {
+			pinmux = <FC3_P0_PIO1_12>,
+				<FC3_P1_PIO1_13>;
+			slew-rate = "fast";
+			drive-strength = "low";
+			input-enable;
+			bias-pull-up;
+			drive-open-drain;
+		};
+	};
 
 
 	pinmux_flexcomm5_lpspi: pinmux_flexcomm5_lpspi {
