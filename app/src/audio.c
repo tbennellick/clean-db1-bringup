@@ -1,10 +1,7 @@
 #include <zephyr/kernel.h>
-#include <zephyr/sys/printk.h>
 #include <zephyr/audio/codec.h>
 #include <zephyr/drivers/i2s.h>
 #include "max9867.h"
-#include <math.h>
-//#include <zephyr/sys/iterable_sections.h>
 
 #include <zephyr/logging/log.h>
 
@@ -16,8 +13,7 @@ LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
 #define I2S_DEV_NODE_RX DT_NODELABEL(sai1)
 
 
-
-/* TODO: Think about this */
+/* TODO: Think about this when considering system architecture  */
 #define NUM_BLOCKS 20
 #define SAMPLE_NO 64
 
@@ -51,7 +47,7 @@ void rx_thread_func(void *p1, void *p2, void *p3)
     size_t rx_size;
     int ret;
     
-    LOG_INF("RX thread started");
+    LOG_INF("SAI RX thread started");
     
     while(1)
     {
@@ -61,7 +57,6 @@ void rx_thread_func(void *p1, void *p2, void *p3)
             LOG_ERR("Failed to read I2S RX stream (%d)", ret);
             return;
         }
-//        LOG_INF("Received %d bytes from I2S RX stream", rx_size);
 
         k_mem_slab_free(&rx_0_mem_slab, rx_block);
     }
@@ -160,7 +155,6 @@ static int configure_and_start_tx(const struct device *dev_i2s)
 
     LOG_INF("TX stream started");
 
-    /* Start TX thread to continuously fill TX queue */
     k_thread_create(&tx_thread_data, tx_thread_stack,
                     K_THREAD_STACK_SIZEOF(tx_thread_stack),
                     tx_thread_func,

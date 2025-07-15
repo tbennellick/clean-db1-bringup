@@ -13,18 +13,6 @@
 		};
 	};
 
-//	pinmux_flexcomm2_lpi2c: pinmux_flexcomm2_lpi2c {
-//		group0 {
-//			pinmux = <FC2_P0_PIO4_0>,
-//				<FC2_P1_PIO4_1>;
-//			slew-rate = "fast";
-//			drive-strength = "low";
-//			input-enable;
-//			bias-pull-up;
-//			drive-open-drain;
-//		};
-//	};
-
 	pinmux_flexcomm3_lpi2c: pinmux_flexcomm3_lpi2c {
 		group0 {
 			pinmux = <FC3_P0_PIO1_12>,
@@ -237,15 +225,6 @@
 			drive-strength = "low";
 		};
 	};
-
-//	pinmux_lpcmp0: pinmux_lpcmp0 {
-//		group0 {
-//			pinmux = <CMP0_IN0_PIO1_0>;
-//			drive-strength = "low";
-//			slew-rate = "fast";
-//			bias-pull-up;
-//		};
-//	};
 
 	pinmux_flexcan0: pinmux_flexcan0 {
 		group0 {
