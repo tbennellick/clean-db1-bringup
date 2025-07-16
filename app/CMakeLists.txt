@@ -18,6 +18,7 @@ target_sources(app PRIVATE src/fuel_gauge.c)
 target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
 target_sources(app PRIVATE src/display.c)
+target_sources(app PRIVATE img/Stowood-logo-30-years-220422a-mini-green.c)
 
 # This exposes the audio codec routing enum to the app,
 # it seems that there is not a nice way to handle this.

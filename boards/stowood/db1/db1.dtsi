@@ -184,7 +184,8 @@
 			vdvs = <0x20>;
 			mdac = <0x88>;
 			gamma = <0x01>;/* IC default, not specced in display DS */
-			colmod = <0x66>;
+//			colmod = <0x66>; /* Display datasheet example*/
+			colmod = <0x55>; /* Match CONFIG_ST7789V_RGB565*/
 			lcm = <0x2c>;
 			porch-param = [0c 0c 00 33 33];
 			cmd2en-param = [5a 69 02 01];
