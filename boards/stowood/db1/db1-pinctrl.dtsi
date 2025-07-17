@@ -13,18 +13,6 @@
 		};
 	};
 
-	pinmux_flexcomm2_lpi2c: pinmux_flexcomm2_lpi2c {
-		group0 {
-			pinmux = <FC2_P0_PIO4_0>,
-				<FC2_P1_PIO4_1>;
-			slew-rate = "fast";
-			drive-strength = "low";
-			input-enable;
-			bias-pull-up;
-			drive-open-drain;
-		};
-	};
-
 	pinmux_flexcomm3_lpi2c: pinmux_flexcomm3_lpi2c {
 		group0 {
 			pinmux = <FC3_P0_PIO1_12>,
@@ -135,50 +123,26 @@
 		};
 	};
 	
-	// Missing MCLK currently
 	pinmux_sai1: pinmux_sai1 {
 		group0 {
 			pinmux = <SAI1_TX_BCLK_PIO1_0>,
-				<SAI1_TX_FS_PIO1_1 >,
-				<SAI1_RXD0_PIO3_21>;
+				<SAI1_TX_FS_PIO1_1>,
+				<SAI1_TXD0_PIO1_2>,
+//				<SAI1_RX_BCLK_PIO3_18>, Also USER LED R on board 62-2
+//				<SAI1_RX_FS_PIO3_19>, Also USER LED G on board 62-2
+				<SAI1_MCLK_PIO1_21>;
+			drive-strength = "high";
+			slew-rate = "fast";
+		};
+		group1 {
+			pinmux = <SAI1_RXD0_PIO3_21>;
 			drive-strength = "high";
 			slew-rate = "fast";
 			input-enable;
 		};
 	};
 
-//	pinmux_sai0: pinmux_sai0 {
-//		group0 {
-//			pinmux = <SAI0_TXD0_PIO2_2>,
-//				<SAI0_TX_BCLK_PIO2_6>,
-//				<SAI0_TX_FS_PIO2_7>;
-//			drive-strength = "high";
-//			slew-rate = "fast";
-//			input-enable;
-//		};
-//	};
 
-	pinmux_enet_qos: pinmux_enet_qos {
-		mdio_group {
-			pinmux = <ENET0_MDC_PIO1_20>,
-				<ENET0_MDIO_PIO1_21>;
-			slew-rate = "fast";
-			drive-strength = "low";
-			input-enable;
-		};
-		mac_group {
-			pinmux = <ENET0_RXDV_PIO1_13>,
-				<ENET0_RXD0_PIO1_14>,
-				<ENET0_RXD1_PIO1_15>,
-				<ENET0_TX_CLK_PIO1_4>,
-				<ENET0_TXEN_PIO1_5>,
-				<ENET0_TXD0_PIO1_6>,
-				<ENET0_TXD1_PIO1_7>;
-			slew-rate = "fast";
-			drive-strength = "low";
-			input-enable;
-		};
-	};
 
 	pinmux_flexpwm1_pwm0: pinmux_flexpwm1_pwm0 {
 		group0 {
@@ -259,15 +223,6 @@
 				<ADC0_B1_PIO4_19>;
 			slew-rate = "fast";
 			drive-strength = "low";
-		};
-	};
-
-	pinmux_lpcmp0: pinmux_lpcmp0 {
-		group0 {
-			pinmux = <CMP0_IN0_PIO1_0>;
-			drive-strength = "low";
-			slew-rate = "fast";
-			bias-pull-up;
 		};
 	};
 

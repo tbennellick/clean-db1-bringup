@@ -204,7 +204,10 @@
 	audio_codec: max9867@18{
 		compatible = "maxim,max9867";
 		reg = <0x18>;
-		clocks = <&syscon MCUX_AUDIO_MCLK>; /* Ideally this would come via syscon but that seems to be broken */
+		/* Ideally mclk would come via clock control api but that is missing for this clock,
+		on this MCU at the moment, so it will fall back to the default. */
+		mclk-default = <12288000>; 
+		clocks = <&syscon MCUX_AUDIO_MCLK>; /* once MCX clock controll api is fixed */
 		clock-names = "mclk";
 	};
 };
@@ -387,34 +390,27 @@ ads1298: ads1298@0 {
 	pinctrl-names = "default";
 };
 
-//&sai1 {
-//	pinctrl-0 = <&pinmux_sai1>;
-//	pinctrl-names = "default";
-//};
+&sai1 {
+	pinctrl-0 = <&pinmux_sai1>;
+	pinctrl-names = "default";
+	/* PLL1 is clock source and this is setup in board.c */
+	pre-div = <1>;
+	podf = <19>;
+	clock-mux = <0>;
+
+	/* SAI Configuration for Simultaneous TX/RX Operation */
+	/* Configure RX as async (Master to TX and generate bclk and sync) */
+	//	nxp,rx-sync-mode; /* property present = kSAI_ModeSync */
+
+	/* Configure TX as synchronous (Slave to RX bclk and sync) */
+	 nxp,tx-sync-mode; 	/* TX to follow RX (use bclk and sync)*/
+};
 
 //&sai0 {
 //	pinctrl-0 = <&pinmux_sai0>;
 //	pinctrl-names = "default";
 //};
 
-&enet {
-	pinctrl-0 = <&pinmux_enet_qos>;
-	pinctrl-names = "default";
-};
-
-&enet_mac {
-	phy-connection-type = "rmii";
-	zephyr,random-mac-address;
-	phy-handle = <&phy>;
-};
-
-&enet_mdio {
-	phy: ethernet-phy@0 {
-		compatible = "ethernet-phy";
-		reg = <0>;
-		status = "okay";
-	};
-};
 
 &flexpwm1_pwm0 {
 	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
@@ -448,11 +444,6 @@ zephyr_mipi_dbi_parallel: &flexio0_lcd {
 	cs-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
 	rs-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
 	pinctrl-0 = <&pinmux_flexio_lcd>;
-	pinctrl-names = "default";
-};
-
-&lpcmp0 {
-	pinctrl-0 = <&pinmux_lpcmp0>;
 	pinctrl-names = "default";
 };
 

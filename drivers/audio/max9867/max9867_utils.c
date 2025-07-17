@@ -18,12 +18,12 @@ void split_mic_gain(audio_property_value_t val, uint8_t *preamp_gain, uint8_t *m
     }
     else if (vol <= 50)
     {
-        *preamp_gain = 4;
+        *preamp_gain = 3;
         *mic_gain = 50 - vol;
     }
     else
     {
-        *preamp_gain = 4;
+        *preamp_gain = 3;
         *mic_gain = 0;
     }
 }

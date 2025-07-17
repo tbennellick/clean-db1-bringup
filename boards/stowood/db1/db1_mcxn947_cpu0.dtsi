@@ -95,7 +95,7 @@
 };
 
 &flexcomm2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &flexcomm2_lpi2c2 {
@@ -174,15 +174,15 @@
 };
 
 &enet {
-	status = "okay";
+	status = "disabled";
 };
 
 &enet_mac {
-	status = "okay";
+	status = "disabled";
 };
 
 &enet_mdio {
-	status = "okay";
+	status = "disabled";
 };
 
 &wwdt0 {
@@ -231,7 +231,7 @@ zephyr_udc0: &usb1 {
 };
 
 &lpcmp0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &lptmr0 {
@@ -259,7 +259,7 @@ zephyr_udc0: &usb1 {
 };
 
 &sai1 {
-	status = "disabled";
+	status = "okay";
 };
 &sai0 {
 	status = "disabled";

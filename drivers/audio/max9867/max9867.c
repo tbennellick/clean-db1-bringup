@@ -189,6 +189,78 @@ int select_source(const struct device *dev, max9867_input_t input)
     return 0;
 }
 
+static int get_mclk(const struct max9867_config *dev_cfg, uint32_t *mclk_rate) {
+    int err;
+//    err = clock_control_on(dev_cfg->mclk_dev, dev_cfg->mclk_name);
+//    if (err < 0)
+//    {
+//        LOG_INF("Can't enable mclk control %d", err);
+//        return err;
+//    }
+
+    uint32_t canary = UINT32_MAX;
+
+    err = clock_control_get_rate(dev_cfg->mclk_dev, dev_cfg->mclk_name, &canary);
+    if (err < 0)
+    {
+        LOG_INF("Cant get mclk: %d", err);
+        return err;
+    }
+    /* clock_control_get_rate returns 0 even when it cant get the rate. Not as docstring */
+    if(canary == UINT32_MAX)
+    {
+        LOG_INF("MCLK rate is not available dynamically");
+        return -ENODATA;
+    }
+    *mclk_rate = canary;
+    return 0;
+}
+
+static void uint8_to_binary(uint8_t val, char *buf)
+{
+    for (int i = 7; i >= 0; i--) {
+        buf[7 - i] = (val & (1 << i)) ? '1' : '0';
+    }
+    buf[8] = '\0';
+}
+
+__maybe_unused
+void dump_registers(const struct device *dev)
+{
+    const struct max9867_config *config = dev->config;
+    uint8_t reg[MAX9867_SYS_SHDN+1];
+    int ret = i2c_burst_read_dt(&config->i2c, MAX9867_STATUS, reg, sizeof(reg));
+    if (ret < 0) {
+        LOG_ERR("Failed to read registers: %d", ret);
+        return;
+    }
+    LOG_INF("MAX9867 Registers:");
+    for (int i = 0; i < sizeof(reg); i += 4) {
+        if (i + 3 < sizeof(reg)) {
+            LOG_INF("\033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m  \033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m  \033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m  \033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m",
+                    MAX9867_STATUS + i, reg[i],
+                    MAX9867_STATUS + i + 1, reg[i + 1],
+                    MAX9867_STATUS + i + 2, reg[i + 2],
+                    MAX9867_STATUS + i + 3, reg[i + 3]);
+            char bin0[9], bin1[9], bin2[9], bin3[9];
+            uint8_to_binary(reg[i], bin0);
+            uint8_to_binary(reg[i + 1], bin1);
+            uint8_to_binary(reg[i + 2], bin2);
+            uint8_to_binary(reg[i + 3], bin3);
+            LOG_INF("  %s  | %s  | %s  | %s", bin0, bin1, bin2, bin3);
+        } else {
+            // Handle remaining registers if not divisible by 4
+            for (int j = i; j < sizeof(reg); j++) {
+                LOG_INF("\033[36m0x%02x\033[0m: \033[33m0x%02x\033[0m", MAX9867_STATUS + j, reg[j]);
+                char bin[9];
+                uint8_to_binary(reg[j], bin);
+                LOG_INF("      %s", bin);
+            }
+        }
+    }
+
+}
+
 static int max9867_configure(const struct device *dev, struct audio_codec_cfg *cfg)
 {
     const struct max9867_config *dev_cfg = dev->config;
@@ -220,15 +292,10 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
         return -EINVAL;
     }
 
-    int err = clock_control_on(dev_cfg->mclk_dev, dev_cfg->mclk_name);
-
-    if (err < 0) {
-        LOG_ERR("MCLK clock source enable fail: %d", err);
-    }
-
-    err = clock_control_get_rate(dev_cfg->mclk_dev, dev_cfg->mclk_name, &cfg->mclk_freq);
-    if (err < 0) {
-        LOG_ERR("MCLK clock source freq acquire fail: %d", err);
+    if(get_mclk(dev_cfg, &cfg->mclk_freq) != 0)
+    {
+        cfg->mclk_freq = dev_cfg->mclk_default;
+        LOG_INF("MCLK frequency unavailable dynamically, using default: %u", dev_cfg->mclk_default);
     }
 
     if (cfg->mclk_freq % cfg->dai_cfg.i2s.frame_clk_freq != 0) {
@@ -289,8 +356,8 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
         return ret;
     }
 
-    set_mic_input_gain(dev, AUDIO_CHANNEL_ALL, 0);
-    set_line_input_gain(dev, AUDIO_CHANNEL_ALL, 0);
+    set_mic_input_gain(dev, AUDIO_CHANNEL_ALL, 50);
+    set_line_input_gain(dev, AUDIO_CHANNEL_ALL, 15);
 
     ret = i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_VOL_L, MAX9867_VOL_X_MUTE);
     if (ret < 0) {
@@ -305,6 +372,10 @@ static int max9867_configure(const struct device *dev, struct audio_codec_cfg *c
     }
 
     select_source(dev, MAX9867_INPUT_MIC); /* Default to Mic input */
+
+    i2c_reg_write_byte_dt(&dev_cfg->i2c, MAX9867_DAI_IF_MODE1, 0x08);
+
+//    dump_registers(dev);
 
     return 0;
 }
@@ -395,6 +466,7 @@ static int max9867_init(const struct device *dev)
     static const struct max9867_config max9867_config_##inst = {                                   \
         .i2c = I2C_DT_SPEC_INST_GET(inst),                                                         \
         .clock_source = DT_INST_PROP_OR(inst, clk_source, 0),                                      \
+        .mclk_default = DT_INST_PROP(inst, mclk_default), \
         .mclk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR_BY_NAME(inst, mclk)),                        \
         .mclk_name = (clock_control_subsys_t)DT_INST_CLOCKS_CELL_BY_NAME(inst, mclk, name)};       \
                                                                                                    \
