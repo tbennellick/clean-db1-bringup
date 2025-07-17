@@ -4,7 +4,11 @@ LOG_MODULE_REGISTER(display, LOG_LEVEL_INF);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/display.h>
+#ifdef CONFIG_DISPLAY_LOGO
 #include "test_logo.h"
+#endif
+
+#define RGB565(r,g,b) (((r & 0x1F) << 11) | ((g & 0x3F) << 5) | (b & 0x1F))
 
 
 static void fill_buffer_rgb565(uint16_t color, uint8_t *buf,
@@ -64,18 +68,18 @@ int init_display(void)
     }
 
 
-    /* ============*/
+#ifdef CONFIG_DISPLAY_LOGO
     buf_desc.buf_size = TEST_LOGO_WIDTH * TEST_LOGO_HEIGHT * 2;
     buf_desc.width = TEST_LOGO_WIDTH;
     buf_desc.height = TEST_LOGO_HEIGHT;
     buf_desc.pitch = TEST_LOGO_WIDTH;
-
 
     if (display_write(display_dev, 0, 0, &buf_desc, test_logo) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
         return -1;
     }
+#endif
 
     return 0;
 }
