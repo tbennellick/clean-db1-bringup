@@ -182,7 +182,7 @@
 			gctrl = <0x35>;
 			vrhs = <0x11>;
 			vdvs = <0x20>;
-			mdac = <0x88>; //this is MADCTL
+			mdac = <0x80>; //this is MADCTL
 			gamma = <0x01>;/* IC default, not specced in display DS */
 			inversion-off;  /* Disable display inversion */
 //			colmod = <0x66>; /* Display datasheet example*/
