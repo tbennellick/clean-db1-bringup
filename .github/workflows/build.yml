@@ -31,6 +31,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Get board revisions
+        id: get-revisions
+        run: |
+          source scripts/setup_env.sh
+          echo "revisions=$(python3 scripts/list_revisions.py | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
       - name: Workaround actions/cache relative path
         run: |
           echo "workspace_path=$(realpath ..)" >> $GITHUB_ENV
@@ -71,23 +77,23 @@ jobs:
         run: |
           source scripts/setup_env.sh
 
-      - name: Build firmware
+      - name: Build and pack firmware for all revisions
         run: |
-          scripts/build.py
-
-      - name: Pack Firmware
-        run: |
-          tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
-          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf"
+          for revision in ${{ steps.get-revisions.outputs.revisions }}; do
+            echo "::group::Building revision $revision"
+            scripts/build.py --revision "$revision" --pristine
+            tar cJf "${build_name}_${revision}.tar" ${{ env.BUILD_DIR }}
+            cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}_${revision}.db1-bu-zephyr.elf"
+            echo "::endgroup::"
+          done
 
       - name: Archive firmware
         uses: actions/upload-artifact@v4
         with:
           name: db1-bu-firmware-${{ env.build_name }}
           path: |
-            ${{ env.build_name }}.tar
-            ${{ env.BUILD_DIR }}/zephyr/zephyr.*
-            ${{ env.build_name }}.db1-bu-zephyr.elf
+            ${{ env.build_name }}_*.tar
+            ${{ env.build_name }}_*.db1-bu-zephyr.elf
           if-no-files-found: error
 
       - name: Dump on Failure
@@ -104,7 +110,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: firmware-fail-${{ env.build_name }}
           path: |
             fail-${{ env.build_name }}.tar
           if-no-files-found: error
