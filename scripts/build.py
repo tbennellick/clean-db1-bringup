@@ -14,7 +14,7 @@ if __name__ == "__main__":
     venv_dir = project_dir / ".venv"
     setup_virtual_environment(venv_dir)
 
-    build_cmd = ["west", "build", "-b", "db1/mcxn947/cpu0", "app/"]
+    build_cmd = ["west", "build", "-b", "db1@62.2.1/mcxn947/cpu0", "app/"]
     if any(arg in ["-p", "--pristine"] for arg in sys.argv[1:]):
         build_cmd.append("-p")
     subprocess.run(build_cmd, check=True)
