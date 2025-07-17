@@ -182,8 +182,9 @@
 			gctrl = <0x35>;
 			vrhs = <0x11>;
 			vdvs = <0x20>;
-			mdac = <0x88>;
+			mdac = <0x88>; //this is MADCTL
 			gamma = <0x01>;/* IC default, not specced in display DS */
+			inversion-off;  /* Disable display inversion */
 //			colmod = <0x66>; /* Display datasheet example*/
 			colmod = <0x55>; /* Match CONFIG_ST7789V_RGB565*/
 			lcm = <0x2c>;
@@ -193,8 +194,8 @@
 			pvgam-param = [D0 00 05 0E 15 0D 37 43 47 09 15 12 16 19];
 			nvgam-param = [D0 00 05 0D 0C 06 2D 44 40 0E 1C 18 16 19];
 			ram-param = [00 F0];
-//			rgb-param = [CD 08 14]; sample value
-			rgb-param = [40 02 14]; // defult value
+			rgb-param = [CD 08 14]; //sample value
+//			rgb-param = [40 02 14]; // default value
 			mipi-mode = "MIPI_DBI_MODE_SPI_4WIRE";
 		};
 	};

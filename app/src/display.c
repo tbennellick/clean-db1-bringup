@@ -4,7 +4,18 @@ LOG_MODULE_REGISTER(display, LOG_LEVEL_INF);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/display.h>
-#include "img.h"
+#include "test_logo.h"
+
+
+static void fill_buffer_rgb565(uint16_t color, uint8_t *buf,
+			       size_t buf_size)
+{
+	for (size_t idx = 0; idx < buf_size; idx += 2) {
+		*(buf + idx + 0) = (color >> 8) & 0xFFu;
+		*(buf + idx + 1) = (color >> 0) & 0xFFu;
+	}
+}
+
 
 int init_display(void)
 {
@@ -44,6 +55,8 @@ int init_display(void)
 
     k_sleep(K_SECONDS(2));
     memset(buf, 0x00, buf_size);
+    fill_buffer_rgb565(RGB565(0, 0, 0xff ),buf, buf_size);
+
     if (display_write(display_dev, 0, 0, &buf_desc, buf) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
@@ -52,11 +65,13 @@ int init_display(void)
 
 
     /* ============*/
-    buf_desc.buf_size = IMG_WIDTH * IMG_HEIGHT * 2;
-    buf_desc.width = IMG_WIDTH;
-    buf_desc.height = IMG_HEIGHT;
-    buf_desc.pitch = IMG_WIDTH;
-    if (display_write(display_dev, 0, 0, &buf_desc, img_data) < 0) {
+    buf_desc.buf_size = TEST_LOGO_WIDTH * TEST_LOGO_HEIGHT * 2;
+    buf_desc.width = TEST_LOGO_WIDTH;
+    buf_desc.height = TEST_LOGO_HEIGHT;
+    buf_desc.pitch = TEST_LOGO_WIDTH;
+
+
+    if (display_write(display_dev, 0, 0, &buf_desc, test_logo) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
         return -1;

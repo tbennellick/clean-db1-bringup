@@ -18,8 +18,10 @@ target_sources(app PRIVATE src/fuel_gauge.c)
 target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
 target_sources(app PRIVATE src/display.c)
-target_sources(app PRIVATE img/Stowood-logo-30-years-220422a-mini-green.c)
+target_sources(app PRIVATE ../artifacts/test_logo.c)
 
+target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../artifacts)
 # This exposes the audio codec routing enum to the app,
 # it seems that there is not a nice way to handle this.
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
+
