@@ -9,7 +9,7 @@ board:
       cpucluster: 'cpu0'
   revision:
     format: major.minor.patch
-    default: 62.2.0
+    default: 62.2.1
     exact: true
     revisions:
       - name: 62.2.0
