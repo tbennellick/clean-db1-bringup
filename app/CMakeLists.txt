@@ -18,7 +18,8 @@ target_sources(app PRIVATE src/fuel_gauge.c)
 target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
 target_sources(app PRIVATE src/display.c)
-target_sources(app PRIVATE ../artifacts/test_logo.c)
+
+zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artifacts/test_logo.c)
 
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../artifacts)
 # This exposes the audio codec routing enum to the app,
