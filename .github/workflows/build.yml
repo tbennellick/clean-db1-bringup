@@ -31,12 +31,6 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get board revisions
-        id: get-revisions
-        run: |
-          source scripts/setup_env.sh
-          echo "revisions=$(python3 scripts/list_revisions.py | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
-
       - name: Workaround actions/cache relative path
         run: |
           echo "workspace_path=$(realpath ..)" >> $GITHUB_ENV
@@ -69,6 +63,7 @@ jobs:
           echo "build_name=$(date -Iseconds | tr ':' '.')_${short_hash}" >> "$GITHUB_ENV"
 
       # If this step fails, it may be because there are no tags in the repo. (git tag v0.0.0)
+      # It is used in the build and here to flush out later issues that are harder to debug.
       - name: Git Describe
         run: |
           git describe --tags --dirty --abbrev=7
@@ -76,6 +71,11 @@ jobs:
       - name: Set up repo, dependencies and toolchain
         run: |
           source scripts/setup_env.sh
+
+      - name: Get board revisions
+        id: get-revisions
+        run: |
+          echo "revisions=$(python3 scripts/list_revisions.py | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
 
       - name: Build firmware
         run: |
