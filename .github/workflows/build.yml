@@ -22,7 +22,7 @@ jobs:
       id-token: "write"
     env:
       CMAKE_PREFIX_PATH: /opt/zephyr-sdk
-      BUILD_DIR: build/db1/mcxn947/cpu0/app/
+      BUILD_DIR: build/
 
     steps:
       - name: Checkout
@@ -63,6 +63,7 @@ jobs:
           echo "build_name=$(date -Iseconds | tr ':' '.')_${short_hash}" >> "$GITHUB_ENV"
 
       # If this step fails, it may be because there are no tags in the repo. (git tag v0.0.0)
+      # It is used in the build and here to flush out later issues that are harder to debug.
       - name: Git Describe
         run: |
           git describe --tags --dirty --abbrev=7
@@ -71,14 +72,29 @@ jobs:
         run: |
           source scripts/setup_env.sh
 
-      - name: Build firmware
+      - name: Get board revisions
+        id: get-revisions
         run: |
-          scripts/build.py
+          revisions=$(python3 scripts/list_revisions.py)
+          echo "revisions=$revisions" >> "$GITHUB_OUTPUT"
+          echo "Revisions: $revisions"
+
+      - name: Build firmware for all revisions
+        run: |
+          for revision in ${{ steps.get-revisions.outputs.revisions }}; do
+            echo "::group::Building revision $revision"
+            scripts/build.py --revision "$revision" --pristine
+            echo "::endgroup::"
+          done
 
       - name: Pack Firmware
         run: |
           tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
-          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf"
+          mkdir bins
+          for revision in ${{ steps.get-revisions.outputs.revisions }}; do     
+               cp ${{ env.BUILD_DIR }}/db1@${revision}/mcxn947/cpu0/app/zephyr/zephyr.elf bins/"${build_name}_${revision}.db1-bu-zephyr.elf"
+          done
+          ls -l bins
 
       - name: Archive firmware
         uses: actions/upload-artifact@v4
@@ -86,8 +102,7 @@ jobs:
           name: db1-bu-firmware-${{ env.build_name }}
           path: |
             ${{ env.build_name }}.tar
-            ${{ env.BUILD_DIR }}/zephyr/zephyr.*
-            ${{ env.build_name }}.db1-bu-zephyr.elf
+            bins/*
           if-no-files-found: error
 
       - name: Dump on Failure
