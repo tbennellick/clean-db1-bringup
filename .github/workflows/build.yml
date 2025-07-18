@@ -92,7 +92,7 @@ jobs:
           tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
           mkdir bins
           for revision in ${{ steps.get-revisions.outputs.revisions }}; do     
-               cp ${{ env.BUILD_DIR }}/db1@${{ revision }}/mcxn947/cpu0/app/zephyr/zephyr.elf bins/"${build_name}_${{revision}}.db1-bu-zephyr.elf"
+               cp ${{ env.BUILD_DIR }}/db1@${revision}/mcxn947/cpu0/app/zephyr/zephyr.elf bins/"${build_name}_${revision}.db1-bu-zephyr.elf"
           done
           ls -l bins
           #  build/*/mcxn947/cpu0/app/
