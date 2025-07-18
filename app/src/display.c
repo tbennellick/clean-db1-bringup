@@ -66,19 +66,27 @@ int init_display(void)
         return -1;
     }
 
-
+    uint8_t * logo = buf;
 #ifdef CONFIG_DISPLAY_LOGO
     buf_desc.buf_size = TEST_LOGO_WIDTH * TEST_LOGO_HEIGHT * 2;
     buf_desc.width = TEST_LOGO_WIDTH;
     buf_desc.height = TEST_LOGO_HEIGHT;
     buf_desc.pitch = TEST_LOGO_WIDTH;
+    logo = test_logo;
+#else
+    buf_desc.width = 206;
+    buf_desc.height = 100;
+    buf_desc.pitch = 100;
+    buf_desc.buf_size = buf_desc.width * buf_desc.height * 2;
+    fill_buffer_rgb565(RGB565(0, 0, 0xff ),buf, buf_desc.buf_size);
+    logo = buf;
+#endif
 
-    if (display_write(display_dev, 20 , 100, &buf_desc, test_logo) < 0) {
+    if (display_write(display_dev, 20 , 100, &buf_desc, logo) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
         return -1;
     }
-#endif
 
     return 0;
 }
