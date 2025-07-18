@@ -57,9 +57,8 @@ int init_display(void)
 
 	display_blanking_off(display_dev);
 
-    k_sleep(K_SECONDS(2));
-    memset(buf, 0x00, buf_size);
-    fill_buffer_rgb565(RGB565(0, 0, 0xff ),buf, buf_size);
+    memset(buf, 0xff, buf_size);
+//    fill_buffer_rgb565(RGB565(0xff, 0, 0 ),buf, buf_size);
 
     if (display_write(display_dev, 0, 0, &buf_desc, buf) < 0) {
         LOG_ERR("Display write failed");
@@ -74,7 +73,7 @@ int init_display(void)
     buf_desc.height = TEST_LOGO_HEIGHT;
     buf_desc.pitch = TEST_LOGO_WIDTH;
 
-    if (display_write(display_dev, 0, 0, &buf_desc, test_logo) < 0) {
+    if (display_write(display_dev, 20 , 100, &buf_desc, test_logo) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
         return -1;
