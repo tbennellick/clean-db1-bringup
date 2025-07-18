@@ -4,10 +4,13 @@ LOG_MODULE_REGISTER(display, LOG_LEVEL_INF);
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/display.h>
+#include "power.h"
+
 #ifdef CONFIG_DISPLAY_LOGO
 #include "test_logo.h"
 #endif
 
+__maybe_unused
 #define RGB565(r,g,b) (((r & 0x1F) << 11) | ((g & 0x3F) << 5) | (b & 0x1F))
 
 
@@ -29,15 +32,16 @@ int init_display(void)
 	struct display_buffer_descriptor buf_desc;
 	size_t buf_size = 0;
 
-	display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+    backlight_on();
+
+    display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 	if (!device_is_ready(display_dev)) {
-		LOG_ERR("Device %s not found. Aborting sample.",
-			display_dev->name);
+		LOG_ERR("Display Device %s not found", display_dev->name);
+        return -ENODEV;
 	}
 
-	LOG_INF("Display sample for %s", display_dev->name);
 	display_get_capabilities(display_dev, &capabilities);
-    LOG_INF("Display capabilities: x_res=%d, y_res=%d, pixel_format=%d",
+    LOG_DBG("Display capabilities: x_res=%d, y_res=%d, pixel_format=%d",
           capabilities.x_resolution, capabilities.y_resolution,
           capabilities.current_pixel_format);
 
@@ -45,8 +49,8 @@ int init_display(void)
 
 	buf = k_malloc(buf_size);
 	if (buf == NULL) {
-		LOG_ERR("Could not allocate memory. Aborting sample.");
-		return 0;
+		LOG_ERR("Could not allocate memory. Aborting Display init.");
+		return -ENOMEM;
 	}
 
     buf_desc.frame_incomplete = false;
@@ -58,12 +62,11 @@ int init_display(void)
 	display_blanking_off(display_dev);
 
     memset(buf, 0xff, buf_size);
-//    fill_buffer_rgb565(RGB565(0xff, 0, 0 ),buf, buf_size);
 
     if (display_write(display_dev, 0, 0, &buf_desc, buf) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
-        return -1;
+        return -EIO;
     }
 
     uint8_t * logo = buf;
@@ -72,7 +75,7 @@ int init_display(void)
     buf_desc.width = TEST_LOGO_WIDTH;
     buf_desc.height = TEST_LOGO_HEIGHT;
     buf_desc.pitch = TEST_LOGO_WIDTH;
-    logo = test_logo;
+    logo = (uint8_t *) test_logo;
 #else
     buf_desc.width = 206;
     buf_desc.height = 100;
@@ -85,7 +88,7 @@ int init_display(void)
     if (display_write(display_dev, 20 , 100, &buf_desc, logo) < 0) {
         LOG_ERR("Display write failed");
         k_free(buf);
-        return -1;
+        return -EIO;
     }
 
     return 0;

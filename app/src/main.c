@@ -34,7 +34,6 @@ int main(void) {
     init_modem();
     init_als();
     init_audio();
-    backlight_on();
     init_display();
 
     LOG_INF("Init complete");
