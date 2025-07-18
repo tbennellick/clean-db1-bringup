@@ -75,8 +75,9 @@ jobs:
       - name: Get board revisions
         id: get-revisions
         run: |
-          echo "revisions=$(python3 scripts/list_revisions.py | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
-          echo "Revisions: ${{ steps.get-revisions.outputs.revisions }}"
+          revisions=$(python3 scripts/list_revisions.py)
+          echo "revisions=$revisions" >> "$GITHUB_OUTPUT"
+          echo "Revisions: $revisions"
 
       - name: Build firmware
         run: |
