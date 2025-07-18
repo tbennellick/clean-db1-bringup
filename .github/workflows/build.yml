@@ -22,7 +22,7 @@ jobs:
       id-token: "write"
     env:
       CMAKE_PREFIX_PATH: /opt/zephyr-sdk
-      BUILD_DIR: build/db1/mcxn947/cpu0/app/
+      BUILD_DIR: build
 
     steps:
       - name: Checkout
