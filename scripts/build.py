@@ -38,5 +38,5 @@ if __name__ == "__main__":
     build_specific_board_variant(board_spec, args.pristine)
 
     if args.flash:
-        subprocess.run(["west", "flash", "-d", "build/db1/mcxn947/cpu0/app", "--runner=jlink"], check=True)
+        subprocess.run(["west", "flash", "-d", f"build/{board_spec}/app", "--runner=jlink"], check=True)
         #TODO, add debugger select with --snr=50000364
