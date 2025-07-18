@@ -168,7 +168,7 @@ static int abp2_channel_get(const struct device *dev, enum sensor_channel chan, 
 	}
     return 0;
 }
-__unused
+
 static int abp2_probe(const struct device *dev)
 {
     uint8_t status =0;
