@@ -19,7 +19,7 @@ target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
 target_sources(app PRIVATE src/display.c)
 
-#Logo can be optioanllyy removed from the build.
+#Logo can be optionally removed from the build.
 zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artefacts/test_logo.c)
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../artefacts)
 
