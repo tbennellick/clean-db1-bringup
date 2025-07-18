@@ -62,8 +62,7 @@ void rx_thread_func(void *p1, void *p2, void *p3)
     }
 }
 
-#define BRD_REV_62_2 /* Replace with board config from ENG-37*/
-#ifdef BRD_REV_62_2
+#ifdef CONFIG_BOARD_DB1_REV_62_2
 
 #define TX_THREAD_STACK_SIZE 1024
 #define TX_THREAD_PRIORITY 5
@@ -194,7 +193,7 @@ int init_i2s(void)
         return ret;
     }
 
-#ifdef BRD_REV_62_2
+#ifdef CONFIG_BOARD_DB1_REV_62_2
     /* Datasheet */
 //    If both the transmitter and receiver use the receiver bit clock and frame sync:
 //    • Configure the receiver for asynchronous operation and the transmitter for synchronous operation.
