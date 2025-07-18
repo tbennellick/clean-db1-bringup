@@ -79,25 +79,42 @@ jobs:
           echo "revisions=$revisions" >> "$GITHUB_OUTPUT"
           echo "Revisions: $revisions"
 
-      - name: Build firmware
+#      - name: Build firmware
+#        run: |
+#          scripts/build.py
+
+      - name: Build firmware for all revisions
         run: |
-          scripts/build.py
+          for revision in ${{ steps.get-revisions.outputs.revisions }}; do
+            echo "::group::Building revision $revision"
+            scripts/build.py --revision "$revision" --pristine
+            tar cJf "${build_name}_${revision}.tar" ${{ env.BUILD_DIR }}
+            cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}_${revision}.db1-bu-zephyr.elf"
+            echo "::endgroup::"
+          done
 
-      - name: Pack Firmware
+      - name: Dump on Failure
         run: |
-          tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
-          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf"
+          tree /__w/
 
-      - name: Archive firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: db1-bu-firmware-${{ env.build_name }}
-          path: |
-            ${{ env.build_name }}.tar
-            ${{ env.BUILD_DIR }}/zephyr/zephyr.*
-            ${{ env.build_name }}.db1-bu-zephyr.elf
-          if-no-files-found: error
 
+
+#
+#      - name: Pack Firmware
+#        run: |
+#          tar cJf "${build_name}.tar" ${{ env.BUILD_DIR }}
+#          cp ${{ env.BUILD_DIR }}/zephyr/zephyr.elf "${build_name}.db1-bu-zephyr.elf"
+#
+#      - name: Archive firmware
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: db1-bu-firmware-${{ env.build_name }}
+#          path: |
+#            ${{ env.build_name }}.tar
+#            ${{ env.BUILD_DIR }}/zephyr/zephyr.*
+#            ${{ env.build_name }}.db1-bu-zephyr.elf
+#          if-no-files-found: error
+#
       - name: Dump on Failure
         if: failure()
         run: |
