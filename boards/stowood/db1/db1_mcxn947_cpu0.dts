@@ -190,7 +190,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		st7789v:st7789v@0 {
+		st7789v: st7789v@0 {
 			compatible = "sitronix,st7789v";
 			//			mipi-max-frequency = <20000000>;
 			mipi-max-frequency = <20000000>;
@@ -206,7 +206,6 @@
 			mdac = <0x00>; //this is MADCTL
 			gamma = <0x01>;/* IC default, not specced in display DS */
 			inversion-off;  /* Disable display inversion */
-			//			colmod = <0x66>; /* Display datasheet example*/
 			colmod = <0x55>; /* Match CONFIG_ST7789V_RGB565*/
 			lcm = <0x2c>;
 			porch-param = [0c 0c 00 33 33];
@@ -216,7 +215,7 @@
 			nvgam-param = [D0 00 05 0D 0C 06 2D 44 40 0E 1C 18 16 19];
 			ram-param = [00 F0];
 			rgb-param = [CD 08 14]; //sample value
-			//			rgb-param = [40 02 14]; // default value
+			//rgb-param = [40 02 14]; // default value
 			mipi-mode = "MIPI_DBI_MODE_SPI_4WIRE";
 		};
 	};
