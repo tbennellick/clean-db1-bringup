@@ -24,7 +24,3 @@ target_include_directories(app PRIVATE ../include/app/drivers)
 ## This exposes the audio codec routing enum to the app,
 ## it seems that there is not a nice way to handle this.
 #target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
-#
-## This exposes the exg configuration to the app,
-## it seems that there is not a nice way to handle this.
-#target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/sensor/ads1298)
