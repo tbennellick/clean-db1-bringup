@@ -8,7 +8,6 @@ struct exg_config {
     /** Memory slab to store RX data. */
     struct k_mem_slab *mem_slab;
     /** Read/Write timeout. Number of milliseconds to wait in case TX queue
-     * is full or RX queue is empty, or 0, or SYS_FOREVER_MS.
-     */
+     * is full or RX queue is empty, or 0, or SYS_FOREVER_MS. */
     int32_t timeout;
 };
