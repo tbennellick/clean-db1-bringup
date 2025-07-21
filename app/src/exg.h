@@ -1,2 +1,2 @@
 #pragma once
-void init_exg(void);
+int init_exg(void);
