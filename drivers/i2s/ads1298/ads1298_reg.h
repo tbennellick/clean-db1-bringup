@@ -46,5 +46,5 @@ typedef enum {
 #define ADS1298_CONFIG1_DR_MASK       0x07
 #define ADS1298_CONFIG1_HR            BIT(7)
 
-
+#define ADS1298_SAMPLE_LEN (3 + (8* 3 )) // 3 status bytes, 8 * 3 data bytes
 

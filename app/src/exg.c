@@ -11,10 +11,8 @@
 LOG_MODULE_REGISTER(exg, LOG_LEVEL_DBG);
 
 
-/* TODO - sort this out*/
+
 #define SAMPLES_IN_SLAB 20
-#define SAMPLE_NO 64
-#define BLOCK_SIZE (2 * SAMPLE_NO)
 
 
 #ifdef CONFIG_NOCACHE_MEMORY
@@ -24,10 +22,10 @@ LOG_MODULE_REGISTER(exg, LOG_LEVEL_DBG);
 #endif
 
 static char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
-_k_mem_slab_buf_exg_0_mem_slab[(SAMPLES_IN_SLAB + 2) * WB_UP(sizeof(ads1298_sample))];
+_k_mem_slab_buf_exg_0_mem_slab[(SAMPLES_IN_SLAB + 2) * WB_UP(sizeof(ads1298_sample_t))];
 STRUCT_SECTION_ITERABLE(k_mem_slab, exg_0_mem_slab) =
         Z_MEM_SLAB_INITIALIZER(exg_0_mem_slab, _k_mem_slab_buf_exg_0_mem_slab,
-                               WB_UP(sizeof(ads1298_sample)), SAMPLES_IN_SLAB);
+                               WB_UP(sizeof(ads1298_sample_t)), SAMPLES_IN_SLAB);
 
 
 #define EXG_RX_THREAD_STACK_SIZE 1024
@@ -53,6 +51,11 @@ void exg_rx_thread_func(void *p1, void *p2, void *p3)
             LOG_ERR("Failed to read EXG RX stream (%d)", ret);
             return;
         }
+
+        ads1298_sample_t * sample = (ads1298_sample_t *)rx_block;
+        LOG_DBG("Received sample: status=%02x%02x%02x, timestamp=%llu, sequence_number=%u",
+              sample->status[0], sample->status[1], sample->status[2],
+              sample->timestamp, sample->sequence_number);
 
         k_mem_slab_free(&exg_0_mem_slab, rx_block);
     }
