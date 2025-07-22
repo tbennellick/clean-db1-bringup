@@ -161,12 +161,17 @@ static int ads1298_base_setup_device(const struct device *dev)
 	return 0;
 }
 
-/* ON interrupt*/
-static void ads1298_i2s_read_data(const struct device *dev)
+static void ads1298_data_work_handler(struct k_work *work)
 {
-    struct ads1298_i2s_data *data = dev->data;
+    struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+    struct ads1298_i2s_data *data = CONTAINER_OF(dwork, struct ads1298_i2s_data, data_work);
+    const struct device *dev = data->dev;
     int ret;
     void *mem_block;
+
+    if (!data->running) {
+        return;
+    }
 
     if (data->read_busy) {
         LOG_WRN("DRDY interrupt triggered before previous read completed");
@@ -196,8 +201,7 @@ static void ads1298_i2s_read_data(const struct device *dev)
 static void ads1298_drdy_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     struct ads1298_i2s_data *data = CONTAINER_OF(cb, struct ads1298_i2s_data, drdy_cb);
-    /* Todo: call this outside of interrupt context */
-    ads1298_i2s_read_data(data->dev);
+    k_work_reschedule(&data->data_work, K_NO_WAIT);
 }
 
 static int ads1298_i2s_configure(const struct device *dev, enum i2s_dir dir,
@@ -410,6 +414,9 @@ static int ads1298_i2s_init(const struct device *dev)
 	data->running = false;
 	data->read_busy = false;
 	data->current_config1 = 0x06; /* Reset Value */
+
+	/* Initialize work queue for data processing */
+	k_work_init_delayable(&data->data_work, ads1298_data_work_handler);
 
 	/* Configure DRDY interrupt */
 	gpio_init_callback(&data->drdy_cb, ads1298_drdy_callback, BIT(cfg->drdy_gpio.pin));
