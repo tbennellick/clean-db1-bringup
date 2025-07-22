@@ -45,12 +45,12 @@ const struct spi_buf_set rx = {
 
 
 
-/* Bufs can be null */
+/* Buffers can be null */
 static int ads1298_transact(const struct device *dev, const struct spi_buf_set *txbs, const struct spi_buf_set *rxbs)
 {
-    const struct ads1298_dev_config *cfg = dev->config;
+    const struct ads1298_i2s_config *cfg = dev->config;
 
-    int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , txbs, rxbs);
+    int ret  = spi_transceive(cfg->spi_bus.bus , &cfg->spi_bus.config , txbs, rxbs);
 
     if (ret !=0) {
         LOG_ERR("Failed to transact with SPI device (%d)", ret);
@@ -270,7 +270,7 @@ static int ads1298_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 		data->running = true;
 		data->read_busy = false;
 
-		/* Send start command */
+        // Put the Device Back in RDATAC Mode
 		ret = ads1298_send_command(dev, ADS1298_CMD_RDATAC);
 		if (ret) return ret;
 
@@ -278,6 +278,9 @@ static int ads1298_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 		uint32_t tsettle_us = ads1298_get_tsettle_us(data->current_config1);
         k_busy_wait(tsettle_us);
         gpio_pin_interrupt_configure_dt(&cfg->drdy_gpio, GPIO_INT_EDGE_TO_ACTIVE);
+
+        /* Start Conversion */
+        gpio_pin_set_dt(&cfg->start_conv_gpio, 1);
 
 		LOG_INF("ADS1298 I2S stream started");
 		break;
@@ -293,7 +296,10 @@ static int ads1298_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 		const struct ads1298_i2s_config *cfg = dev->config;
 		gpio_pin_interrupt_configure_dt(&cfg->drdy_gpio, GPIO_INT_DISABLE);
 
-		/* Send stop command */
+        /* Stop conversion */
+        gpio_pin_set_dt(&cfg->start_conv_gpio, 0);
+
+		/* Go Back in to SDATAC mode so registers can be read. (DS unclear) */
 		ret = ads1298_send_command(dev, ADS1298_CMD_SDATAC);
 		if (ret) return ret;
 
@@ -424,9 +430,6 @@ static int ads1298_i2s_init(const struct device *dev)
         LOG_ERR("Device probe failed: %d", ret);
         return ret;
     }
-	
-	/* Set START pin high to enable conversions */
-	gpio_pin_set_dt(&cfg->start_conv_gpio, 1);
 	
 	LOG_INF("ADS1298 I2S driver initialized, device ID: 0x%02x", device_id);
 	return 0;
