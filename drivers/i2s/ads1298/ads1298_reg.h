@@ -1,16 +1,18 @@
 #pragma once
 
 /* ADS1298 Commands */
-#define ADS1298_CMD_WAKEUP      0x02
-#define ADS1298_CMD_STANDBY     0x04
-#define ADS1298_CMD_RESET       0x06
-#define ADS1298_CMD_START       0x08
-#define ADS1298_CMD_STOP        0x0A
-#define ADS1298_CMD_RDATAC      0x10
-#define ADS1298_CMD_SDATAC      0x11
-#define ADS1298_CMD_RDATA       0x12
-#define ADS1298_CMD_RREG        0x20
-#define ADS1298_CMD_WREG        0x40
+typedef enum {
+    ADS1298_CMD_WAKEUP  = 0x02,
+    ADS1298_CMD_STANDBY = 0x04,
+    ADS1298_CMD_RESET   = 0x06,
+    ADS1298_CMD_START   = 0x08,
+    ADS1298_CMD_STOP    = 0x0A,
+    ADS1298_CMD_RDATAC  = 0x10,
+    ADS1298_CMD_SDATAC  = 0x11,
+    ADS1298_CMD_RDATA   = 0x12,
+    ADS1298_CMD_RREG    = 0x20,
+    ADS1298_CMD_WREG    = 0x40
+} ads1298_cmd_t;
 
 /* ADS1298 Registers */
 #define ADS1298_REG_ID          0x00
