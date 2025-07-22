@@ -25,7 +25,7 @@ struct ads1298_i2s_data {
 	bool read_busy;
 	uint8_t current_config1;
 	struct gpio_callback drdy_cb;
-	struct k_work_delayable data_work;
+	struct k_work_delayable get_samples_work;
 	const struct device *dev;
 };
 

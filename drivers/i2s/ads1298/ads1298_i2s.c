@@ -90,7 +90,7 @@ static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t *val)
         LOG_ERR("Failed to read register %d: %d", reg, ret);
         return ret;
     }
-    *val = rx_bufs[0].buf[2];
+    *val = ((uint8_t *)rx_bufs[0].buf)[2];
 
     if (reg == ADS1298_REG_CONFIG1)
     {
@@ -161,10 +161,10 @@ static int ads1298_base_setup_device(const struct device *dev)
 	return 0;
 }
 
-static void ads1298_data_work_handler(struct k_work *work)
+static void ads1298_get_samples_work_handler(struct k_work *work)
 {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
-    struct ads1298_i2s_data *data = CONTAINER_OF(dwork, struct ads1298_i2s_data, data_work);
+    struct ads1298_i2s_data *data = CONTAINER_OF(dwork, struct ads1298_i2s_data, get_samples_work);
     const struct device *dev = data->dev;
     int ret;
     void *mem_block;
@@ -201,7 +201,7 @@ static void ads1298_data_work_handler(struct k_work *work)
 static void ads1298_drdy_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     struct ads1298_i2s_data *data = CONTAINER_OF(cb, struct ads1298_i2s_data, drdy_cb);
-    k_work_reschedule(&data->data_work, K_NO_WAIT);
+    k_work_reschedule(&data->get_samples_work, K_NO_WAIT);
 }
 
 static int ads1298_i2s_configure(const struct device *dev, enum i2s_dir dir,
@@ -416,7 +416,7 @@ static int ads1298_i2s_init(const struct device *dev)
 	data->current_config1 = 0x06; /* Reset Value */
 
 	/* Initialize work queue for data processing */
-	k_work_init_delayable(&data->data_work, ads1298_data_work_handler);
+	k_work_init_delayable(&data->get_samples_work, ads1298_get_samples_work_handler);
 
 	/* Configure DRDY interrupt */
 	gpio_init_callback(&data->drdy_cb, ads1298_drdy_callback, BIT(cfg->drdy_gpio.pin));
