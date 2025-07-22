@@ -12,6 +12,7 @@
 #include "ads1298_i2s.h"
 #include "ads1298_reg.h"
 #include "ads1298_utils.h"
+#include "ads1298_public.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ADS1298_I2S, LOG_LEVEL_DBG);
@@ -182,19 +183,17 @@ static void ads1298_get_samples_work_handler(struct k_work *work)
 
     ret = k_mem_slab_alloc(data->mem_slab, &mem_block, K_NO_WAIT);
     if (ret == 0) {
-        /* Read data packet */
-        /* TODO: Actually get the data*/
-//        ret = ads1298_spi_transceive(dev, NULL, (uint8_t *)mem_block, ADS1298_PACKET_SIZE);
-        if (ret == 0) {
-            /* Queue the data block for processing */
-            if (data->data_queue) {
-                k_msgq_put(data->data_queue, &mem_block, K_NO_WAIT);
-            }
-        } else {
+
+        rx_bufs[0].len = ADS1298_SAMPLE_LEN;
+        ret = ads1298_transact(dev, NULL, &rx);
+        if (ret == 0)
+        {
+            k_msgq_put(data->data_queue, &mem_block, K_NO_WAIT);
+        } else
+        {
             k_mem_slab_free(data->mem_slab, mem_block);
         }
     }
-
     data->read_busy = false;
 }
 
@@ -223,34 +222,21 @@ static int ads1298_i2s_read(const struct device *dev, void **mem_block, size_t *
 {
 	struct ads1298_i2s_data *data = dev->data;
 	int ret;
+    void *buffer;
 
-/* From i2s_mcux_sai.c*/
-//    struct stream *strm = &dev_data->rx;
-//    void *buffer;
-//    int status, ret = 0;
-//
-//    LOG_DBG("i2s_mcux_read");
-//    if (strm->state == I2S_STATE_NOT_READY) {
-//        LOG_ERR("invalid state %d", strm->state);
-//        return -EIO;
-//    }
-//
-//    status = k_msgq_get(&strm->out_queue, &buffer, SYS_TIMEOUT_MS(strm->cfg.timeout));
-//    if (status != 0) {
-//        if (strm->state == I2S_STATE_ERROR) {
-//            ret = -EIO;
-//        } else {
-//            LOG_DBG("need retry");
-//            ret = -EAGAIN;
-//        }
-//        return ret;
-//    }
-//
-//    *mem_block = buffer;
-//    *size = strm->cfg.block_size;
+    if (data->running == false) {
+        LOG_ERR("ADS1298 not running");
+        return -EIO;
+    }
 
 
+    ret = k_msgq_get(data->data_queue, &buffer, SYS_TIMEOUT_MS(data->timeout));
+    if (ret != 0)
+    {
+        return ret;
+    }
 
+    *mem_block = buffer;
     return 0;
 }
 
@@ -413,9 +399,11 @@ static int ads1298_i2s_init(const struct device *dev)
 	data->dev = dev;
 	data->running = false;
 	data->read_busy = false;
-	data->current_config1 = 0x06; /* Reset Value */
+	data->current_config1 = 0x06; /* To match value on HW reset */
+    k_msgq_init(data->data_queue, (char *)data->rx_in_msgs, sizeof(ads1298_sample_t *),CONFIG_EXG_RX_SAMPLE_COUNT);
 
-	/* Initialize work queue for data processing */
+
+    /* Initialize work queue for data processing */
 	k_work_init_delayable(&data->get_samples_work, ads1298_get_samples_work_handler);
 
 	/* Configure DRDY interrupt */
