@@ -39,3 +39,19 @@
 #define ADS1298_REG_CONFIG4     0x17
 #define ADS1298_REG_WCT1        0x18
 #define ADS1298_REG_WCT2        0x19
+
+/* CONFIG1 register bits */
+#define ADS1298_CONFIG1_DR_MASK       0x07
+#define ADS1298_CONFIG1_HR            BIT(7)
+
+
+/* ADS1298 Settling Time Table (Table 12 from datasheet) */
+typedef struct {
+    uint8_t dr_bits;         // DR[2:0] value (000 to 110)
+    uint16_t hr_mode_cycles; // High-Resolution Mode Settling Time (tCLK)
+    uint16_t lp_mode_cycles; // Low-Power Mode Settling Time (tCLK)
+} ads1298_settling_time_t;
+
+/* tCLK period in nanoseconds (488ps = 0.488ns) */
+#define ADS1298_TCLK_PS 488
+

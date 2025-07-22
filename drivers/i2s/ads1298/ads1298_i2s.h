@@ -22,7 +22,9 @@ struct ads1298_i2s_data {
 	struct k_msgq *data_queue;
 	uint32_t timeout;
 	bool running;
-	struct k_work_delayable data_work;
+	bool read_busy;
+	uint8_t current_config1;
+	struct gpio_callback drdy_cb;
 	const struct device *dev;
 };
 
