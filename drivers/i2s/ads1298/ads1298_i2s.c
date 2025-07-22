@@ -21,21 +21,57 @@ static int ads1298_send_command(const struct device *dev, uint8_t cmd)
     return 0;
 }
 
-static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t len, uint8_t *data)
+static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t *val)
 {
     return 0;
 }
 
-static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint8_t len, const uint8_t *data)
+static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint8_t val)
 {
+    struct ads1298_i2s_data *data = dev->data;
+    if (reg == ADS1298_REG_CONFIG1)
+    {
+        data->current_config1 = val;
+    }
+
     return 0;
 }
 
+/* ADS1298 Settling Time Table (Table 12 from datasheet) */
+static const ads1298_settling_time_t settling_table[] = {
+        {0b000,  296,     584},
+        {0b001,  584,    1160},
+        {0b010, 1160,    2312},
+        {0b011, 2312,    4616},
+        {0b100, 4616,    9224},
+        {0b101, 9224,   18440},
+        {0b110,18440,   36872}
+};
 
+static uint32_t ads1298_get_tsettle_us(uint8_t config1_reg)
+{
+	uint8_t dr_bits = config1_reg & ADS1298_CONFIG1_DR_MASK;
+	uint16_t cycles;
+
+    if (dr_bits > 6) {
+        LOG_ERR("Invalid DR bits: %d", dr_bits);
+        return 0;
+    }
+    if(config1_reg & ADS1298_CONFIG1_HR) {
+        /* High-Resolution Mode */
+        cycles = settling_table[dr_bits].hr_mode_cycles;
+    } else {
+        /* Low-Power Mode */
+        cycles = settling_table[dr_bits].lp_mode_cycles;
+    }
+    uint32_t ps = cycles * ADS1298_TCLK_PS;
+    uint32_t us = (ps / 1000000) + 1; /* Convert ns to ms, round up */
+    return us;
+}
 
 static int ads1298_base_setup_device(const struct device *dev)
 {
-	uint8_t data;
+	uint8_t value;
 	int ret;
 	
 	/* Stop continuous data mode */
@@ -43,55 +79,43 @@ static int ads1298_base_setup_device(const struct device *dev)
 	if (ret) return ret;
 	
 	/* Configure CONFIG3: enable internal reference */
-	data = 0xc0;
-	ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG3, 1, &data);
+	value = 0xc0;
+	ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG3, value);
 	if (ret) return ret;
 	
 	/* Configure CONFIG1: 250 SPS, normal mode */
-	data = 0x86;
-	ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG1, 1, &data);
+	value = 0x86;
+	ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG1, value);
 	if (ret) return ret;
 	
 	/* Configure CONFIG2: test signals off */
-	data = 0x00;
-	ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG2, 1, &data);
+	value = 0x00;
+	ret = ads1298_write_reg(dev, ADS1298_REG_CONFIG2, value);
 	if (ret) return ret;
 	
 	/* Configure all channels: normal electrode input, gain = 6 */
-	data = 0x01;
+	value = 0x01;
 	for (int ch = ADS1298_REG_CH1SET; ch <= ADS1298_REG_CH8SET; ch++) {
-		ret = ads1298_write_reg(dev, ch, 1, &data);
+		ret = ads1298_write_reg(dev, ch, value);
 		if (ret) return ret;
 	}
 	
 	return 0;
 }
 
-
-
-//static void ads1298_data_work_handler(struct k_work *work)
-//{
-//    struct k_work_delayable *dwork = k_work_delayable_from_work(work);
-//    struct ads1298_i2s_data *data = CONTAINER_OF(dwork, struct ads1298_i2s_data, data_work);
-//    const struct device *dev = data->dev;
-//    const struct ads1298_i2s_config *cfg = dev->config;
-//    void *mem_block;
-//    int ret;
-//
-//    if (!data->running) {
-//        return;
-//    }
-
 /* ON interrupt*/
-__unused
-static void ads1298_data_process(const struct device *dev)
+static void ads1298_i2s_read_data(const struct device *dev)
 {
     struct ads1298_i2s_data *data = dev->data;
     int ret;
     void *mem_block;
 
+    if (data->read_busy) {
+        LOG_WRN("DRDY interrupt triggered before previous read completed");
+        return;
+    }
 
-	/* TODO: Check DRDY signal ? */
+    data->read_busy = true;
 
     ret = k_mem_slab_alloc(data->mem_slab, &mem_block, K_NO_WAIT);
     if (ret == 0) {
@@ -107,6 +131,15 @@ static void ads1298_data_process(const struct device *dev)
             k_mem_slab_free(data->mem_slab, mem_block);
         }
     }
+
+    data->read_busy = false;
+}
+
+static void ads1298_drdy_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+    struct ads1298_i2s_data *data = CONTAINER_OF(cb, struct ads1298_i2s_data, drdy_cb);
+    /* Todo: call this outside of interrupt context */
+    ads1298_i2s_read_data(data->dev);
 }
 
 static int ads1298_i2s_configure(const struct device *dev, enum i2s_dir dir,
@@ -163,6 +196,7 @@ static int ads1298_i2s_trigger(const struct device *dev, enum i2s_dir dir,
                                enum i2s_trigger_cmd cmd)
 {
 	struct ads1298_i2s_data *data = dev->data;
+    const struct ads1298_i2s_config *cfg = dev->config;
 	int ret;
 	
 	if (dir != I2S_DIR_RX) {
@@ -175,7 +209,17 @@ static int ads1298_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 			return -EALREADY;
 		}
 
-        /* TODO */
+		data->running = true;
+		data->read_busy = false;
+
+		/* Send start command */
+		ret = ads1298_send_command(dev, ADS1298_CMD_RDATAC);
+		if (ret) return ret;
+
+		/* Enable DRDY interrupt after Tsettle delay based on data rate */
+		uint32_t tsettle_us = ads1298_get_tsettle_us(data->current_config1);
+        k_busy_wait(tsettle_us);
+        gpio_pin_interrupt_configure_dt(&cfg->drdy_gpio, GPIO_INT_EDGE_TO_ACTIVE);
 
 		LOG_INF("ADS1298 I2S stream started");
 		break;
@@ -187,7 +231,13 @@ static int ads1298_i2s_trigger(const struct device *dev, enum i2s_dir dir,
 		
 		data->running = false;
 
-        /* TODO */
+		/* Disable DRDY interrupt */
+		const struct ads1298_i2s_config *cfg = dev->config;
+		gpio_pin_interrupt_configure_dt(&cfg->drdy_gpio, GPIO_INT_DISABLE);
+
+		/* Send stop command */
+		ret = ads1298_send_command(dev, ADS1298_CMD_SDATAC);
+		if (ret) return ret;
 
 		LOG_INF("ADS1298 I2S stream stopped");
 		break;
@@ -222,7 +272,7 @@ static inline void ads1298_reset_sequence(const struct ads1298_i2s_config *cfg)
 static int ads1298_probe(const struct device *dev)
 {
     uint8_t  id = 0;
-    int ret = ads1298_read_reg(dev, ADS1298_REG_ID, 1, &id);
+    int ret = ads1298_read_reg(dev, ADS1298_REG_ID, &id);
     LOG_DBG("read ID: 0x%02x", id);
     if( ret != 0 || id != 0x92) /* TODO, there are multiple valid IDs*/
     {
@@ -294,7 +344,16 @@ static int ads1298_i2s_init(const struct device *dev)
     /* Initialize device */
 	data->dev = dev;
 	data->running = false;
-//	k_work_init_delayable(&data->data_work, ads1298_data_work_handler);
+	data->read_busy = false;
+	data->current_config1 = 0x06; /* Reset Value */
+
+	/* Configure DRDY interrupt */
+	gpio_init_callback(&data->drdy_cb, ads1298_drdy_callback, BIT(cfg->drdy_gpio.pin));
+	ret = gpio_add_callback(cfg->drdy_gpio.port, &data->drdy_cb);
+	if (ret) {
+		LOG_ERR("Failed to add DRDY callback: %d", ret);
+		return ret;
+	}
 	
 	ret = ads1298_base_setup_device(dev);
 	if (ret) {
