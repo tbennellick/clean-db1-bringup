@@ -1,0 +1,56 @@
+description: |
+  Texas Instruments ADS1298 8-channel, 24-bit analog-to-digital converter
+  with integrated programmable gain amplifier and internal reference.
+
+compatible: "ti,ads1298_i2s"
+
+include: [sensor-device.yaml, spi-device.yaml]
+
+properties:
+  int-gpios:
+    type: phandle-array
+    description: |
+      The INT signal defaults to active low open drain, so requires a
+      pull-up on the board or in the flags cell of this entry.
+
+  clksel-gpios:
+    type: phandle-array
+    description: |
+      GPIO pin for clock select signal (CLKSEL).
+      High = internal clock, Low = external clock.
+
+  nrst-gpios:
+    type: phandle-array
+    description: |
+      GPIO pin for reset signal (nRST).
+      Active low reset pin.
+
+  npwdn-gpios:
+    type: phandle-array
+    description: |
+      GPIO pin for power down signal (nPWDN).
+      Active low power down pin.
+
+  start-conv-gpios:
+    type: phandle-array
+    description: |
+      GPIO pin for start conversion signal (START).
+      High = start conversions, Low = stop conversions.
+
+  drdy-gpios:
+    type: phandle-array
+    description: |
+      GPIO pin for data ready signal (DRDY).
+      Goes low when new data is available.
+
+  sample-rate:
+    type: int
+    default: 250
+    description: |
+      Sample rate in Hz. Supported rates: 250, 500, 1000, 2000, 4000, 8000, 16000, 32000.
+
+  channels:
+    type: int
+    default: 8
+    description: |
+      Number of channels to enable (1-8).

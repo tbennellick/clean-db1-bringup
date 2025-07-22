@@ -1,2 +1,3 @@
 add_subdirectory_ifdef(CONFIG_AUDIO audio)
+add_subdirectory_ifdef(CONFIG_I2S i2s)
 add_subdirectory_ifdef(CONFIG_SENSOR sensor)
