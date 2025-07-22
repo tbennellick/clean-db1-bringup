@@ -61,7 +61,7 @@ void exg_rx_thread_func(void *p1, void *p2, void *p3)
 
 int init_exg(void)
 {
-    const struct device *const dev = DEVICE_DT_GET_ONE(ti_ads1298);
+    const struct device *const dev = DEVICE_DT_GET_ONE(ti_ads1298_i2s);
     struct exg_config exg_cfg;
     int ret;
 

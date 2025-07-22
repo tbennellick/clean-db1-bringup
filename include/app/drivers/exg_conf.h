@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include <zephyr/kernel.h>
+
 struct exg_config {
     /** Number of channels in use */
     uint8_t channels;
