@@ -11,6 +11,7 @@
 
 #include "ads1298_i2s.h"
 #include "ads1298_reg.h"
+#include "ads1298_utils.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ADS1298_I2S, LOG_LEVEL_DBG);
@@ -37,37 +38,6 @@ static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint8_t val)
     return 0;
 }
 
-/* ADS1298 Settling Time Table (Table 12 from datasheet) */
-static const ads1298_settling_time_t settling_table[] = {
-        {0b000,  296,     584},
-        {0b001,  584,    1160},
-        {0b010, 1160,    2312},
-        {0b011, 2312,    4616},
-        {0b100, 4616,    9224},
-        {0b101, 9224,   18440},
-        {0b110,18440,   36872}
-};
-
-static uint32_t ads1298_get_tsettle_us(uint8_t config1_reg)
-{
-	uint8_t dr_bits = config1_reg & ADS1298_CONFIG1_DR_MASK;
-	uint16_t cycles;
-
-    if (dr_bits > 6) {
-        LOG_ERR("Invalid DR bits: %d", dr_bits);
-        return 0;
-    }
-    if(config1_reg & ADS1298_CONFIG1_HR) {
-        /* High-Resolution Mode */
-        cycles = settling_table[dr_bits].hr_mode_cycles;
-    } else {
-        /* Low-Power Mode */
-        cycles = settling_table[dr_bits].lp_mode_cycles;
-    }
-    uint32_t ps = cycles * ADS1298_TCLK_PS;
-    uint32_t us = (ps / 1000000) + 1; /* Convert ns to ms, round up */
-    return us;
-}
 
 static int ads1298_base_setup_device(const struct device *dev)
 {
