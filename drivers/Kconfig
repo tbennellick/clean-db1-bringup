@@ -1,5 +1,6 @@
 menu "Drivers"
 rsource "audio/Kconfig"
 rsource "blink/Kconfig"
+rsource "i2s/Kconfig"
 rsource "sensor/Kconfig"
 endmenu
