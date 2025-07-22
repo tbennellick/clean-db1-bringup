@@ -20,7 +20,8 @@ struct ads1298_i2s_config {
 struct ads1298_i2s_data {
 	struct k_mem_slab *mem_slab;
 	struct k_msgq *data_queue;
-	uint32_t timeout;
+    void * rx_in_msgs[CONFIG_EXG_RX_SAMPLE_COUNT];
+    uint32_t timeout;
 	bool running;
 	bool read_busy;
 	uint8_t current_config1;

@@ -4,3 +4,12 @@ config I2S_ADS1298
 	help
 	  Enable driver for TI ADS1298 EXG (ECG/EEG) analog front-end
 	  IC that presents data as an I2S-like stream.
+
+
+config EXG_RX_SAMPLE_COUNT
+    int "Number of samples to receive in one I2S transaction"
+    default 32
+#     range 1 256
+    help
+      This is the number of samples that?
+#TODO
