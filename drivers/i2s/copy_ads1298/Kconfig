@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config I2S_ADS1298
+	bool "TI ADS1298 EXG I2S driver"
+	depends on I2S && SPI && GPIO
+	help
+	  Enable driver for TI ADS1298 EXG (ECG/EEG) analog front-end
+	  IC that presents data as an I2S-like stream.
