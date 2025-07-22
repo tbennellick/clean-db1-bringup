@@ -2,6 +2,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include "exg_conf.h"
+#include "ads1298_public.h"
 #include "gpio_init.h"
 
 #include <zephyr/drivers/i2s.h>
@@ -11,7 +12,7 @@ LOG_MODULE_REGISTER(exg, LOG_LEVEL_DBG);
 
 
 /* TODO - sort this out*/
-#define NUM_BLOCKS 20
+#define SAMPLES_IN_SLAB 20
 #define SAMPLE_NO 64
 #define BLOCK_SIZE (2 * SAMPLE_NO)
 
@@ -23,10 +24,10 @@ LOG_MODULE_REGISTER(exg, LOG_LEVEL_DBG);
 #endif
 
 static char MEM_SLAB_CACHE_ATTR __aligned(WB_UP(32))
-_k_mem_slab_buf_exg_0_mem_slab[(NUM_BLOCKS + 2) * WB_UP(BLOCK_SIZE)];
+_k_mem_slab_buf_exg_0_mem_slab[(SAMPLES_IN_SLAB + 2) * WB_UP(sizeof(ads1298_sample))];
 STRUCT_SECTION_ITERABLE(k_mem_slab, exg_0_mem_slab) =
         Z_MEM_SLAB_INITIALIZER(exg_0_mem_slab, _k_mem_slab_buf_exg_0_mem_slab,
-                               WB_UP(BLOCK_SIZE), NUM_BLOCKS + 2);
+                               WB_UP(sizeof(ads1298_sample)), SAMPLES_IN_SLAB);
 
 
 #define EXG_RX_THREAD_STACK_SIZE 1024
