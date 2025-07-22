@@ -17,14 +17,88 @@
 LOG_MODULE_REGISTER(ADS1298_I2S, LOG_LEVEL_DBG);
 
 
-static int ads1298_send_command(const struct device *dev, uint8_t cmd)
+#define MAX_REG_RW_BYTES 256
+#define REG_WRITE_OPCODE_LEN 2 /* 1 byte for command and reg  + 1 byte for length */
+#define EXG_MAX_SPI_LEN (MAX_REG_RW_BYTES+REG_WRITE_OPCODE_LEN)
+uint8_t actual_tx_buffer[EXG_MAX_SPI_LEN];
+uint8_t actual_rx_buffer[EXG_MAX_SPI_LEN];
+struct spi_buf tx_bufs[] = {
+        {
+                .buf = actual_tx_buffer,
+                .len = sizeof(actual_tx_buffer),
+        },
+};
+struct spi_buf rx_bufs[] = {
+        {
+                .buf = actual_rx_buffer,
+                .len = sizeof(actual_rx_buffer),
+        },
+};
+const struct spi_buf_set tx = {
+        .buffers = tx_bufs,
+        .count = ARRAY_SIZE(tx_bufs)
+};
+const struct spi_buf_set rx = {
+        .buffers = rx_bufs,
+        .count = ARRAY_SIZE(rx_bufs)
+};
+
+
+
+/* Bufs can be null */
+static int ads1298_transact(const struct device *dev, const struct spi_buf_set *txbs, const struct spi_buf_set *rxbs)
 {
-    return 0;
+    const struct ads1298_dev_config *cfg = dev->config;
+
+    int ret  = spi_transceive(cfg->bus.bus, &cfg->bus.config , txbs, rxbs);
+
+    if (ret !=0) {
+        LOG_ERR("Failed to transact with SPI device (%d)", ret);
+    }
+    return ret;
+}
+
+
+static int ads1298_send_command(const struct device *dev, ads1298_cmd_t cmd)
+{
+    actual_tx_buffer[0] = cmd;
+    tx_bufs[0].len = 1;
+
+    int ret = ads1298_transact(dev, &tx, NULL);
+    LOG_DBG("Set SDATAC mode ret: %d", ret);
+
+    return ret;
 }
 
 static int ads1298_read_reg(const struct device *dev, uint8_t reg, uint8_t *val)
 {
-    return 0;
+    struct ads1298_i2s_data *data = dev->data;
+
+    if (reg > 0x1F) {
+        LOG_ERR("Invalid register %d", reg);
+        return -EINVAL;
+    }
+
+    actual_tx_buffer[0] = ADS1298_CMD_RREG | (reg & 0x1F); /* Read command */
+    actual_tx_buffer[1] = 0; /* Number of reg to read -1 */
+    actual_tx_buffer[2] = 0; /* Dummy byte for read command */
+    tx_bufs[0].len = 3;
+    rx_bufs[0].len = 3;
+
+    int ret = ads1298_transact(dev, &tx, &rx);
+    if (ret) {
+        LOG_ERR("Failed to read register %d: %d", reg, ret);
+        return ret;
+    }
+    *val = rx_bufs[0].buf[2];
+
+    if (reg == ADS1298_REG_CONFIG1)
+    {
+        data->current_config1 = *val;
+    }
+
+    return ret;
+
 }
 
 static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint8_t val)
@@ -35,7 +109,21 @@ static int ads1298_write_reg(const struct device *dev, uint8_t reg, uint8_t val)
         data->current_config1 = val;
     }
 
-    return 0;
+    if (reg > 0x1F) {
+        LOG_ERR("Invalid register %d", reg);
+        return -EINVAL;
+    }
+
+    actual_tx_buffer[0] = ADS1298_CMD_WREG | (reg & 0x1F);
+    actual_tx_buffer[1] = 0;
+    actual_tx_buffer[2] = val;
+    tx_bufs[0].len = 3;
+    int ret = ads1298_transact(dev, &tx, NULL);
+    if (ret) {
+        LOG_ERR("Failed to write register %d: %d", reg, ret);
+        return ret;
+    }
+    return ret;
 }
 
 
