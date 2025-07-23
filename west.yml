@@ -21,4 +21,5 @@ manifest:
           - hal_nxp
           - hal_st
           - fatfs
+          - littlefs
 
