@@ -20,7 +20,6 @@
 		zephyr,uart-mcumgr = &flexcomm4_lpuart4;
 		zephyr,console = &flexcomm4_lpuart4;
 		zephyr,shell-uart = &flexcomm4_lpuart4;
-		zephyr,canbus = &flexcan0;
 		zephyr,code-cpu1-partition = &slot1_partition;
 		zephyr,display = &st7789v;
 	};
@@ -62,8 +61,8 @@
 		mcuboot-button0 = &user_button_2;
 
 		watchdog0 = &wwdt0;
-		pwm-0 = &flexpwm1_pwm0;
-		pwm-1 = &sc_timer;
+//		pwm-0 = &flexpwm1_pwm0;
+//		pwm-1 = &sc_timer;
 		rtc = &rtc;
 	};
 	leds {
@@ -505,9 +504,7 @@
 };
 
 &dac0 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_dac0>;
-	pinctrl-names = "default";
+	status = "disabled";
 };
 &enet {
 	status = "disabled";
@@ -526,14 +523,21 @@
 };
 
 &flexpwm1_pwm0 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
-	pinctrl-names = "default";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
+//	pinctrl-names = "default";
 };
+&flexpwm1_pwm1 {
+	status = "disabled";
+};
+&flexpwm1_pwm2 {
+	status = "disabled";
+}
+
 &flexcan0 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_flexcan0>;
-	pinctrl-names = "default";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_flexcan0>;
+//	pinctrl-names = "default";
 };
 
 &ctimer0 {
@@ -586,9 +590,9 @@ zephyr_udc0: &usb1 {
 };
 
 &i3c1 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_i3c1>;
-	pinctrl-names = "default";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_i3c1>;
+//	pinctrl-names = "default";
 };
 
 &flexio0 {
@@ -633,24 +637,23 @@ zephyr_udc0: &usb1 {
 };
 
 
-zephyr_mipi_dbi_parallel: &flexio0_lcd {
-	/* DMA channels 0, muxed to FlexIO TX */
-	dmas = <&edma0 0 61>;
-	dma-names = "tx";
-	shifters-count = <8>;
-	timers-count = <1>;
-	enwr-pin = <1>;
-	rd-pin = <0>;
-	data-pin-start = <16>;
-	reset-gpios = <&gpio4 7 GPIO_ACTIVE_HIGH>;
-	cs-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
-	rs-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
-	pinctrl-0 = <&pinmux_flexio_lcd>;
-	pinctrl-names = "default";
-};
+//zephyr_mipi_dbi_parallel: &flexio0_lcd {
+//	/* DMA channels 0, muxed to FlexIO TX */
+//	dmas = <&edma0 0 61>;
+//	dma-names = "tx";
+//	shifters-count = <8>;
+//	timers-count = <1>;
+//	enwr-pin = <1>;
+//	rd-pin = <0>;
+//	data-pin-start = <16>;
+//	reset-gpios = <&gpio4 7 GPIO_ACTIVE_HIGH>;
+//	cs-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+//	rs-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+//	pinctrl-0 = <&pinmux_flexio_lcd>;
+//	pinctrl-names = "default";
+//};
 
-
-/* SmartDMA is used for video driver on this board */
+/* TODO Is this in use? */
 &smartdma {
 	status = "okay";
 	program-mem = <0x4000000>;
