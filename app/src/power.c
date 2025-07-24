@@ -20,6 +20,8 @@ static const struct gpio_dt_spec ven_ble = GPIO_DT_SPEC_GET(POWER_VEN_BLE, gpios
 static const struct gpio_dt_spec ven_sys = GPIO_DT_SPEC_GET(POWER_VEN_SYS, gpios);
 #define POWER_VEN_BAT DT_ALIAS(power_ven_bat)
 static const struct gpio_dt_spec ven_bat = GPIO_DT_SPEC_GET(POWER_VEN_BAT, gpios);
+#define DISP_BL DT_ALIAS(backlight)
+static const struct gpio_dt_spec backlight = GPIO_DT_SPEC_GET(DISP_BL, gpios);
 
 
 /* TODO */
@@ -63,6 +65,10 @@ void init_power(void)
 
 }
 
+void backlight_on(void)
+{
+    safe_init_gpio(&backlight, GPIO_OUTPUT_HIGH);
+}
 
 
 static int auto_early_power_up(void) {

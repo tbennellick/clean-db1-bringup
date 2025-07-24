@@ -17,6 +17,11 @@ target_sources(app PRIVATE src/gpio_init.c)
 target_sources(app PRIVATE src/fuel_gauge.c)
 target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
+target_sources(app PRIVATE src/display.c)
+
+#Logo can be optionally removed from the build.
+zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artefacts/test_logo.c)
+target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../artefacts)
 
 # This exposes the audio codec routing enum to the app,
 # it seems that there is not a nice way to handle this.

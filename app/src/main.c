@@ -14,6 +14,7 @@
 #include "fuel_gauge.h"
 #include "als.h"
 #include "audio.h"
+#include "display.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -33,6 +34,7 @@ int main(void) {
     init_modem();
     init_als();
     init_audio();
+    init_display();
 
     LOG_INF("Init complete");
     while (1)
