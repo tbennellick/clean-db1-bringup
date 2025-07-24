@@ -52,6 +52,7 @@
 		modem-on = &modem_on;
 
 		hs-usb-sel = &hs_usb_sel;
+		emmc-reset = &emmc_reset;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -150,6 +151,10 @@
 		hs_usb_sel: hs_usb_sel {
 			gpios = <&gpio1 16 GPIO_ACTIVE_HIGH>;
 			label = "HS USB Mux Select";
+		};
+		emmc_reset: emmc_reset {
+			gpios = <&gpio1 17 GPIO_ACTIVE_LOW>;
+			label = "eMMC Reset";
 		};
 	};
 
@@ -501,6 +506,7 @@
 	pinctrl-2 = <&pinmux_usdhc0>;
 	pinctrl-names = "default", "slow", "med";
 	no-1-8-v;
+	pwr-gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>;
 	
 	/* eMMC - embedded storage */
 	emmc {

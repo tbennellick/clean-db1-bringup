@@ -5,6 +5,7 @@
 #include <zephyr/fs/littlefs.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/led.h>
 #include <string.h>
 
 #include "storage.h"
@@ -25,6 +26,9 @@ static struct fs_mount_t lfs_storage_mnt = {
 
 static bool storage_initialized = false;
 
+static const struct gpio_dt_spec emmc_reset = GPIO_DT_SPEC_GET(DT_ALIAS(emmc_reset), gpios);
+
+
 int init_storage(void)
 {
     int rc;
@@ -33,6 +37,25 @@ int init_storage(void)
         LOG_WRN("Storage already initialized");
         return 0;
     }
+
+    if (!gpio_is_ready_dt(&emmc_reset)) {
+        LOG_ERR("eMMC reset GPIO not ready");
+        return -ENODEV;
+    }
+
+    rc = gpio_pin_configure_dt(&emmc_reset, GPIO_OUTPUT_ACTIVE);
+    if (rc != 0) {
+        LOG_ERR("Failed to configure eMMC reset pin: %d", rc);
+        return rc;
+    }
+    LOG_INF("eMMC reset pin asserted");
+
+    k_sleep(K_MSEC(10));
+
+    gpio_pin_set_dt(&emmc_reset, 0);
+    LOG_INF("eMMC reset pin de-asserted");
+
+    k_sleep(K_MSEC(100));
 
     /* Initialize disk access */
     rc = disk_access_init(STORAGE_PARTITION_LABEL);
