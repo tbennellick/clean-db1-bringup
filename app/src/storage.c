@@ -27,7 +27,7 @@ static struct fs_mount_t lfs_storage_mnt = {
 
 static bool storage_initialized = false;
 
-static const struct gpio_dt_spec emmc_reset = GPIO_DT_SPEC_GET(DT_ALIAS(emmc_reset), gpios);
+//static const struct gpio_dt_spec emmc_reset = GPIO_DT_SPEC_GET(DT_ALIAS(emmc_reset), gpios);
 
 
 int init_storage(void)
@@ -39,26 +39,30 @@ int init_storage(void)
         return 0;
     }
 
-    if (!gpio_is_ready_dt(&emmc_reset)) {
-        LOG_ERR("eMMC reset GPIO not ready");
-        return -ENODEV;
-    }
+//    if (!gpio_is_ready_dt(&emmc_reset)) {
+//        LOG_ERR("eMMC reset GPIO not ready");
+//        return -ENODEV;
+//    }
 
-    rc = gpio_pin_configure_dt(&emmc_reset, GPIO_OUTPUT_ACTIVE);
-    if (rc != 0) {
-        LOG_ERR("Failed to configure eMMC reset pin: %d", rc);
-        return rc;
-    }
-    LOG_INF("eMMC reset pin asserted");
 
-    /* Hold reset for minimum 1ms as per eMMC spec */
-    k_sleep(K_MSEC(50));
+    LOG_DBG("SDHC clock at %d",CLOCK_GetUsdhcClkFreq());
 
-    gpio_pin_set_dt(&emmc_reset, 0);
-    LOG_INF("eMMC reset pin de-asserted");
-
-    /* Wait for eMMC internal initialization - spec requires 74+ clock cycles */
-    k_sleep(K_MSEC(200));
+//
+//    rc = gpio_pin_configure_dt(&emmc_reset, GPIO_OUTPUT_ACTIVE);
+//    if (rc != 0) {
+//        LOG_ERR("Failed to configure eMMC reset pin: %d", rc);
+//        return rc;
+//    }
+//    LOG_INF("eMMC reset pin asserted");
+//
+//    /* Hold reset for minimum 1ms as per eMMC spec */
+//    k_sleep(K_MSEC(50));
+//
+//    gpio_pin_set_dt(&emmc_reset, 0);
+//    LOG_INF("eMMC reset pin de-asserted");
+//
+//    /* Wait for eMMC internal initialization - spec requires 74+ clock cycles */
+//    k_sleep(K_MSEC(200));
 
     /* Initialize disk access */
     rc = disk_access_init(STORAGE_PARTITION_LABEL);
