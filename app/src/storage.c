@@ -10,7 +10,8 @@
 
 #include "storage.h"
 
-LOG_MODULE_REGISTER(storage, CONFIG_APP_LOG_LEVEL);
+//LOG_MODULE_REGISTER(storage, CONFIG_APP_LOG_LEVEL);
+LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
 
 #define STORAGE_PARTITION_LABEL "EMMC"
 #define STORAGE_MOUNT_POINT "/lfs"
@@ -50,12 +51,14 @@ int init_storage(void)
     }
     LOG_INF("eMMC reset pin asserted");
 
-    k_sleep(K_MSEC(10));
+    /* Hold reset for minimum 1ms as per eMMC spec */
+    k_sleep(K_MSEC(50));
 
     gpio_pin_set_dt(&emmc_reset, 0);
     LOG_INF("eMMC reset pin de-asserted");
 
-    k_sleep(K_MSEC(100));
+    /* Wait for eMMC internal initialization - spec requires 74+ clock cycles */
+    k_sleep(K_MSEC(200));
 
     /* Initialize disk access */
     rc = disk_access_init(STORAGE_PARTITION_LABEL);
