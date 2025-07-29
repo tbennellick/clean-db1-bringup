@@ -12,25 +12,19 @@ LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 #define TEMP_SAMPLE_INTERVAL_MS 10  /* 100Hz = 10ms interval */
 #define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
 
-/* Direct reference to the single ADC channel */
-static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
-
-
-static int16_t m_sample_buffer;
 
 
 
 typedef struct {
-    const struct device *adc_dev;
-    struct adc_sequence adc_seq;
+    const struct adc_dt_spec *adc_dev_dt;
+    struct adc_sequence sequence;
+    temp_block_t current_block;
+    uint16_t sample_count;
+    int16_t m_sample_buffer;
 } temp_timer_ctx_t;
 
 static struct k_timer temp_timer;
 static temp_timer_ctx_t timer_ctx;
-
-/* Sample aggregation variables */
-static temp_block_t current_block;
-static uint16_t sample_count = 0;
 
 static struct k_msgq temp_msgq;
 static char __aligned(4) temp_msgq_buffer[TEMP_MSGQ_SIZE * sizeof(temp_block_t)];
@@ -39,29 +33,32 @@ static void temp_timer_handler(struct k_timer *timer)
 {
     temp_timer_ctx_t *ctx = k_timer_user_data_get(timer);
     int16_t sample_buffer;
-    
-    ctx->adc_seq.buffer = &sample_buffer;
-    
-    int ret = adc_read(ctx->adc_dev, &ctx->adc_seq);
-    if (ret < 0) {
+    int ret;
+
+    ret = adc_read_dt(ctx->adc_dev_dt, &ctx->sequence);
+    if (ret < 0)
+    {
         LOG_ERR("ADC read failed: %d", ret);
         return;
     }
-    
-    current_block.samples[sample_count] = sample_buffer;
-    sample_count++;
-    
+
+    LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
+
+    /* This can be optimised with pointer shuffling but it's going in the bin hopefully*/
+    ctx->current_block.samples[ctx->sample_count] = ctx->m_sample_buffer;
+    ctx->sample_count++;
+
     /* If block is full, send it to message queue */
-    if (sample_count >= TEMP_BLOCK_SIZE) {
-        current_block.count = sample_count;
-        current_block.timestamp_ms = k_uptime_get_32();
-        
-        ret = k_msgq_put(&temp_msgq, &current_block, K_NO_WAIT);
+    if (ctx->sample_count >= TEMP_BLOCK_SIZE) {
+        ctx->current_block.count = ctx->sample_count;
+        ctx->current_block.timestamp_ms = k_uptime_get_32();
+
+        ret = k_msgq_put(&temp_msgq, &ctx->current_block, K_NO_WAIT);
         if (ret != 0) {
             LOG_WRN("Temperature message queue full, dropping block");
         }
         
-        sample_count = 0;
+        ctx->sample_count = 0;
     }
 }
 
@@ -70,90 +67,41 @@ int init_temperature(void)
     int ret;
 
     LOG_DBG("Initializing temperature ADC");
+    timer_ctx.adc_dev_dt = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
-    ret = adc_is_ready_dt(&temp_adc_channel);
+    ret = adc_is_ready_dt(timer_ctx.adc_dev_dt);
     if (!ret) {
         LOG_ERR("ADC device is not ready");
         return -ENODEV;
     }
 
-    ret = adc_channel_setup_dt(&temp_adc_channel);
+    ret = adc_channel_setup_dt(timer_ctx.adc_dev_dt);
     if (ret < 0) {
         LOG_ERR("ADC channel setup failed: %d", ret);
         return ret;
     }
 
-    struct adc_sequence sequence = {
-            .buffer = &m_sample_buffer,
-            .buffer_size = sizeof(m_sample_buffer),
-    };
+    timer_ctx.sequence.buffer = &timer_ctx.m_sample_buffer;
+    timer_ctx.sequence.buffer_size = sizeof(timer_ctx.m_sample_buffer);
 
-    memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
-
-    ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
+    ret = adc_sequence_init_dt(timer_ctx.adc_dev_dt, &timer_ctx.sequence);
     if (ret < 0) {
         LOG_ERR("ADC sequence initialization failed: %d", ret);
         return ret;
     }
 
-    while(1)
-    {
-        ret = adc_read_dt(&temp_adc_channel, &sequence);
-        if (ret < 0)
-        {
-            LOG_ERR("ADC read failed: %d", ret);
-            return ret;
-        }
 
-        LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
-        k_sleep(K_MSEC(1000));
-    }
+    k_msgq_init(&temp_msgq, temp_msgq_buffer, sizeof(temp_block_t), TEMP_MSGQ_SIZE);
 
+    timer_ctx.sample_count = 0;
+    timer_ctx.current_block.count = 0;
+    timer_ctx.current_block.timestamp_ms = 0;
+
+    k_timer_init(&temp_timer, temp_timer_handler, NULL);
+    k_timer_user_data_set(&temp_timer, &timer_ctx);
+    k_timer_start(&temp_timer, K_MSEC(TEMP_SAMPLE_INTERVAL_MS), K_MSEC(TEMP_SAMPLE_INTERVAL_MS));
+    return 0;
 }
-
-
-//int init_temperature(void)
-//{
-//    int ret;
-//    struct adc_channel_cfg adc_channel_cfg;
-//    struct adc_sequence adc_seq;
-//
-//    sample_count = 0;
-//    k_msgq_init(&temp_msgq, temp_msgq_buffer, sizeof(temp_block_t), TEMP_MSGQ_SIZE);
-//
-//    timer_ctx.adc_dev = DEVICE_DT_GET(ADC_NODE);
-//    if (!device_is_ready(timer_ctx.adc_dev)) {
-//        LOG_ERR("ADC device not ready");
-//        return -ENODEV;
-//    }
-//
-//
-//    /* Configure ADC channel */
-//    adc_channel_cfg.gain = ADC_GAIN_1;
-//    adc_channel_cfg.reference = ADC_REF_EXTERNAL0;
-//    adc_channel_cfg.acquisition_time = ADC_ACQ_TIME_DEFAULT;
-//    adc_channel_cfg.channel_id = ADC_CHANNEL;
-//    adc_channel_cfg.differential = 0;
-//
-//    ret = adc_channel_setup(timer_ctx.adc_dev, &adc_channel_cfg);
-//    if (ret < 0) {
-//        LOG_ERR("ADC channel setup failed: %d", ret);
-//        return ret;
-//    }
-//
-//    /* Configure ADC sequence in timer context */
-//    adc_seq.channels = BIT(ADC_CHANNEL);
-//    adc_seq.buffer_size = sizeof(int16_t);
-//    adc_seq.resolution = 16;
-//    adc_seq.oversampling = 0;
-//    adc_seq.calibrate = false;
-//    timer_ctx.adc_seq = adc_seq;
-//
-//    k_timer_init(&temp_timer, temp_timer_handler, NULL);
-//    k_timer_user_data_set(&temp_timer, &timer_ctx);
-//    k_timer_start(&temp_timer, K_MSEC(TEMP_SAMPLE_INTERVAL_MS), K_MSEC(TEMP_SAMPLE_INTERVAL_MS));
-//    return 0;
-//}
 
 int temperature_read_block(temp_block_t *block, k_timeout_t timeout)
 {
