@@ -16,7 +16,7 @@ LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
 
-static int16_t m_sample_buffer[6];
+static int16_t m_sample_buffer;
 
 
 
@@ -84,7 +84,7 @@ int init_temperature(void)
     }
 
     struct adc_sequence sequence = {
-            .buffer = m_sample_buffer,
+            .buffer = &m_sample_buffer,
             .buffer_size = sizeof(m_sample_buffer),
     };
 
@@ -105,7 +105,7 @@ int init_temperature(void)
             return ret;
         }
 
-        LOG_HEXDUMP_DBG(m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
+        LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
         k_sleep(K_MSEC(1000));
     }
 
