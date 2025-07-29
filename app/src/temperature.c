@@ -98,6 +98,8 @@ int init_temperature(void)
 {
     int i, ret;
 
+    LOG_DBG(" %d ADC channels found", adc_channels_count);
+
     ret = adc_is_ready_dt(&adc_channels[0]);
     if (!ret) {
         LOG_ERR("ADC device is not ready");
@@ -117,20 +119,26 @@ int init_temperature(void)
             .buffer_size = sizeof(m_sample_buffer),
     };
 
-    ret = adc_sequence_init_dt(&adc_channels[0], &sequence);
+    memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
+
+    ret = adc_sequence_init_dt(&adc_channels[2], &sequence);
     if (ret < 0) {
         LOG_ERR("ADC sequence initialization failed: %d", ret);
         return ret;
     }
 
-    ret = adc_read_dt(&adc_channels[0], &sequence);
-    if (ret < 0 ) {
-        LOG_ERR("ADC read failed: %d", ret);
-        return ret;
+    while(1)
+    {
+        ret = adc_read_dt(&adc_channels[2], &sequence);
+        if (ret < 0)
+        {
+            LOG_ERR("ADC read failed: %d", ret);
+            return ret;
+        }
+
+        LOG_HEXDUMP_DBG(m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
+        k_sleep(K_MSEC(1000));
     }
-
-    LOG_HEXDUMP_DBG(m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
-
 
 }
 
