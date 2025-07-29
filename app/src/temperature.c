@@ -77,7 +77,7 @@ int init_temperature(void)
 
     /* Configure ADC channel */
     adc_channel_cfg.gain = ADC_GAIN_1;
-    adc_channel_cfg.reference = ADC_REF_INTERNAL;
+    adc_channel_cfg.reference = ADC_REF_EXTERNAL0;
     adc_channel_cfg.acquisition_time = ADC_ACQ_TIME_DEFAULT;
     adc_channel_cfg.channel_id = ADC_CHANNEL;
     adc_channel_cfg.differential = 0;
