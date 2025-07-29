@@ -184,7 +184,13 @@
 					  <11  0 &gpio4 7 0>;	/* Pin 11, LCD and touch reset */
 	};
 
+	zephyr,user {
+		io-channels = <&lpadc0 0>, <&lpadc0 1>;
+	};
+
 };
+
+
 
 /*
  * Default for this board is to allocate SRAM0-5 to cpu0 but the
@@ -523,9 +529,6 @@
 	status = "okay";
 	pinctrl-0 = <&pinmux_lpadc0>;
 	pinctrl-names = "default";
-//};
-//
-//&lpadc0 {
 	#address-cells = <1>;
 	#size-cells = <0>;
 
@@ -548,18 +551,7 @@
 		zephyr,vref-mv = <1800>;
 		zephyr,input-positive = <MCUX_LPADC_CH2A>;
 	};
-
-	channel@3 {
-		reg = <3>;
-		zephyr,gain = "ADC_GAIN_1";
-		zephyr,reference = "ADC_REF_EXTERNAL0";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,resolution = <16>;
-		zephyr,vref-mv = <3300>;
-		zephyr,input-positive = <MCUX_LPADC_CH6A>;
-	};
 };
-
 
 
 
