@@ -31,7 +31,7 @@ int main(void) {
     init_pressure();
 //    init_exg();
     init_fuel_gauge();
-    init_modem();
+//    init_modem();
     init_als();
     init_audio();
     init_temperature();
@@ -49,7 +49,7 @@ int main(void) {
             int16_t avg_raw = sum / temp_block.count;
             LOG_INF("Temperature block avg raw: %d,", avg_raw);
         }
-        
+        k_sleep(K_MSEC(2));
 //        k_sleep(K_SECONDS(1));
         printk(".");
         debug_led_toggle();

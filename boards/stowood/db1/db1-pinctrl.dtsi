@@ -218,7 +218,8 @@
 
 	pinmux_lpadc0: pinmux_lpadc0 {
 		group0 {
-			pinmux = <ADC0_A3_PIO4_6>;
+			pinmux = <ADC0_A2_PIO4_23>,
+				<ADC0_A6_PIO4_16>;
 			slew-rate = "fast";
 			drive-strength = "low";
 		};

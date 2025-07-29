@@ -5,6 +5,9 @@
 #include <zephyr/dt-bindings/i2c/i2c.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/mcux-lpadc.h>
+
 / {
 	model = "NXP FRDM_N94 board";
 	compatible = "nxp,mcxn947", "nxp,mcx";
@@ -486,7 +489,7 @@
 };
 &flexpwm1_pwm2 {
 	status = "disabled";
-}
+};
 
 &flexcan0 {
 	status = "disabled";
@@ -520,7 +523,44 @@
 	status = "okay";
 	pinctrl-0 = <&pinmux_lpadc0>;
 	pinctrl-names = "default";
+//};
+//
+//&lpadc0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_EXTERNAL1";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+		zephyr,vref-mv = <1800>;
+		zephyr,input-positive = <MCUX_LPADC_CH1A>;
+	};
+
+	channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_EXTERNAL1";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+		zephyr,vref-mv = <1800>;
+		zephyr,input-positive = <MCUX_LPADC_CH2A>;
+	};
+
+	channel@3 {
+		reg = <3>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_EXTERNAL0";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <16>;
+		zephyr,vref-mv = <3300>;
+		zephyr,input-positive = <MCUX_LPADC_CH6A>;
+	};
 };
+
+
 
 
 zephyr_udc0: &usb1 {
