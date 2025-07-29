@@ -12,41 +12,11 @@ LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 #define TEMP_SAMPLE_INTERVAL_MS 10  /* 100Hz = 10ms interval */
 #define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
 
-#define DT_SPEC_AND_COMMA(node_id, prop, idx) ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
-
-#define INTERNAL_ADC_CHANNEL 0 /* This is the channel within the ADC block,*/
-
-#if DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
-/* Data of ADC io-channels specified in devicetree. */
-static const struct adc_dt_spec adc_channels[] = {
-	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels, DT_SPEC_AND_COMMA)
-};
-static const int adc_channels_count = ARRAY_SIZE(adc_channels);
-#else
-#error "Unsupported board."
-#endif
+/* Direct reference to the single ADC channel */
+static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
 
-#if CONFIG_ADC_32_BITS_DATA
-typedef int32_t adc_data_size_t;
-#define INVALID_ADC_VALUE INT_MIN
-#else
-typedef int16_t adc_data_size_t;
-#endif
-
-
-#if CONFIG_NOCACHE_MEMORY
-#define __NOCACHE	__attribute__((__section__(".nocache")))
-#else /* CONFIG_NOCACHE_MEMORY */
-#define __NOCACHE
-#endif /* CONFIG_NOCACHE_MEMORY */
-
-#define BUFFER_SIZE  6
-#ifdef CONFIG_TEST_USERSPACE
-static ZTEST_BMEM adc_data_size_t m_sample_buffer[BUFFER_SIZE];
-#else
-static __aligned(32) adc_data_size_t m_sample_buffer[BUFFER_SIZE] __NOCACHE;
-#endif
+static int16_t m_sample_buffer[6];
 
 
 
@@ -97,22 +67,20 @@ static void temp_timer_handler(struct k_timer *timer)
 
 int init_temperature(void)
 {
-    int i, ret;
+    int ret;
 
-    LOG_DBG(" %d ADC channels found", adc_channels_count);
+    LOG_DBG("Initializing temperature ADC");
 
-    ret = adc_is_ready_dt(&adc_channels[0]);
+    ret = adc_is_ready_dt(&temp_adc_channel);
     if (!ret) {
         LOG_ERR("ADC device is not ready");
         return -ENODEV;
     }
 
-    for (i = 0; i < adc_channels_count; i++) {
-        ret = adc_channel_setup_dt(&adc_channels[i]);
-        if (ret < 0) {
-            LOG_ERR("ADC channel setup failed for channel %d: %d", i, ret);
-            return ret;
-        }
+    ret = adc_channel_setup_dt(&temp_adc_channel);
+    if (ret < 0) {
+        LOG_ERR("ADC channel setup failed: %d", ret);
+        return ret;
     }
 
     struct adc_sequence sequence = {
@@ -122,7 +90,7 @@ int init_temperature(void)
 
     memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
 
-    ret = adc_sequence_init_dt(&adc_channels[INTERNAL_ADC_CHANNEL], &sequence);
+    ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
     if (ret < 0) {
         LOG_ERR("ADC sequence initialization failed: %d", ret);
         return ret;
@@ -130,7 +98,7 @@ int init_temperature(void)
 
     while(1)
     {
-        ret = adc_read_dt(&adc_channels[INTERNAL_ADC_CHANNEL], &sequence);
+        ret = adc_read_dt(&temp_adc_channel, &sequence);
         if (ret < 0)
         {
             LOG_ERR("ADC read failed: %d", ret);

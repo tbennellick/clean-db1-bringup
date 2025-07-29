@@ -64,6 +64,7 @@
 //		pwm-0 = &flexpwm1_pwm0;
 //		pwm-1 = &sc_timer;
 		rtc = &rtc;
+		temp-adc = &temp_adc_channel;
 	};
 	leds {
 		compatible = "gpio-leds";
@@ -185,7 +186,6 @@
 	};
 
 	zephyr,user {
-//		io-channels = <&lpadc0 0>, <&lpadc0 1>, <&lpadc0 2>;
 		io-channels = <&lpadc0 0>;
 	};
 
@@ -533,7 +533,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 
-	channel@0 {
+	temp_adc_channel: channel@0 {
 		reg = <0>;
 		zephyr,gain = "ADC_GAIN_1";
 		zephyr,reference = "ADC_REF_EXTERNAL1";
