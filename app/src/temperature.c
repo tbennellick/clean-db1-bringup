@@ -81,6 +81,15 @@ int init_temperature(void)
         return -ENODEV;
     }
 
+    for (i = 0; i < adc_channels_count; i++) {
+        ret = adc_channel_setup_dt(&adc_channels[i]);
+        if (ret < 0) {
+            LOG_ERR("ADC channel setup failed for channel %d: %d", i, ret);
+            return ret;
+        }
+    }
+
+
 //
 //    for (i = 0; i < adc_channels_count; i++) {
 //        ret = adc_channel_setup_dt(&adc_channels[i]);
