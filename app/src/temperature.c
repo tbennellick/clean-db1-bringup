@@ -14,6 +14,7 @@ LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
+#define INTERNAL_ADC_CHANNEL 0 /* This is the channel within the ADC block,*/
 
 #if DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
 /* Data of ADC io-channels specified in devicetree. */
@@ -121,7 +122,7 @@ int init_temperature(void)
 
     memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
 
-    ret = adc_sequence_init_dt(&adc_channels[2], &sequence);
+    ret = adc_sequence_init_dt(&adc_channels[INTERNAL_ADC_CHANNEL], &sequence);
     if (ret < 0) {
         LOG_ERR("ADC sequence initialization failed: %d", ret);
         return ret;
@@ -129,7 +130,7 @@ int init_temperature(void)
 
     while(1)
     {
-        ret = adc_read_dt(&adc_channels[2], &sequence);
+        ret = adc_read_dt(&adc_channels[INTERNAL_ADC_CHANNEL], &sequence);
         if (ret < 0)
         {
             LOG_ERR("ADC read failed: %d", ret);
