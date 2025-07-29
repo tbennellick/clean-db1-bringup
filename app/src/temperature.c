@@ -6,7 +6,8 @@
 
 #include "temperature.h"
 
-LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
+//LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
+LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 
 #define TEMP_SAMPLE_INTERVAL_MS 10  /* 100Hz = 10ms interval */
 #define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
@@ -22,6 +23,28 @@ static const struct adc_dt_spec adc_channels[] = {
 static const int adc_channels_count = ARRAY_SIZE(adc_channels);
 #else
 #error "Unsupported board."
+#endif
+
+
+#if CONFIG_ADC_32_BITS_DATA
+typedef int32_t adc_data_size_t;
+#define INVALID_ADC_VALUE INT_MIN
+#else
+typedef int16_t adc_data_size_t;
+#endif
+
+
+#if CONFIG_NOCACHE_MEMORY
+#define __NOCACHE	__attribute__((__section__(".nocache")))
+#else /* CONFIG_NOCACHE_MEMORY */
+#define __NOCACHE
+#endif /* CONFIG_NOCACHE_MEMORY */
+
+#define BUFFER_SIZE  6
+#ifdef CONFIG_TEST_USERSPACE
+static ZTEST_BMEM adc_data_size_t m_sample_buffer[BUFFER_SIZE];
+#else
+static __aligned(32) adc_data_size_t m_sample_buffer[BUFFER_SIZE] __NOCACHE;
 #endif
 
 
@@ -89,21 +112,26 @@ int init_temperature(void)
         }
     }
 
+    struct adc_sequence sequence = {
+            .buffer = m_sample_buffer,
+            .buffer_size = sizeof(m_sample_buffer),
+    };
 
-//
-//    for (i = 0; i < adc_channels_count; i++) {
-//        ret = adc_channel_setup_dt(&adc_channels[i]);
-//        zassert_equal(ret, 0, "Setting up of channel %d failed with code %d", i, ret);
-//    }
-//
-//    for (i = 0; i < BUFFER_SIZE; ++i) {
-//        m_sample_buffer[i] = INVALID_ADC_VALUE;
-//    }
-//
-//#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(test_counter)) && \
-//	defined(CONFIG_COUNTER)
-//    init_counter();
-//#endif
+    ret = adc_sequence_init_dt(&adc_channels[0], &sequence);
+    if (ret < 0) {
+        LOG_ERR("ADC sequence initialization failed: %d", ret);
+        return ret;
+    }
+
+    ret = adc_read_dt(&adc_channels[0], &sequence);
+    if (ret < 0 ) {
+        LOG_ERR("ADC read failed: %d", ret);
+        return ret;
+    }
+
+    LOG_HEXDUMP_DBG(m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
+
+
 }
 
 
