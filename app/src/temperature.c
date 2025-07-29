@@ -1,6 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/counter.h>
 #include <zephyr/logging/log.h>
 #include <math.h>
 
@@ -15,91 +16,154 @@ LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 
 
 
+/* ADC configuration context */
 typedef struct {
-    const struct adc_dt_spec *adc_dev_dt;
     struct adc_sequence sequence;
     temp_block_t current_block;
     uint16_t sample_count;
     int16_t m_sample_buffer;
-} temp_timer_ctx_t;
+} temp_adc_ctx_t;
 
-static struct k_timer temp_timer;
-static temp_timer_ctx_t timer_ctx;
+/* Static ADC device tree spec initialization */
+static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
+static temp_adc_ctx_t adc_ctx;
 static struct k_msgq temp_msgq;
 static char __aligned(4) temp_msgq_buffer[TEMP_MSGQ_SIZE * sizeof(temp_block_t)];
 
-static void temp_timer_handler(struct k_timer *timer)
-{
-    temp_timer_ctx_t *ctx = k_timer_user_data_get(timer);
-    int16_t sample_buffer;
-    int ret;
+/* Hardware timer device */
+static const struct device *counter_dev;
 
-    ret = adc_read_dt(ctx->adc_dev_dt, &ctx->sequence);
-    if (ret < 0)
-    {
+/* Counter alarm callback for ADC sampling */
+static void timer_alarm_callback(const struct device *dev, uint8_t chan_id, uint32_t ticks, void *user_data)
+{
+    struct counter_alarm_cfg alarm_cfg;
+    int ret;
+    
+    /* Perform ADC read using Zephyr ADC API */
+    ret = adc_read_dt(&temp_adc_channel, &adc_ctx.sequence);
+    if (ret < 0) {
         LOG_ERR("ADC read failed: %d", ret);
         return;
     }
-
-    LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
-
-    /* This can be optimised with pointer shuffling but it's going in the bin hopefully*/
-    ctx->current_block.samples[ctx->sample_count] = ctx->m_sample_buffer;
-    ctx->sample_count++;
-
+    
+    LOG_HEXDUMP_DBG(&adc_ctx.m_sample_buffer, sizeof(adc_ctx.m_sample_buffer), "ADC timer result");
+    
+    /* Store sample in current block */
+    adc_ctx.current_block.samples[adc_ctx.sample_count] = adc_ctx.m_sample_buffer;
+    adc_ctx.sample_count++;
+    
     /* If block is full, send it to message queue */
-    if (ctx->sample_count >= TEMP_BLOCK_SIZE) {
-        ctx->current_block.count = ctx->sample_count;
-        ctx->current_block.timestamp_ms = k_uptime_get_32();
-
-        ret = k_msgq_put(&temp_msgq, &ctx->current_block, K_NO_WAIT);
+    if (adc_ctx.sample_count >= TEMP_BLOCK_SIZE) {
+        adc_ctx.current_block.count = adc_ctx.sample_count;
+        adc_ctx.current_block.timestamp_ms = k_uptime_get_32();
+        
+        ret = k_msgq_put(&temp_msgq, &adc_ctx.current_block, K_NO_WAIT);
         if (ret != 0) {
             LOG_WRN("Temperature message queue full, dropping block");
         }
         
-        ctx->sample_count = 0;
+        adc_ctx.sample_count = 0;
     }
+    
+    /* Reschedule alarm for next period (relative to current time) */
+    alarm_cfg.flags = 0; /* Relative alarm */
+    alarm_cfg.ticks = counter_us_to_ticks(dev, 10000); /* 10ms = 10000us */
+    alarm_cfg.callback = timer_alarm_callback;
+    alarm_cfg.user_data = NULL;
+    
+    ret = counter_set_channel_alarm(dev, chan_id, &alarm_cfg);
+    if (ret < 0) {
+        LOG_ERR("Failed to reschedule counter alarm: %d", ret);
+    }
+}
+
+/* Configure hardware timer using Zephyr Counter API for 100Hz ADC triggering */
+static int configure_counter_for_adc_trigger(void)
+{
+    struct counter_alarm_cfg alarm_cfg;
+    uint32_t freq;
+    int ret;
+    
+    LOG_DBG("Configuring Counter (CTIMER0) for 100Hz ADC trigger");
+    
+    /* Get counter device */
+    counter_dev = DEVICE_DT_GET(DT_NODELABEL(ctimer0));
+    if (!device_is_ready(counter_dev)) {
+        LOG_ERR("Counter device not ready");
+        return -ENODEV;
+    }
+    
+    /* Get counter frequency */
+    freq = counter_get_frequency(counter_dev);
+    LOG_DBG("Counter frequency: %u Hz", freq);
+    
+    /* Start counter */
+    ret = counter_start(counter_dev);
+    if (ret < 0) {
+        LOG_ERR("Counter start failed: %d", ret);
+        return ret;
+    }
+    
+    /* Configure alarm for 100Hz (10ms period) */
+    alarm_cfg.flags = 0; /* Relative alarm */
+    alarm_cfg.ticks = counter_us_to_ticks(counter_dev, 10000); /* 10ms = 10000us */
+    alarm_cfg.callback = timer_alarm_callback;
+    alarm_cfg.user_data = NULL;
+    
+    ret = counter_set_channel_alarm(counter_dev, 0, &alarm_cfg);
+    if (ret < 0) {
+        LOG_ERR("Counter alarm setup failed: %d", ret);
+        return ret;
+    }
+    
+    LOG_DBG("Counter alarm configured for %u ticks (%u us)", alarm_cfg.ticks, 10000);
+    return 0;
 }
 
 int init_temperature(void)
 {
     int ret;
 
-    LOG_DBG("Initializing temperature ADC");
-    timer_ctx.adc_dev_dt = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
-
-    ret = adc_is_ready_dt(timer_ctx.adc_dev_dt);
+    LOG_DBG("Initializing temperature ADC with hardware timer trigger");
+    
+    /* Initialize ADC using the static device tree spec */
+    ret = adc_is_ready_dt(&temp_adc_channel);
     if (!ret) {
         LOG_ERR("ADC device is not ready");
         return -ENODEV;
     }
 
-    ret = adc_channel_setup_dt(timer_ctx.adc_dev_dt);
+    ret = adc_channel_setup_dt(&temp_adc_channel);
     if (ret < 0) {
         LOG_ERR("ADC channel setup failed: %d", ret);
         return ret;
     }
 
-    timer_ctx.sequence.buffer = &timer_ctx.m_sample_buffer;
-    timer_ctx.sequence.buffer_size = sizeof(timer_ctx.m_sample_buffer);
+    adc_ctx.sequence.buffer = &adc_ctx.m_sample_buffer;
+    adc_ctx.sequence.buffer_size = sizeof(adc_ctx.m_sample_buffer);
 
-    ret = adc_sequence_init_dt(timer_ctx.adc_dev_dt, &timer_ctx.sequence);
+    ret = adc_sequence_init_dt(&temp_adc_channel, &adc_ctx.sequence);
     if (ret < 0) {
         LOG_ERR("ADC sequence initialization failed: %d", ret);
         return ret;
     }
 
-
+    /* Initialize message queue */
     k_msgq_init(&temp_msgq, temp_msgq_buffer, sizeof(temp_block_t), TEMP_MSGQ_SIZE);
 
-    timer_ctx.sample_count = 0;
-    timer_ctx.current_block.count = 0;
-    timer_ctx.current_block.timestamp_ms = 0;
+    adc_ctx.sample_count = 0;
+    adc_ctx.current_block.count = 0;
+    adc_ctx.current_block.timestamp_ms = 0;
 
-    k_timer_init(&temp_timer, temp_timer_handler, NULL);
-    k_timer_user_data_set(&temp_timer, &timer_ctx);
-    k_timer_start(&temp_timer, K_MSEC(TEMP_SAMPLE_INTERVAL_MS), K_MSEC(TEMP_SAMPLE_INTERVAL_MS));
+    /* Configure hardware timer trigger using Zephyr Counter API */
+    ret = configure_counter_for_adc_trigger();
+    if (ret < 0) {
+        LOG_ERR("Counter configuration failed: %d", ret);
+        return ret;
+    }
+    
+    LOG_INF("Temperature ADC initialized with hardware timer trigger at 100Hz using Zephyr Counter API");
     return 0;
 }
 
