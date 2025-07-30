@@ -36,22 +36,13 @@ int main(void) {
     init_als();
     init_audio();
     init_sample_clock();
-//    init_temperature();
+    init_temperature();
 
     LOG_INF("Init complete");
     
     temp_block_t temp_block;
     while (1)
     {
-//        if (temperature_read_block(&temp_block, K_NO_WAIT) == 0) {
-//            int32_t sum = 0;
-//            for (int i = 0; i < temp_block.count; i++) {
-//                sum += temp_block.samples[i];
-//            }
-//            int16_t avg_raw = sum / temp_block.count;
-//            LOG_INF("Temperature block avg raw: %d,", avg_raw);
-//        }
-//        k_sleep(K_MSEC(2));
         k_sleep(K_SECONDS(1));
         printk(".");
         debug_led_toggle(0);

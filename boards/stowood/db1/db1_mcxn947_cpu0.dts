@@ -504,6 +504,7 @@
 //	pinctrl-names = "default";
 };
 
+/* This is actually configured directly via HAL to allow triggering */
 &ctimer0 {
 	status = "okay";
 //	prescale = < 0x0 >;
