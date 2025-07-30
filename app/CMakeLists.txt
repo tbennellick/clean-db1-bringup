@@ -19,6 +19,7 @@ target_sources(app PRIVATE src/als.c)
 target_sources(app PRIVATE src/audio.c)
 target_sources(app PRIVATE src/display.c)
 target_sources(app PRIVATE src/temperature.c)
+target_sources(app PRIVATE src/sample_timer.c)
 
 #Logo can be optionally removed from the build.
 zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artefacts/test_logo.c)
