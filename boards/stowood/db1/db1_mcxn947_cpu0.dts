@@ -552,6 +552,7 @@
 
 &ctimer0 {
 	status = "okay";
+//	prescale = < 0x0 >;
 };
 
 &usdhc0 {

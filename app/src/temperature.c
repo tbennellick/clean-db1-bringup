@@ -2,6 +2,7 @@
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/irq.h>
+#include <zephyr/drivers/counter.h>
 #include <math.h>
 
 /* NXP HAL includes for hardware trigger configuration */
@@ -9,6 +10,7 @@
 #include <fsl_lpadc.h>
 #include <fsl_inputmux.h>
 #include <fsl_clock.h>
+#include <fsl_reset.h>
 
 #include "temperature.h"
 
@@ -43,24 +45,27 @@ static void lpadc_hardware_trigger_isr(const void *arg)
     if (status & (uint32_t)kLPADC_TriggerCompletionFlag) {
         /* Read conversion result */
         if (LPADC_GetConvResult(ADC0, &conv_result, 0U)) {
-            LOG_HEXDUMP_DBG(&conv_result.convValue, sizeof(conv_result.convValue), "ADC hw trigger result");
-            
-            /* Store sample in current block */
-            adc_ctx.current_block.samples[adc_ctx.sample_count] = (int16_t)conv_result.convValue;
-            adc_ctx.sample_count++;
-            
-            /* If block is full, send it to message queue */
-            if (adc_ctx.sample_count >= TEMP_BLOCK_SIZE) {
-                adc_ctx.current_block.count = adc_ctx.sample_count;
-                adc_ctx.current_block.timestamp_ms = k_uptime_get_32();
-                
-                ret = k_msgq_put(&temp_msgq, &adc_ctx.current_block, K_NO_WAIT);
-                if (ret != 0) {
-                    LOG_WRN("Temperature message queue full, dropping block");
-                }
-                
-                adc_ctx.sample_count = 0;
-            }
+
+//            LOG_HEXDUMP_DBG(&conv_result.convValue, sizeof(conv_result.convValue), "ADC hw trigger result");
+//
+//            /* Store sample in current block */
+//            adc_ctx.current_block.samples[adc_ctx.sample_count] = (int16_t)conv_result.convValue;
+//            adc_ctx.sample_count++;
+//
+//            /* If block is full, send it to message queue */
+//            if (adc_ctx.sample_count >= TEMP_BLOCK_SIZE) {
+//                adc_ctx.current_block.count = adc_ctx.sample_count;
+//                adc_ctx.current_block.timestamp_ms = k_uptime_get_32();
+//
+//                ret = k_msgq_put(&temp_msgq, &adc_ctx.current_block, K_NO_WAIT);
+//                if (ret != 0) {
+//                    LOG_WRN("Temperature message queue full, dropping block");
+//                }
+//
+//                adc_ctx.sample_count = 0;
+//            }
+//
+
         }
         
         /* Clear the trigger completion flag */
@@ -68,19 +73,93 @@ static void lpadc_hardware_trigger_isr(const void *arg)
     }
 }
 
-/* Configure CTIMER0 for 100Hz output using HAL directly */
-static int configure_ctimer_hardware_trigger(void)
+struct counter_alarm_cfg alarm_cfg;
+#define DELAY 2000000
+#define ALARM_CHANNEL_ID 0
+#define TIMER DT_NODELABEL(ctimer0)
+
+static void test_counter_interrupt_fn(const struct device *counter_dev,
+                                      uint8_t chan_id, uint32_t ticks,
+                                      void *user_data)
+{
+    struct counter_alarm_cfg *config = user_data;
+    uint32_t now_ticks;
+    uint64_t now_usec;
+    int now_sec;
+    int err;
+
+    err = counter_get_value(counter_dev, &now_ticks);
+    if (!counter_is_counting_up(counter_dev)) {
+        now_ticks = counter_get_top_value(counter_dev) - now_ticks;
+    }
+
+    if (err) {
+        printk("Failed to read counter value (err %d)", err);
+        return;
+    }
+
+    now_usec = counter_ticks_to_us(counter_dev, now_ticks);
+    now_sec = (int)(now_usec / USEC_PER_SEC);
+
+    printk("!!! Alarm !!!\n");
+    printk("Now: %u\n", now_sec);
+
+    /* Set a new alarm with a double length duration */
+    config->ticks = config->ticks * 2U;
+
+    printk("Set alarm in %u sec (%u ticks)\n",
+           (uint32_t)(counter_ticks_to_us(counter_dev,
+                                          config->ticks) / USEC_PER_SEC),
+           config->ticks);
+
+    err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
+                                    user_data);
+    if (err != 0) {
+        printk("Alarm could not be set\n");
+    }
+}
+
+
+static void setup_timer_100hz(void)
+{
+    const struct device *const counter_dev = DEVICE_DT_GET(TIMER);
+
+    if (!device_is_ready(counter_dev)) {
+        printk("device not ready.\n");
+        return;
+    }
+
+    counter_start(counter_dev);
+    alarm_cfg.flags = 0;
+    alarm_cfg.ticks = counter_us_to_ticks(counter_dev, DELAY);
+    alarm_cfg.callback = test_counter_interrupt_fn;
+    alarm_cfg.user_data = &alarm_cfg;
+
+    int err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
+                                    &alarm_cfg);
+    printk("Set alarm in %u sec (%u ticks)\n",
+           (uint32_t)(counter_ticks_to_us(counter_dev,
+                                          alarm_cfg.ticks) / USEC_PER_SEC),
+           alarm_cfg.ticks);
+
+    if (-EINVAL == err) {
+        printk("Alarm settings invalid\n");
+    } else if (-ENOTSUP == err) {
+        printk("Alarm setting request not supported\n");
+    } else if (err != 0) {
+        printk("Error\n");
+    }
+
+}
+static void setup_timer_100hz_old(void)
 {
     ctimer_config_t config;
     ctimer_match_config_t matchConfig;
     uint32_t srcClock_Hz;
-    
-    LOG_DBG("Configuring CTIMER0 for 100Hz hardware trigger");
-    
-    /* Get CTIMER clock frequency - assuming 150MHz from PLL0 */
+
+    /*TODO: Get CTIMER clock frequency - assuming 150MHz from PLL0 */
     srcClock_Hz = 150000000U;
     
-    /* Initialize CTIMER0 */
     CTIMER_GetDefaultConfig(&config);
     CTIMER_Init(CTIMER0, &config);
     
@@ -90,37 +169,26 @@ static int configure_ctimer_hardware_trigger(void)
     matchConfig.matchValue = srcClock_Hz / 100; /* 100Hz = 1,500,000 cycles at 150MHz */
     matchConfig.outControl = kCTIMER_Output_Toggle;
     matchConfig.outPinInitState = kCTIMER_Output_Set;
-    matchConfig.enableInterrupt = false;
+    matchConfig.enableInterrupt = true;
+
     
     CTIMER_SetupMatch(CTIMER0, kCTIMER_Match_3, &matchConfig);
-    
-    return 0;
 }
 
-/* Configure INPUTMUX to route CTIMER0 output to LPADC0 trigger */
-static int configure_inputmux_routing(void)
+static void attach_timer_adc_trigger(void)
 {
-    LOG_DBG("Configuring INPUTMUX: CTIMER0 Match 3 -> LPADC0 Trigger");
-    
-    /* Enable INPUTMUX peripheral clock before accessing registers */
     CLOCK_EnableClock(kCLOCK_InputMux);
     
     /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
-    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
-    
-    return 0;
+//    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
 }
 
-/* Initialize and configure LPADC for hardware trigger directly using HAL */
-static int configure_lpadc_hardware_trigger(void)
+void setup_adc(void)
 {
     lpadc_config_t lpadc_config;
     lpadc_conv_trigger_config_t trigger_config;
     lpadc_conv_command_config_t cmd_config;
-    
-    LOG_DBG("Configuring LPADC for true hardware trigger");
-    
-    /* Initialize LPADC */
+
     LPADC_GetDefaultConfig(&lpadc_config);
     lpadc_config.enableAnalogPreliminary = true;
     lpadc_config.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
@@ -129,75 +197,50 @@ static int configure_lpadc_hardware_trigger(void)
     
     LPADC_Init(ADC0, &lpadc_config);
     
-    /* Configure trigger for hardware triggering */
-    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
-    trigger_config.enableHardwareTrigger = true;
-    trigger_config.targetCommandId = 1; /* Use command 1 */
-    trigger_config.priority = 0; /* High priority */
-    
-    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
-    
-    /* Configure conversion command for our channel */
-    LPADC_GetDefaultConvCommandConfig(&cmd_config);
-    cmd_config.channelNumber = 0; /* Channel 0 from device tree */
-    cmd_config.sampleChannelMode = kLPADC_SampleChannelSingleEndSideA;
-    cmd_config.sampleTimeMode = kLPADC_SampleTimeADCK3;
-    cmd_config.hardwareAverageMode = kLPADC_HardwareAverageCount1;
-    cmd_config.conversionResolutionMode = kLPADC_ConversionResolutionStandard;
-    
-    LPADC_SetConvCommandConfig(ADC0, 1, &cmd_config);
-    
-    /* Enable trigger completion interrupt */
-    LPADC_EnableInterrupts(ADC0, (uint32_t)kLPADC_Trigger0CompletionInterruptEnable);
-    
-    /* Note: IRQ_CONNECT removed to avoid conflict with Zephyr driver */
-    /* IRQ_CONNECT(DT_IRQN(DT_NODELABEL(lpadc0)), DT_IRQ(DT_NODELABEL(lpadc0), priority),
-                lpadc_hardware_trigger_isr, NULL, 0); */
-    /* irq_enable(DT_IRQN(DT_NODELABEL(lpadc0))); */
-    
-    /* Perform auto-calibration */
+//    /* Configure trigger for hardware triggering */
+//    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
+//    trigger_config.enableHardwareTrigger = true;
+//    trigger_config.targetCommandId = 1; /* Use command 1 */
+//    trigger_config.priority = 0; /* High priority */
+//
+//    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
+//
+//    /* Configure conversion command for our channel */
+//    LPADC_GetDefaultConvCommandConfig(&cmd_config);
+//    cmd_config.channelNumber = 0; /* Channel 0 from device tree */
+//    cmd_config.sampleChannelMode = kLPADC_SampleChannelSingleEndSideA;
+//    cmd_config.sampleTimeMode = kLPADC_SampleTimeADCK3;
+//    cmd_config.hardwareAverageMode = kLPADC_HardwareAverageCount1;
+//    cmd_config.conversionResolutionMode = kLPADC_ConversionResolutionStandard;
+//
+//    LPADC_SetConvCommandConfig(ADC0, 1, &cmd_config);
+//
+//    /* Enable trigger completion interrupt */
+//    LPADC_EnableInterrupts(ADC0, (uint32_t)kLPADC_Trigger0CompletionInterruptEnable);
+//
+//    /* Note: IRQ_CONNECT removed to avoid conflict with Zephyr driver */
+//    /* IRQ_CONNECT(DT_IRQN(DT_NODELABEL(lpadc0)), DT_IRQ(DT_NODELABEL(lpadc0), priority),
+//                lpadc_hardware_trigger_isr, NULL, 0); */
+//    /* irq_enable(DT_IRQN(DT_NODELABEL(lpadc0))); */
+//
+//    /* Perform auto-calibration */
     LPADC_DoAutoCalibration(ADC0);
-    
-    return 0;
 }
 
 int init_temperature(void)
 {
     int ret;
 
-    LOG_DBG("Initializing temperature ADC with hardware timer trigger");
-    
-    /* Initialize message queue */
     k_msgq_init(&temp_msgq, temp_msgq_buffer, sizeof(temp_block_t), TEMP_MSGQ_SIZE);
 
     adc_ctx.sample_count = 0;
     adc_ctx.current_block.count = 0;
     adc_ctx.current_block.timestamp_ms = 0;
 
-    /* Configure LPADC for hardware triggering */
-    ret = configure_lpadc_hardware_trigger();
-    if (ret < 0) {
-        LOG_ERR("LPADC hardware trigger configuration failed: %d", ret);
-        return ret;
-    }
-    
-    /* Configure hardware timer for ADC triggering */
-    ret = configure_ctimer_hardware_trigger();
-    if (ret < 0) {
-        LOG_ERR("CTIMER configuration failed: %d", ret);
-        return ret;
-    }
-    
-    ret = configure_inputmux_routing();
-    if (ret < 0) {
-        LOG_ERR("INPUTMUX configuration failed: %d", ret);
-        return ret;
-    }
-    
-    /* Start CTIMER0 to begin hardware triggering */
-    CTIMER_StartTimer(CTIMER0);
-    
-    LOG_INF("Temperature ADC initialized with true hardware timer trigger at 100Hz");
+    setup_adc();
+    setup_timer_100hz();
+    attach_timer_adc_trigger();
+//    CTIMER_StartTimer(CTIMER0);
     return 0;
 }
 
