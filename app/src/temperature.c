@@ -13,6 +13,7 @@
 #include <fsl_reset.h>
 
 #include "temperature.h"
+#include "debug_leds.h"
 
 //LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
 LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
@@ -74,7 +75,7 @@ static void lpadc_hardware_trigger_isr(const void *arg)
 }
 
 struct counter_alarm_cfg alarm_cfg;
-#define DELAY 2000000
+#define TIMER_PERIOD_US 10000
 #define ALARM_CHANNEL_ID 0
 #define TIMER DT_NODELABEL(ctimer0)
 
@@ -84,33 +85,30 @@ static void test_counter_interrupt_fn(const struct device *counter_dev,
 {
     struct counter_alarm_cfg *config = user_data;
     uint32_t now_ticks;
-    uint64_t now_usec;
-    int now_sec;
     int err;
 
     err = counter_get_value(counter_dev, &now_ticks);
-    if (!counter_is_counting_up(counter_dev)) {
-        now_ticks = counter_get_top_value(counter_dev) - now_ticks;
-    }
-
     if (err) {
         printk("Failed to read counter value (err %d)", err);
         return;
     }
 
-    now_usec = counter_ticks_to_us(counter_dev, now_ticks);
-    now_sec = (int)(now_usec / USEC_PER_SEC);
+    if (!counter_is_counting_up(counter_dev)) {
+        now_ticks = counter_get_top_value(counter_dev) - now_ticks;
+    }
 
-    printk("!!! Alarm !!!\n");
-    printk("Now: %u\n", now_sec);
+    debug_led_toggle(1);
 
-    /* Set a new alarm with a double length duration */
-    config->ticks = config->ticks * 2U;
+    static uint64_t count=0;
+    count++;
+    if((count % 100) == 0) {
+        printk("Counter ticks: %u, count: %llu\n", now_ticks, count);
+    }
 
-    printk("Set alarm in %u sec (%u ticks)\n",
-           (uint32_t)(counter_ticks_to_us(counter_dev,
-                                          config->ticks) / USEC_PER_SEC),
-           config->ticks);
+    //    uint64_t now_usec;
+//    int now_sec;
+//    now_usec = counter_ticks_to_us(counter_dev, now_ticks);
+//    now_sec = (int)(now_usec / USEC_PER_SEC);
 
     err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
                                     user_data);
@@ -131,16 +129,12 @@ static void setup_timer_100hz(void)
 
     counter_start(counter_dev);
     alarm_cfg.flags = 0;
-    alarm_cfg.ticks = counter_us_to_ticks(counter_dev, DELAY);
+    alarm_cfg.ticks = counter_us_to_ticks(counter_dev, TIMER_PERIOD_US);
     alarm_cfg.callback = test_counter_interrupt_fn;
     alarm_cfg.user_data = &alarm_cfg;
 
     int err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
                                     &alarm_cfg);
-    printk("Set alarm in %u sec (%u ticks)\n",
-           (uint32_t)(counter_ticks_to_us(counter_dev,
-                                          alarm_cfg.ticks) / USEC_PER_SEC),
-           alarm_cfg.ticks);
 
     if (-EINVAL == err) {
         printk("Alarm settings invalid\n");
