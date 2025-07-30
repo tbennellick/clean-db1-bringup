@@ -10,11 +10,3 @@ typedef struct {
 } temp_block_t;
 
 int init_temperature(void);
-
-/**
- * @brief Read a temperature block from the queue
- * @param block Pointer to store the temperature block
- * @param timeout Timeout for the read operation
- * @return 0 on success, -ENOMSG if no data available, other negative errno on failure
- */
-int temperature_read_block(temp_block_t *block, k_timeout_t timeout);

@@ -14,6 +14,12 @@
 //LOG_MODULE_REGISTER(sample_timer, CONFIG_APP_LOG_LEVEL);
 LOG_MODULE_REGISTER(sample_timer, LOG_LEVEL_DBG);
 
+/* The Zephyr Driver is drivers/counter/counter_mcux_ctimer.c */
+/* However, we are not really using it here as it does not do what we need */
+/* There is maybe an avenue with: */
+/* 	.set_top_value = mcux_lpc_ctimer_set_top_value, */
+
+
 #define TEMP_SAMPLE_INTERVAL_MS 10  /* 100Hz = 10ms interval */
 #define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
 
@@ -108,5 +114,8 @@ int init_sample_clock(void)
         LOG_ERR("Failed to set timer alarm: %d", err);
         return err;
     }
+
+/* 	.set_top_value = mcux_lpc_ctimer_set_top_value, */
+
     return 0;
 }
