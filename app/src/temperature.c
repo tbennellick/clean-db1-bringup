@@ -53,7 +53,8 @@ enum adc_action adc_callback(const struct device *dev,
     {
         count++;
     }
-    return ADC_ACTION_CONTINUE; // Continue sampling
+    return ADC_ACTION_CONTINUE;
+//    return ADC_ACTION_REPEAT;
 }
 
 int init_temperature(void)
@@ -92,16 +93,16 @@ int init_temperature(void)
         return ret;
     }
 
-//    while(1)
-//    {
-        ret = adc_read_dt(&temp_adc_channel, &sequence);
+    ret = adc_read_async(temp_adc_channel.dev, &sequence, NULL);
+
+//        ret = adc_read_dt(&temp_adc_channel, &sequence);
         if (ret < 0)
         {
-            LOG_ERR("ADC read failed: %d", ret);
+            LOG_ERR("ADC async read failed: %d", ret);
             return ret;
         }
 
-        LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
+//        LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
 //        k_sleep(K_MSEC(1000));
 //    }
 
