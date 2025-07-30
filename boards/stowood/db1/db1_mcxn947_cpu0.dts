@@ -535,6 +535,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 
+	/* this gets passed via "user space" rather than via the drvier in the normal way */
 	temp_adc_channel: channel@0 {
 		reg = <0>;
 		zephyr,gain = "ADC_GAIN_1";
