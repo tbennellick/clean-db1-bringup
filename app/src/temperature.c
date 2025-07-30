@@ -11,6 +11,7 @@
 #include <fsl_inputmux.h>
 #include <fsl_clock.h>
 #include <fsl_reset.h>
+#include <zephyr/drivers/adc.h>
 
 #include "temperature.h"
 #include "debug_leds.h"
@@ -110,6 +111,8 @@ static void test_counter_interrupt_fn(const struct device *counter_dev,
 //    now_usec = counter_ticks_to_us(counter_dev, now_ticks);
 //    now_sec = (int)(now_usec / USEC_PER_SEC);
 
+    /* Ideally this would be achieved by setting matchConfig.enableCounterReset = true; */
+    /* However the Zephyr driver does not support this yet.*/
     err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
                                     user_data);
     if (err != 0) {
@@ -145,6 +148,7 @@ static void setup_timer_100hz(void)
     }
 
 }
+__unused
 static void setup_timer_100hz_old(void)
 {
     ctimer_config_t config;
@@ -175,6 +179,39 @@ static void attach_timer_adc_trigger(void)
     
     /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
 //    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
+}
+
+static int16_t m_sample_buffer;
+int zephyr_adc_setup(void)
+{
+    struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
+    int ret;
+
+    ret = adc_is_ready_dt(&temp_adc_channel);
+    if (!ret) {
+        LOG_ERR("ADC device is not ready");
+        return -ENODEV;
+    }
+
+    ret = adc_channel_setup_dt(&temp_adc_channel);
+    if (ret < 0) {
+        LOG_ERR("ADC channel setup failed: %d", ret);
+        return ret;
+    }
+
+    struct adc_sequence sequence = {
+            .buffer = &m_sample_buffer,
+            .buffer_size = sizeof(m_sample_buffer),
+    };
+
+    memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
+
+    ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
+    if (ret < 0) {
+        LOG_ERR("ADC sequence initialization failed: %d", ret);
+        return ret;
+    }
+    return 0;
 }
 
 void setup_adc(void)
@@ -231,8 +268,9 @@ int init_temperature(void)
     adc_ctx.current_block.count = 0;
     adc_ctx.current_block.timestamp_ms = 0;
 
-    setup_adc();
     setup_timer_100hz();
+    zephyr_adc_setup();
+    setup_adc();
     attach_timer_adc_trigger();
 //    CTIMER_StartTimer(CTIMER0);
     return 0;
