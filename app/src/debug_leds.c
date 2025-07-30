@@ -46,9 +46,27 @@ void debug_led_off(void)
     gpio_pin_set_dt(&debug_led0, 0);
 }
 
-void debug_led_toggle(void)
+void debug_led_toggle(uint8_t led)
 {
-    gpio_pin_toggle_dt(&debug_led0);
+    switch (led)
+    {
+        case 0:
+            gpio_pin_toggle_dt(&debug_led0);
+            break;
+        case 1:
+            gpio_pin_toggle_dt(&debug_led1);
+            break;
+        case 2:
+            gpio_pin_toggle_dt(&debug_led2);
+            break;
+        case 3:
+            gpio_pin_toggle_dt(&debug_led3);
+            break;
+        default:
+            // Invalid LED index, no logging in module.
+            break;
+
+    }
 }
 
 void debug_led_strobe(void)
