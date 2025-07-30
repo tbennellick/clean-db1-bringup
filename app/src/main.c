@@ -15,6 +15,7 @@
 #include "als.h"
 #include "audio.h"
 #include "temperature.h"
+#include "sample_timer.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -34,7 +35,8 @@ int main(void) {
 //    init_modem();
     init_als();
     init_audio();
-    init_temperature();
+    init_sample_clock();
+//    init_temperature();
 
     LOG_INF("Init complete");
     
