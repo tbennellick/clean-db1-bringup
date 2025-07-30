@@ -8,6 +8,7 @@
 #include <fsl_ctimer.h>
 #include <fsl_lpadc.h>
 #include <fsl_inputmux.h>
+#include <fsl_clock.h>
 
 #include "temperature.h"
 
@@ -100,6 +101,9 @@ static int configure_ctimer_hardware_trigger(void)
 static int configure_inputmux_routing(void)
 {
     LOG_DBG("Configuring INPUTMUX: CTIMER0 Match 3 -> LPADC0 Trigger");
+    
+    /* Enable INPUTMUX peripheral clock before accessing registers */
+    CLOCK_EnableClock(kCLOCK_InputMux);
     
     /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
     INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
