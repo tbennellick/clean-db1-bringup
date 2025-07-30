@@ -1,118 +1,172 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
+#include <zephyr/drivers/adc.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/irq.h>
-#include <zephyr/drivers/counter.h>
 #include <math.h>
 
-#include <fsl_ctimer.h>
-#include <fsl_lpadc.h>
-#include <fsl_inputmux.h>
-#include <fsl_clock.h>
-#include <fsl_reset.h>
-#include <zephyr/drivers/adc.h>
-
 #include "temperature.h"
-#include "debug_leds.h"
 
 //LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
 LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
-/* Driver is drivers/adc/adc_mcux_lpadc.c */
 
-#define AVERAGE_WINDOW 100
+#define TEMP_SAMPLE_INTERVAL_MS 10  /* 100Hz = 10ms interval */
+#define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
 
-/* ADC configuration context */
+/* Direct reference to the single ADC channel */
+static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
+
+
+static int16_t m_sample_buffer;
+
+
+
 typedef struct {
-    int64_t avg;
-    uint16_t sample_count;
-} temp_adc_ctx_t;
+    const struct device *adc_dev;
+    struct adc_sequence adc_seq;
+} temp_timer_ctx_t;
 
-static temp_adc_ctx_t adc_ctx;
+static struct k_timer temp_timer;
+static temp_timer_ctx_t timer_ctx;
 
-static void lpadc_hardware_trigger_isr(const void *arg)
+/* Sample aggregation variables */
+static temp_block_t current_block;
+static uint16_t sample_count = 0;
+
+static struct k_msgq temp_msgq;
+static char __aligned(4) temp_msgq_buffer[TEMP_MSGQ_SIZE * sizeof(temp_block_t)];
+
+static void temp_timer_handler(struct k_timer *timer)
 {
-    uint32_t status;
-    lpadc_conv_result_t conv_result;
-    int ret;
+    temp_timer_ctx_t *ctx = k_timer_user_data_get(timer);
+    int16_t sample_buffer;
     
-    status = LPADC_GetStatusFlags(ADC0);
-    if (status & (uint32_t)kLPADC_TriggerCompletionFlag) {
-        if (LPADC_GetConvResult(ADC0, &conv_result, 0U))
-        {
-            adc_ctx.avg  += conv_result.convValue;
-            adc_ctx.sample_count++;
-            if (adc_ctx.sample_count >= AVERAGE_WINDOW) {
-                adc_ctx.avg /= AVERAGE_WINDOW;
-                adc_ctx.sample_count = 0;
-                LOG_INF("Temperature ADC average: %d", adc_ctx.avg);
-            }
-        }else {
-            LOG_ERR("Failed to get ADC conversion result");
-        }
-        debug_led_toggle(1);
-        LPADC_ClearStatusFlags(ADC0, (uint32_t)kLPADC_TriggerCompletionFlag);
+    ctx->adc_seq.buffer = &sample_buffer;
+    
+    int ret = adc_read(ctx->adc_dev, &ctx->adc_seq);
+    if (ret < 0) {
+        LOG_ERR("ADC read failed: %d", ret);
+        return;
     }
-}
-
-//static void attach_timer_adc_trigger(void)
-//{
-//    CLOCK_EnableClock(kCLOCK_InputMux);
-//
-//    /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
-////    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
-//}
-
-void setup_adc(void)
-{
-    lpadc_config_t lpadc_config;
-    lpadc_conv_trigger_config_t trigger_config;
-    lpadc_conv_command_config_t cmd_config;
-
-    LPADC_GetDefaultConfig(&lpadc_config);
-    lpadc_config.enableAnalogPreliminary = true;
-    lpadc_config.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
-    lpadc_config.powerLevelMode = kLPADC_PowerLevelAlt1;
-    lpadc_config.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptImmediately;
     
-    LPADC_Init(ADC0, &lpadc_config);
-
-    /* Perform auto-calibration */
-    LPADC_DoAutoCalibration(ADC0);
-
-
-    /* Configure trigger for hardware triggering */
-    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
-    trigger_config.enableHardwareTrigger = true;
-    trigger_config.targetCommandId = 1; /* Use command 1 */
-    trigger_config.priority = 0; /* High priority */
-
-    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
-
-    /* Configure conversion command for our channel */
-    LPADC_GetDefaultConvCommandConfig(&cmd_config);
-    cmd_config.channelNumber = 0; /* Channel 0 from device tree */
-    cmd_config.sampleChannelMode = kLPADC_SampleChannelSingleEndSideA;
-    cmd_config.sampleTimeMode = kLPADC_SampleTimeADCK3;
-    cmd_config.hardwareAverageMode = kLPADC_HardwareAverageCount1;
-    cmd_config.conversionResolutionMode = kLPADC_ConversionResolutionStandard;
-
-    LPADC_SetConvCommandConfig(ADC0, 1, &cmd_config);
-    LPADC_EnableInterrupts(ADC0, (uint32_t)kLPADC_Trigger0CompletionInterruptEnable);
-
-    IRQ_CONNECT(DT_IRQN(DT_NODELABEL(lpadc0)), DT_IRQ(DT_NODELABEL(lpadc0), priority), lpadc_hardware_trigger_isr, NULL, 0);
-    irq_enable(DT_IRQN(DT_NODELABEL(lpadc0)));
+    current_block.samples[sample_count] = sample_buffer;
+    sample_count++;
+    
+    /* If block is full, send it to message queue */
+    if (sample_count >= TEMP_BLOCK_SIZE) {
+        current_block.count = sample_count;
+        current_block.timestamp_ms = k_uptime_get_32();
+        
+        ret = k_msgq_put(&temp_msgq, &current_block, K_NO_WAIT);
+        if (ret != 0) {
+            LOG_WRN("Temperature message queue full, dropping block");
+        }
+        
+        sample_count = 0;
+    }
 }
 
 int init_temperature(void)
 {
     int ret;
 
+    LOG_DBG("Initializing temperature ADC");
 
-    adc_ctx.sample_count = 0;
-    adc_ctx.avg = 0;
+    ret = adc_is_ready_dt(&temp_adc_channel);
+    if (!ret) {
+        LOG_ERR("ADC device is not ready");
+        return -ENODEV;
+    }
 
-    setup_adc();
-//    attach_timer_adc_trigger();
-    return 0;
+    ret = adc_channel_setup_dt(&temp_adc_channel);
+    if (ret < 0) {
+        LOG_ERR("ADC channel setup failed: %d", ret);
+        return ret;
+    }
+
+    struct adc_sequence sequence = {
+            .buffer = &m_sample_buffer,
+            .buffer_size = sizeof(m_sample_buffer),
+    };
+
+    memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
+
+    ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
+    if (ret < 0) {
+        LOG_ERR("ADC sequence initialization failed: %d", ret);
+        return ret;
+    }
+
+    while(1)
+    {
+        ret = adc_read_dt(&temp_adc_channel, &sequence);
+        if (ret < 0)
+        {
+            LOG_ERR("ADC read failed: %d", ret);
+            return ret;
+        }
+
+        LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
+        k_sleep(K_MSEC(1000));
+    }
+
+}
+
+
+//int init_temperature(void)
+//{
+//    int ret;
+//    struct adc_channel_cfg adc_channel_cfg;
+//    struct adc_sequence adc_seq;
+//
+//    sample_count = 0;
+//    k_msgq_init(&temp_msgq, temp_msgq_buffer, sizeof(temp_block_t), TEMP_MSGQ_SIZE);
+//
+//    timer_ctx.adc_dev = DEVICE_DT_GET(ADC_NODE);
+//    if (!device_is_ready(timer_ctx.adc_dev)) {
+//        LOG_ERR("ADC device not ready");
+//        return -ENODEV;
+//    }
+//
+//
+//    /* Configure ADC channel */
+//    adc_channel_cfg.gain = ADC_GAIN_1;
+//    adc_channel_cfg.reference = ADC_REF_EXTERNAL0;
+//    adc_channel_cfg.acquisition_time = ADC_ACQ_TIME_DEFAULT;
+//    adc_channel_cfg.channel_id = ADC_CHANNEL;
+//    adc_channel_cfg.differential = 0;
+//
+//    ret = adc_channel_setup(timer_ctx.adc_dev, &adc_channel_cfg);
+//    if (ret < 0) {
+//        LOG_ERR("ADC channel setup failed: %d", ret);
+//        return ret;
+//    }
+//
+//    /* Configure ADC sequence in timer context */
+//    adc_seq.channels = BIT(ADC_CHANNEL);
+//    adc_seq.buffer_size = sizeof(int16_t);
+//    adc_seq.resolution = 16;
+//    adc_seq.oversampling = 0;
+//    adc_seq.calibrate = false;
+//    timer_ctx.adc_seq = adc_seq;
+//
+//    k_timer_init(&temp_timer, temp_timer_handler, NULL);
+//    k_timer_user_data_set(&temp_timer, &timer_ctx);
+//    k_timer_start(&temp_timer, K_MSEC(TEMP_SAMPLE_INTERVAL_MS), K_MSEC(TEMP_SAMPLE_INTERVAL_MS));
+//    return 0;
+//}
+
+int temperature_read_block(temp_block_t *block, k_timeout_t timeout)
+{
+    if (block == NULL) {
+        return -EINVAL;
+    }
+    
+    int ret = k_msgq_get(&temp_msgq, block, timeout);
+    if (ret == 0) {
+        LOG_DBG("Temperature block read: %d samples, timestamp: %u ms", 
+                block->count, block->timestamp_ms);
+    }
+    
+    return ret;
 }
 
