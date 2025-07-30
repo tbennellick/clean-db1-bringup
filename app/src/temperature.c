@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "temperature.h"
+#include "debug_leds.h"
 
 //LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
 LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
@@ -35,34 +36,24 @@ static uint16_t sample_count = 0;
 static struct k_msgq temp_msgq;
 static char __aligned(4) temp_msgq_buffer[TEMP_MSGQ_SIZE * sizeof(temp_block_t)];
 
-static void temp_timer_handler(struct k_timer *timer)
+enum adc_action adc_callback(const struct device *dev,
+                                                 const struct adc_sequence *sequence,
+                                                 uint16_t sampling_index)
 {
-    temp_timer_ctx_t *ctx = k_timer_user_data_get(timer);
-    int16_t sample_buffer;
-    
-    ctx->adc_seq.buffer = &sample_buffer;
-    
-    int ret = adc_read(ctx->adc_dev, &ctx->adc_seq);
-    if (ret < 0) {
-        LOG_ERR("ADC read failed: %d", ret);
-        return;
+    static int count = 0;
+    static int64_t avg=0;
+    debug_led_toggle(2);
+    printk("ADC ISR");
+    if(count > 100)
+    {
+        LOG_INF("ADC Callback: Sample %d, Avg: %lld", count, avg / count);
+        count = 0;
+        avg = 0;
+    }else
+    {
+        count++;
     }
-    
-    current_block.samples[sample_count] = sample_buffer;
-    sample_count++;
-    
-    /* If block is full, send it to message queue */
-    if (sample_count >= TEMP_BLOCK_SIZE) {
-        current_block.count = sample_count;
-        current_block.timestamp_ms = k_uptime_get_32();
-        
-        ret = k_msgq_put(&temp_msgq, &current_block, K_NO_WAIT);
-        if (ret != 0) {
-            LOG_WRN("Temperature message queue full, dropping block");
-        }
-        
-        sample_count = 0;
-    }
+    return ADC_ACTION_CONTINUE; // Continue sampling
 }
 
 int init_temperature(void)
@@ -83,9 +74,14 @@ int init_temperature(void)
         return ret;
     }
 
+    struct adc_sequence_options options;
+    options.interval_us = TEMP_SAMPLE_INTERVAL_MS * 1000;
+    options.callback = adc_callback;
+
     struct adc_sequence sequence = {
             .buffer = &m_sample_buffer,
             .buffer_size = sizeof(m_sample_buffer),
+            .options = &options,
     };
 
     memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
@@ -96,8 +92,8 @@ int init_temperature(void)
         return ret;
     }
 
-    while(1)
-    {
+//    while(1)
+//    {
         ret = adc_read_dt(&temp_adc_channel, &sequence);
         if (ret < 0)
         {
@@ -106,8 +102,8 @@ int init_temperature(void)
         }
 
         LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
-        k_sleep(K_MSEC(1000));
-    }
+//        k_sleep(K_MSEC(1000));
+//    }
 
 }
 
