@@ -48,11 +48,11 @@ static void test_counter_interrupt_fn(const struct device *counter_dev,
 
     debug_led_toggle(1);
 
-    static uint64_t count=0;
-    count++;
-    if((count % 100) == 0) {
-        printk("Counter ticks: %u, count: %llu\n", now_ticks, count);
-    }
+//    static uint64_t count=0;
+//    count++;
+//    if((count % 100) == 0) {
+//        printk("Counter ticks: %u, count: %llu\n", now_ticks, count);
+//    }
 
     //    uint64_t now_usec;
 //    int now_sec;
