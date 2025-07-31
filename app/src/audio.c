@@ -38,6 +38,7 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, rx_0_mem_slab) =
 static struct k_thread rx_thread_data;
 K_THREAD_STACK_DEFINE(rx_thread_stack, RX_THREAD_STACK_SIZE);
 
+
 void rx_thread_func(void *p1, void *p2, void *p3)
 {
     const struct device *dev_i2s = (const struct device *)p1;
