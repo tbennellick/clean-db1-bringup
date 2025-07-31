@@ -25,7 +25,7 @@ LOG_MODULE_REGISTER(sample_timer, LOG_LEVEL_DBG);
 
 struct counter_alarm_cfg alarm_cfg;
 #define TIMER_PERIOD_US 800000 //10000
-#define ALARM_CHANNEL_ID 0
+#define ALARM_CHANNEL_ID 3
 #define TIMER DT_NODELABEL(ctimer0)
 
 
@@ -120,6 +120,20 @@ int init_sample_clock(void)
         LOG_ERR("Failed to set timer top value: %d", err);
         return err;
     }
+
+    /* THis is taken from mcux_lpc_ctimer_set_top_value() */
+    ctimer_match_config_t match_config = { .matchValue = top_cfg.ticks,
+            .enableCounterReset = true,
+            .enableCounterStop = false,
+            .outControl = kCTIMER_Output_NoAction,
+            .outPinInitState = false,
+            .enableInterrupt = true };
+
+    /* This bit is added to enable hardware O/P*/
+    match_config.outControl = kCTIMER_Output_Toggle;
+
+    CTIMER_SetupMatch(CTIMER0, 3, &match_config);
+
 
     counter_start(counter_dev);
 //    alarm_cfg.flags = 0;
