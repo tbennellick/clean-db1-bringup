@@ -67,6 +67,24 @@ void external_trigger_test(void)
         k_sleep(K_MSEC(300));
     }
 }
+
+__maybe_unused
+void test__INPUTMUX_AttachSignal(INPUTMUX_Type *base, uint32_t index, inputmux_connection_t connection) {
+    uint32_t pmux_id;
+    uint32_t output_id;
+
+    /* extract pmux to be used */
+    pmux_id = ((uint32_t) (connection)) >> PMUX_SHIFT;
+    /*  extract function number */
+    output_id = ((uint32_t) (connection)) & ((1UL << PMUX_SHIFT) - 1U);
+    /* programm signal */
+
+    //*(volatile uint32_t *)(((uint32_t)base) + pmux_id + (index * 4U)) = output_id;
+    LOG_DBG(" pointer %x", (((uint32_t) base) + pmux_id + (index * 4U)));
+    LOG_DBG(" pointer no base %x", pmux_id + (index * 4U));
+    LOG_DBG(" INdex  %d  PMUX %x, output_id %x", index, pmux_id, output_id);
+}
+
 int init_temperature(void)
 {
     int ret;
@@ -130,13 +148,16 @@ int init_temperature(void)
 
     LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
 
-    CLOCK_EnableClock(kCLOCK_InputMux);
-    /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
-    INPUTMUX_AttachSignal(INPUTMUX, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
+//    CLOCK_EnableClock(kCLOCK_InputMux);
+
+    INPUTMUX_Init(INPUTMUX);
+    INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
 
     /* DS26.1: Once the input multiplexer is configured, disable the clock to
      * the INPUTMUX module in the AHBCLKCTRL register.*/
-    CLOCK_DisableClock(kCLOCK_InputMux);
+    INPUTMUX_Deinit(INPUTMUX);
+
+    test__INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
 
 //    external_trigger_test();
 
