@@ -2,6 +2,17 @@ menu "Zephyr"
 source "Kconfig.zephyr"
 endmenu
 
+menu "Application Configuration"
+
+config NASAL_TEMP_SAMPLE_PERIOD
+	int "Nasal temperature sample period in microseconds (us)"
+	default 10000
+	help
+	  Configure the nasal temperature sample period in microseconds.
+	  Default is 10000us.
+
+endmenu
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

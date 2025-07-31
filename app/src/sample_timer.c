@@ -16,7 +16,6 @@ LOG_MODULE_REGISTER(sample_timer, LOG_LEVEL_DBG);
 
 /* The Zephyr Driver is drivers/counter/counter_mcux_ctimer.c */
 
-#define TIMER_PERIOD_US 800000 //10000
 
 #define TIMER DT_NODELABEL(ctimer0)
 
@@ -56,7 +55,10 @@ int init_sample_clock(void)
 
     struct counter_top_cfg top_cfg;
     memset(&top_cfg, 0, sizeof(top_cfg));
-    top_cfg.ticks = counter_us_to_ticks(counter_dev, TIMER_PERIOD_US);
+
+    /* This timer toggles O/P, ADC triggers on rising edge so run double speed (half period)*/
+    uint32_t timer_ticks_per_half = counter_us_to_ticks(counter_dev, CONFIG_NASAL_TEMP_SAMPLE_PERIOD)/2;
+    top_cfg.ticks =  timer_ticks_per_half;
 #ifdef ADC_TIMER_DEBUG
     top_cfg.callback = timer_callback;
 #else

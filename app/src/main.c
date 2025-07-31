@@ -45,7 +45,8 @@ int main(void) {
     temp_block_t temp_block;
     while (1)
     {
-        k_sleep(K_SECONDS(1));
+//        k_sleep(K_SECONDS(1));
+        k_sleep(K_MSEC(100));
         printk(".");
         debug_led_toggle(0);
     }
