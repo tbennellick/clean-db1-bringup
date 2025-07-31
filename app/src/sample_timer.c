@@ -24,7 +24,7 @@ LOG_MODULE_REGISTER(sample_timer, LOG_LEVEL_DBG);
 #define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
 
 struct counter_alarm_cfg alarm_cfg;
-#define TIMER_PERIOD_US 10000
+#define TIMER_PERIOD_US 800000 //10000
 #define ALARM_CHANNEL_ID 0
 #define TIMER DT_NODELABEL(ctimer0)
 
@@ -68,30 +68,31 @@ static void test_counter_interrupt_fn(const struct device *counter_dev,
     }
 }
 
-__unused
-static void setup_timer_100hz_hal_direct(void)
-{
-    ctimer_config_t config;
-    ctimer_match_config_t matchConfig;
-    uint32_t srcClock_Hz;
-
-    /*TODO: Get CTIMER clock frequency - assuming 150MHz from PLL0 */
-    srcClock_Hz = 150000000U;
-    
-    CTIMER_GetDefaultConfig(&config);
-    CTIMER_Init(CTIMER0, &config);
-    
-    /* Configure Match 3 for 100Hz trigger (10ms period) */
-    matchConfig.enableCounterReset = true;
-    matchConfig.enableCounterStop = false;
-    matchConfig.matchValue = srcClock_Hz / 100; /* 100Hz = 1,500,000 cycles at 150MHz */
-    matchConfig.outControl = kCTIMER_Output_Toggle;
-    matchConfig.outPinInitState = kCTIMER_Output_Set;
-    matchConfig.enableInterrupt = true;
-
-    
-    CTIMER_SetupMatch(CTIMER0, kCTIMER_Match_3, &matchConfig);
-}
+//__unused
+//static void setup_timer_100hz_hal_direct(void)
+//{
+//    ctimer_config_t config;
+//    ctimer_match_config_t matchConfig;
+//    uint32_t srcClock_Hz;
+//
+//    /*TODO: Get CTIMER clock frequency - assuming 150MHz from PLL0 */
+//    srcClock_Hz = 150000000U;
+//
+//    CTIMER_GetDefaultConfig(&config);
+//    CTIMER_Init(CTIMER0, &config);
+//
+//    /* Configure Match 3 for 100Hz trigger (10ms period) */
+//    /* Match 3 corresponds with an option on INPUTMUX device */
+//    matchConfig.enableCounterReset = true;
+//    matchConfig.enableCounterStop = false;
+//    matchConfig.matchValue = srcClock_Hz / 100; /* 100Hz = 1,500,000 cycles at 150MHz */
+//    matchConfig.outControl = kCTIMER_Output_Toggle;
+//    matchConfig.outPinInitState = kCTIMER_Output_Set;
+//    matchConfig.enableInterrupt = true;
+//
+//
+//    CTIMER_SetupMatch(CTIMER0, kCTIMER_Match_3, &matchConfig);
+//}
 
 int init_sample_clock(void)
 {
