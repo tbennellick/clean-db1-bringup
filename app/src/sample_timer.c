@@ -28,7 +28,8 @@ struct counter_alarm_cfg alarm_cfg;
 #define ALARM_CHANNEL_ID 0
 #define TIMER DT_NODELABEL(ctimer0)
 
-static void test_counter_interrupt_fn(const struct device *counter_dev,
+
+void test_counter_interrupt_fn(const struct device *counter_dev,
                                       uint8_t chan_id, uint32_t ticks,
                                       void *user_data)
 {
@@ -46,7 +47,6 @@ static void test_counter_interrupt_fn(const struct device *counter_dev,
         now_ticks = counter_get_top_value(counter_dev) - now_ticks;
     }
 
-    debug_led_toggle(1);
 
 //    static uint64_t count=0;
 //    count++;
@@ -67,6 +67,13 @@ static void test_counter_interrupt_fn(const struct device *counter_dev,
         printk("Alarm could not be set\n");
     }
 }
+
+void timer_callback(const struct device *dev, void *user_data)
+{
+    debug_led_toggle(1);
+    LOG_DBG("Timer ISR");
+}
+
 
 //__unused
 //static void setup_timer_100hz_hal_direct(void)
@@ -103,18 +110,29 @@ int init_sample_clock(void)
         return -ENODEV;
     }
 
-    counter_start(counter_dev);
-    alarm_cfg.flags = 0;
-    alarm_cfg.ticks = counter_us_to_ticks(counter_dev, TIMER_PERIOD_US);
-    alarm_cfg.callback = test_counter_interrupt_fn;
-    alarm_cfg.user_data = &alarm_cfg;
-
-    int err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
-                                        &alarm_cfg);
+    struct counter_top_cfg top_cfg;
+    top_cfg.ticks = counter_us_to_ticks(counter_dev, TIMER_PERIOD_US);
+    top_cfg.callback = timer_callback;
+    top_cfg.user_data = NULL;
+//    top_cfg.flags = 0;
+    int err = counter_set_top_value(counter_dev, &top_cfg);
     if (err != 0) {
-        LOG_ERR("Failed to set timer alarm: %d", err);
+        LOG_ERR("Failed to set timer top value: %d", err);
         return err;
     }
+
+    counter_start(counter_dev);
+//    alarm_cfg.flags = 0;
+//    alarm_cfg.ticks = counter_us_to_ticks(counter_dev, TIMER_PERIOD_US);
+//    alarm_cfg.callback = test_counter_interrupt_fn;
+//    alarm_cfg.user_data = &alarm_cfg;
+//
+//    int err = counter_set_channel_alarm(counter_dev, ALARM_CHANNEL_ID,
+//                                        &alarm_cfg);
+//    if (err != 0) {
+//        LOG_ERR("Failed to set timer alarm: %d", err);
+//        return err;
+//    }
 
 /* 	.set_top_value = mcux_lpc_ctimer_set_top_value, */
 
