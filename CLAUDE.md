@@ -6,6 +6,7 @@ This is a Zephyr RTOS project for the DB1 development board based on the MCXN947
 ## Build Instructions
 - To build: `source scripts/setup_env.sh && scripts/build.py -p`
 - Use the `-p` flag for pristine builds when needed
+- Flash the board with: `scripts/build.py -f` (having sourced the environment setup script)
 - Build script handles environment setup automatically
 
 ## Project Structure
