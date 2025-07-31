@@ -4,6 +4,7 @@
 #include <zephyr/logging/log.h>
 #include <math.h>
 #include <fsl_lpadc.h>
+#include <fsl_inputmux.h>
 
 #include "temperature.h"
 #include "debug_leds.h"
@@ -129,13 +130,15 @@ int init_temperature(void)
 
     LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
 
-//    CLOCK_EnableClock(kCLOCK_InputMux);
+    CLOCK_EnableClock(kCLOCK_InputMux);
     /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
-//    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
+    INPUTMUX_AttachSignal(INPUTMUX, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
 
+    /* DS26.1: Once the input multiplexer is configured, disable the clock to
+     * the INPUTMUX module in the AHBCLKCTRL register.*/
+    CLOCK_DisableClock(kCLOCK_InputMux);
 
-
-    external_trigger_test();
+//    external_trigger_test();
 
 
 
