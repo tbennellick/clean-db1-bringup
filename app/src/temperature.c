@@ -44,7 +44,7 @@ enum adc_action adc_callback(const struct device *dev,
     static int count = 0;
     static int64_t avg=0;
     debug_led_toggle(2);
-    printk("ADC ISR");
+//    printk("ADC ISR");
     if(count > 100)
     {
         LOG_INF("ADC Callback: Sample %d, Avg: %lld", count, avg / count);
@@ -85,7 +85,8 @@ int init_temperature(void)
     }
 
     struct adc_sequence_options options;
-    options.interval_us = TEMP_SAMPLE_INTERVAL_MS * 1000;
+    memset(&options, 0, sizeof(options));
+//    options.interval_us = TEMP_SAMPLE_INTERVAL_MS * 1000;
     options.callback = adc_callback;
 
     struct adc_sequence sequence = {
@@ -113,39 +114,32 @@ int init_temperature(void)
         return ret;
     }
 
-    //external_trigger_test();
 
 
+    /* The code below is based on mcux_lpadc_start_channel() in adc_mcux_lpadc.c */
+    uint8_t first_channel = 3; /* Found by inspection with debugger.*/
 
-    const struct mcux_lpadc_config *config = temp_adc_channel.dev->config;
-    struct mcux_lpadc_data *data = temp_adc_channel.dev->data;
     lpadc_conv_trigger_config_t trigger_config;
-    uint8_t first_channel;
-
-    first_channel = 3;
-
-    LOG_DBG("Starting channel %d, input %d", first_channel,
-            data->cmd_config[first_channel].channelNumber);
-
+    LOG_DBG("Starting channel %d", first_channel);
     LPADC_GetDefaultConvTriggerConfig(&trigger_config);
-
     trigger_config.targetCommandId = first_channel + 1;
 
-    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
+    /* This bit is extra to the normal driver code */
+    trigger_config.enableHardwareTrigger = true;
 
-//    /* Configure trigger for hardware triggering */
-//    lpadc_conv_trigger_config_t trigger_config;
-//    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
-//    trigger_config.enableHardwareTrigger = true;
-//    trigger_config.targetCommandId = 1; /* Use command 1 */
-//    trigger_config.priority = 0; /* High priority */
-//
-//    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
+    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
 
 //    CLOCK_EnableClock(kCLOCK_InputMux);
     /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
 //    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
 
+
+
+    external_trigger_test();
+
+
+
+    return 0;
 
 }
 
