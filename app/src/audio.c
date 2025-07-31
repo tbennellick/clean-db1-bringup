@@ -32,8 +32,6 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, rx_0_mem_slab) =
 	Z_MEM_SLAB_INITIALIZER(rx_0_mem_slab, _k_mem_slab_buf_rx_0_mem_slab,
 				WB_UP(BLOCK_SIZE), NUM_BLOCKS + 2);
 
-
-
 #define RX_THREAD_STACK_SIZE 1024
 #define RX_THREAD_PRIORITY 4
 

@@ -30,7 +30,7 @@ int main(void) {
     init_pressure();
 //    init_exg();
     init_fuel_gauge();
-    init_modem();
+//    init_modem();
     init_als();
     init_audio();
 
