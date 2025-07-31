@@ -97,3 +97,33 @@ python scripts\build.py -f
 ```shell
 west twister -T tests --integration
 ```
+
+## Code Formatting and Linting
+
+This project uses `clang-format` to ensure consistent code formatting, using the [run-clang-format.py](https://github.com/Sarcasm/run-clang-format/) wrapper script. The formatting of staged files is automatically checked on each commit via a pre-commit hook, installed when sourcing the `setup_env.sh` script.
+
+### Running Linting Manually
+* Check formatting of staged files without applying changes:
+	```shell
+	scripts/lint.py --check
+	```
+* Check formatting on all files (not just staged):
+	```shell
+	scripts/lint.py --check --all
+	```
+* Fix formatting of staged files:
+	```shell
+	scripts/lint.py --apply
+	```
+* Fix formatting on all files:
+	```shell
+	scripts/lint.py --apply --all
+	```
+
+### Skipping the Pre-commit Check
+If you need to commit code without running the formatting check, you can skip the pre-commit hook using:
+
+```shell
+git commit --no-verify
+```
+**Note:** This should be used sparingly. It's better to fix formatting issues before committing.
