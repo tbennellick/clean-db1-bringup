@@ -3,6 +3,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/logging/log.h>
 #include <math.h>
+#include <fsl_lpadc.h>
 
 #include "temperature.h"
 #include "debug_leds.h"
@@ -57,6 +58,14 @@ enum adc_action adc_callback(const struct device *dev,
 //    return ADC_ACTION_REPEAT;
 }
 
+__maybe_unused
+void external_trigger_test(void)
+{    while (1)
+    {
+        LPADC_DoSoftwareTrigger(ADC0, 1);
+        k_sleep(K_MSEC(300));
+    }
+}
 int init_temperature(void)
 {
     int ret;
@@ -93,18 +102,50 @@ int init_temperature(void)
         return ret;
     }
 
+    LOG_WRN("TEst");
+    k_sleep(K_MSEC(10));
+    debug_led_toggle(3);
+
     ret = adc_read_async(temp_adc_channel.dev, &sequence, NULL);
+    if (ret < 0)
+    {
+        LOG_ERR("ADC async read failed: %d", ret);
+        return ret;
+    }
 
-//        ret = adc_read_dt(&temp_adc_channel, &sequence);
-        if (ret < 0)
-        {
-            LOG_ERR("ADC async read failed: %d", ret);
-            return ret;
-        }
+    //external_trigger_test();
 
-//        LOG_HEXDUMP_DBG(&m_sample_buffer, sizeof(m_sample_buffer), "ADC read buffer");
-//        k_sleep(K_MSEC(1000));
-//    }
+
+
+    const struct mcux_lpadc_config *config = temp_adc_channel.dev->config;
+    struct mcux_lpadc_data *data = temp_adc_channel.dev->data;
+    lpadc_conv_trigger_config_t trigger_config;
+    uint8_t first_channel;
+
+    first_channel = 3;
+
+    LOG_DBG("Starting channel %d, input %d", first_channel,
+            data->cmd_config[first_channel].channelNumber);
+
+    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
+
+    trigger_config.targetCommandId = first_channel + 1;
+
+    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
+
+//    /* Configure trigger for hardware triggering */
+//    lpadc_conv_trigger_config_t trigger_config;
+//    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
+//    trigger_config.enableHardwareTrigger = true;
+//    trigger_config.targetCommandId = 1; /* Use command 1 */
+//    trigger_config.priority = 0; /* High priority */
+//
+//    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
+
+//    CLOCK_EnableClock(kCLOCK_InputMux);
+    /* Route CTIMER0 Match 3 to ADC0 Trigger via INPUTMUX */
+//    INPUTMUX_AttachSignal(INPUTMUX, kINPUTMUX_Ctimer0M3ToAdc0Trigger, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
+
 
 }
 
