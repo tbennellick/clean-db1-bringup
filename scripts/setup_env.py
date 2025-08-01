@@ -36,9 +36,7 @@ def setup_virtual_environment(venv_dir: Path) -> bool:
 
     if not venv_bin.exists():
         print(f"Initialising venv at: {venv_dir}")
-        subprocess.run(
-            f"python -m venv {venv_dir} --prompt db1-bringup", shell=True, check=True
-        )
+        subprocess.run(f"python -m venv {venv_dir} --prompt db1-bringup", shell=True, check=True)
 
     # set venv environment vars so the rest of the script can use it
     if not current_venv:
@@ -78,6 +76,14 @@ def setup_west(project_dir: Path) -> bool:
     subprocess.run("west setup-toolchain", shell=True, check=True)
 
 
+def git_commit_hook(project_dir: Path):
+    hook_path = project_dir / ".git" / "hooks" / "pre-commit"
+
+    if not hook_path.exists():
+        print("Installing pre-commit hook...")
+        hook_path.symlink_to(project_dir / "scripts" / "lint.py")
+
+
 def main():
     project_dir = Path(__file__).parent.parent.absolute()
     venv_dir = project_dir / ".venv"
@@ -89,6 +95,8 @@ def main():
     install_requirements(requirements_file)
 
     setup_west(project_dir)
+
+    git_commit_hook(project_dir)
 
     print("Environment setup completed successfully!")
 
