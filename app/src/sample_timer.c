@@ -10,6 +10,7 @@
 #include <fsl_reset.h>
 
 #include "debug_leds.h"
+#include "temperature.h"
 
 //LOG_MODULE_REGISTER(sample_timer, CONFIG_APP_LOG_LEVEL);
 LOG_MODULE_REGISTER(sample_timer, LOG_LEVEL_DBG);
@@ -19,15 +20,17 @@ LOG_MODULE_REGISTER(sample_timer, LOG_LEVEL_DBG);
 
 #define TIMER DT_NODELABEL(ctimer0)
 
-//#define ADC_TIMER_DEBUG
-#ifdef ADC_TIMER_DEBUG
+#define SW_TRIGGER_ADC
+#ifdef SW_TRIGGER_ADC
 void timer_callback(const struct device *dev, void *user_data)
 {
     debug_led_toggle(1);
-    LOG_DBG("Timer ISR");
+//    LOG_DBG("Timer ISR");
+//    trigger_temperature_sample();
 }
 #endif
 
+#ifndef SW_TRIGGER_ADC
 /* This is taken from mcux_lpc_ctimer_set_top_value() */
 /* It must be called after counter_set_top_value()*/
 void setup_hardware_output(struct counter_top_cfg *top_cfg) {
@@ -43,6 +46,7 @@ void setup_hardware_output(struct counter_top_cfg *top_cfg) {
 
     CTIMER_SetupMatch(CTIMER0, 3, &match_config);
 }
+#endif
 
 int init_sample_clock(void)
 {
@@ -59,7 +63,7 @@ int init_sample_clock(void)
     /* This timer toggles O/P, ADC triggers on rising edge so run double speed (half period)*/
     uint32_t timer_ticks_per_half = counter_us_to_ticks(counter_dev, CONFIG_NASAL_TEMP_SAMPLE_PERIOD)/2;
     top_cfg.ticks =  timer_ticks_per_half;
-#ifdef ADC_TIMER_DEBUG
+#ifdef SW_TRIGGER_ADC
     top_cfg.callback = timer_callback;
 #else
     top_cfg.callback = NULL;
@@ -69,8 +73,9 @@ int init_sample_clock(void)
         LOG_ERR("Failed to set timer top value: %d", err);
         return err;
     }
+#ifndef SW_TRIGGER_ADC
     setup_hardware_output(&top_cfg);
-
+#endif
     err = counter_start(counter_dev);
     if (err != 0) {
         LOG_ERR("Failed to start timer: %d", err);

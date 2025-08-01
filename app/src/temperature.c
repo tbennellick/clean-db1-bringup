@@ -18,22 +18,23 @@ LOG_MODULE_REGISTER(temperature, LOG_LEVEL_DBG);
 /* Direct reference to the single ADC channel */
 static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
-
+/* Todo: Unglobal?*/
 static int16_t m_sample_buffer;
+struct adc_sequence_options options;
+struct adc_sequence sequence;
 
 
-
-typedef struct {
-    const struct device *adc_dev;
-    struct adc_sequence adc_seq;
-} temp_timer_ctx_t;
-
-static struct k_timer temp_timer;
-static temp_timer_ctx_t timer_ctx;
-
-/* Sample aggregation variables */
-static temp_block_t current_block;
-static uint16_t sample_count = 0;
+//typedef struct {
+//    const struct device *adc_dev;
+//    struct adc_sequence adc_seq;
+//} temp_timer_ctx_t;
+//
+//static struct k_timer temp_timer;
+//static temp_timer_ctx_t timer_ctx;
+//
+///* Sample aggregation variables */
+//static temp_block_t current_block;
+//static uint16_t sample_count = 0;
 
 static struct k_msgq temp_msgq;
 static char __aligned(4) temp_msgq_buffer[TEMP_MSGQ_SIZE * sizeof(temp_block_t)];
@@ -44,18 +45,19 @@ enum adc_action adc_callback(const struct device *dev,
 {
     static int count = 0;
     static int64_t avg=0;
-//    printk("ADC ISR");
+    printk("ADC ISR");
     if(count > 100)
     {
         debug_led_toggle(2);
-//        LOG_INF("ADC Callback: Sample %d, Avg: %lld", count, avg);
+        LOG_INF("ADC Callback: Sample %d, Avg: %lld", count, avg);
         count = 0;
         avg = 0;
     }else
     {
         count++;
     }
-    return ADC_ACTION_FINISH; //ADC_ACTION_CONTINUE;
+    return ADC_ACTION_REPEAT;
+//    return ADC_ACTION_FINISH; //ADC_ACTION_CONTINUE;
 //    return ADC_ACTION_REPEAT;
 }
 
@@ -85,6 +87,20 @@ void test__INPUTMUX_AttachSignal(INPUTMUX_Type *base, uint32_t index, inputmux_c
     LOG_DBG(" INdex  %d  PMUX %x, output_id %x", index, pmux_id, output_id);
 }
 
+//void trigger_temperature_sample(void)
+//{
+//
+//    int ret = adc_read_async(temp_adc_channel.dev, &sequence, NULL);
+//    if (ret < 0)
+//    {
+//        LOG_ERR("ADC async read failed: %d", ret);
+//        return ret;
+//    }
+//
+//
+//}
+
+
 int init_temperature(void)
 {
     int ret;
@@ -103,18 +119,19 @@ int init_temperature(void)
         return ret;
     }
 
-    struct adc_sequence_options options;
+    memset(&sequence, 0, sizeof(sequence));
     memset(&options, 0, sizeof(options));
-//    options.interval_us = TEMP_SAMPLE_INTERVAL_MS * 1000;
-    options.callback = adc_callback;
-
-    struct adc_sequence sequence = {
-            .buffer = &m_sample_buffer,
-            .buffer_size = sizeof(m_sample_buffer),
-            .options = &options,
-    };
-
     memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
+
+    options.extra_samplings = 0;
+    options.interval_us = 800000;
+    options.callback = adc_callback;
+    
+    sequence.buffer = &m_sample_buffer;
+    sequence.buffer_size = sizeof(m_sample_buffer);
+    sequence.options = &options;
+
+
 
     ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
     if (ret < 0) {
@@ -122,9 +139,11 @@ int init_temperature(void)
         return ret;
     }
 
-    LOG_WRN("TEst");
-    k_sleep(K_MSEC(10));
-    debug_led_toggle(3);
+//    LOG_WRN("TEst");
+//    k_sleep(K_MSEC(10));
+//    debug_led_toggle(3);
+//
+//    trigger_temperature_sample();
 
     ret = adc_read_async(temp_adc_channel.dev, &sequence, NULL);
     if (ret < 0)
@@ -134,31 +153,30 @@ int init_temperature(void)
     }
 
 
-
-    /* The code below is based on mcux_lpadc_start_channel() in adc_mcux_lpadc.c */
-    uint8_t first_channel = 3; /* Found by inspection with debugger.*/
-
-    lpadc_conv_trigger_config_t trigger_config;
-    LOG_DBG("Starting channel %d", first_channel);
-    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
-    trigger_config.targetCommandId = first_channel + 1;
-
-    /* This bit is extra to the normal driver code */
-    trigger_config.enableHardwareTrigger = true;
-
-    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
-
-    INPUTMUX_Init(INPUTMUX);
-    INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
-
-    /* DS26.1: Once the input multiplexer is configured, disable the clock to
-     * the INPUTMUX module in the AHBCLKCTRL register.*/
-    INPUTMUX_Deinit(INPUTMUX);
-
-    test__INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
-
-//    external_trigger_test();
-
+//    /* The code below is based on mcux_lpadc_start_channel() in adc_mcux_lpadc.c */
+//    uint8_t first_channel = 3; /* Found by inspection with debugger.*/
+//
+//    lpadc_conv_trigger_config_t trigger_config;
+//    LOG_DBG("Starting channel %d", first_channel);
+//    LPADC_GetDefaultConvTriggerConfig(&trigger_config);
+//    trigger_config.targetCommandId = first_channel + 1;
+//
+//    /* This bit is extra to the normal driver code */
+//    trigger_config.enableHardwareTrigger = true;
+//
+//    LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
+//
+//    INPUTMUX_Init(INPUTMUX);
+//    INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
+//
+//    /* DS26.1: Once the input multiplexer is configured, disable the clock to
+//     * the INPUTMUX module in the AHBCLKCTRL register.*/
+//    INPUTMUX_Deinit(INPUTMUX);
+//
+//    test__INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
+//
+////    external_trigger_test();
+//
 
 
     return 0;

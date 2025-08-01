@@ -10,3 +10,4 @@ typedef struct {
 } temp_block_t;
 
 int init_temperature(void);
+void trigger_temperature_sample(void);
