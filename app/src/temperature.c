@@ -19,6 +19,7 @@ static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PAT
 K_MSGQ_DEFINE(temp_msgq, sizeof(temp_block_t), TEMP_MSGQ_SIZE, 4);
 temp_block_t block;
 
+static K_TIMER_DEFINE(temp_sample_timer, NULL, NULL);
 
 static K_THREAD_STACK_DEFINE(temp_thread_stack, TEMP_THREAD_STACK_SIZE);
 static struct k_thread temp_thread_data;
@@ -61,17 +62,18 @@ static void nt_thread(void *arg1, void *arg2, void *arg3)
         
         sample_count++;
         if(sample_count >= CONFIG_NASAL_TEMP_BLOCK_SIZE) {
-            sample_count = 0;
             block.timestamp_ms = k_uptime_get_32();
             block.count++;
             ret = k_msgq_put(&temp_msgq, &block, K_NO_WAIT);
             if (ret < 0) {
                 LOG_ERR("Failed to put temperature block in message queue: %d", ret);
-                continue;
             }
+            sample_count = 0;
+            memset(&block.samples, 0xaa, sizeof(block.samples));
         }
-//        LOG_DBG("Temperature sample %d: %d", block.count, block.samples[sample_count*2]);
-        k_sleep(K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS)); /* Small delay between samples */
+
+        k_sleep(K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS));
+//        k_timer_status_sync(&temp_sample_timer); /* Wait for next sample period */
     }
 }
 
@@ -90,6 +92,10 @@ int init_temperature(void)
         LOG_ERR("ADC channel setup failed: %d", ret);
         return ret;
     }
+
+    /* Start the sampling timer */
+    k_timer_start(&temp_sample_timer, K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS), 
+                  K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS));
 
     /* Create and start the temperature sampling thread */
     k_thread_create(&temp_thread_data, temp_thread_stack,

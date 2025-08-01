@@ -14,7 +14,6 @@ config NASAL_TEMP_SAMPLE_PERIOD_MS
 config NASAL_TEMP_BLOCK_SIZE
 	int "Number of temperature samples per block"
 	default 800
-	range 1 1000
 	help
 	  Configure the number of temperature samples collected per block
 	  before sending to the message queue. Larger values use more memory

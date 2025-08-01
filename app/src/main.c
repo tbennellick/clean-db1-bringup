@@ -49,6 +49,8 @@ int main(void) {
         int ret = temperature_read_block(&temp_block, K_NO_WAIT);
         if (ret == 0) {
             LOG_INF("Temp block # %d, at %u ms", temp_block.count, temp_block.timestamp_ms);
+//            LOG_HEXDUMP_WRN(temp_block.samples, sizeof(temp_block.samples), "Temp samples");
+            LOG_HEXDUMP_WRN(temp_block.samples, 20, "Temp samples");
             }
     }
     return 0;
