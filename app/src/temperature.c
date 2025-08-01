@@ -22,6 +22,7 @@ static K_TIMER_DEFINE(temp_sample_timer, NULL, NULL);
 static K_THREAD_STACK_DEFINE(temp_thread_stack, TEMP_THREAD_STACK_SIZE);
 static struct k_thread temp_thread_data;
 
+_Noreturn
 static void nt_thread(void *arg1, void *arg2, void *arg3)
 {
     ARG_UNUSED(arg1);
@@ -43,7 +44,7 @@ static void nt_thread(void *arg1, void *arg2, void *arg3)
     ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
     if (ret < 0) {
         LOG_ERR("ADC sequence initialization failed: %d", ret);
-        return;
+        k_thread_abort(k_current_get());
     }
 
     uint32_t sample_count = 0;
