@@ -35,7 +35,7 @@ int main(void) {
     init_fuel_gauge();
 //    init_modem();
     init_als();
-    init_audio();
+//    init_audio();
     init_display();
     init_sample_clock();
     init_temperature();

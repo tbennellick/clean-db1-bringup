@@ -44,18 +44,18 @@ enum adc_action adc_callback(const struct device *dev,
 {
     static int count = 0;
     static int64_t avg=0;
-    debug_led_toggle(2);
 //    printk("ADC ISR");
     if(count > 100)
     {
-        LOG_INF("ADC Callback: Sample %d, Avg: %lld", count, avg / count);
+        debug_led_toggle(2);
+//        LOG_INF("ADC Callback: Sample %d, Avg: %lld", count, avg);
         count = 0;
         avg = 0;
     }else
     {
         count++;
     }
-    return ADC_ACTION_CONTINUE;
+    return ADC_ACTION_FINISH; //ADC_ACTION_CONTINUE;
 //    return ADC_ACTION_REPEAT;
 }
 
@@ -64,7 +64,7 @@ void external_trigger_test(void)
 {    while (1)
     {
         LPADC_DoSoftwareTrigger(ADC0, 1);
-        k_sleep(K_MSEC(300));
+        k_sleep(K_MSEC(10));
     }
 }
 
@@ -147,8 +147,6 @@ int init_temperature(void)
     trigger_config.enableHardwareTrigger = true;
 
     LPADC_SetConvTriggerConfig(ADC0, 0, &trigger_config);
-
-//    CLOCK_EnableClock(kCLOCK_InputMux);
 
     INPUTMUX_Init(INPUTMUX);
     INPUTMUX_AttachSignal(INPUTMUX0, 0, kINPUTMUX_Ctimer0M3ToAdc0Trigger);
