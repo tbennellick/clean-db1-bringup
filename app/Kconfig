@@ -4,12 +4,21 @@ endmenu
 
 menu "Application Configuration"
 
-config NASAL_TEMP_SAMPLE_PERIOD
-	int "Nasal temperature sample period in microseconds (us)"
-	default 10000
+config NASAL_TEMP_SAMPLE_PERIOD_MS
+	int "Nasal temperature sample period in ms"
+	default 10
 	help
-	  Configure the nasal temperature sample period in microseconds.
-	  Default is 10000us.
+	  Configure the nasal temperature sample period in ms.
+	  Default is 10ms.
+
+config NASAL_TEMP_BLOCK_SIZE
+	int "Number of temperature samples per block"
+	default 800
+	range 1 1000
+	help
+	  Configure the number of temperature samples collected per block
+	  before sending to the message queue. Larger values use more memory
+	  but reduce message queue overhead. Default is 100 samples.
 
 endmenu
 

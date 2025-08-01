@@ -16,7 +16,6 @@
 #include "audio.h"
 #include "display.h"
 #include "temperature.h"
-#include "sample_timer.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -37,7 +36,6 @@ int main(void) {
     init_als();
 //    init_audio();
     init_display();
-    init_sample_clock();
     init_temperature();
 
     LOG_INF("Init complete");
@@ -48,6 +46,10 @@ int main(void) {
         k_sleep(K_SECONDS(1));
         printk(".");
         debug_led_toggle(0);
+        int ret = temperature_read_block(&temp_block, K_NO_WAIT);
+        if (ret == 0) {
+            LOG_INF("Temp block # %d, at %u ms", temp_block.count, temp_block.timestamp_ms);
+            }
     }
     return 0;
 }
