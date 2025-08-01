@@ -18,6 +18,8 @@
 #include "temperature.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
+temp_block_t temp_block;
+
 
 int main(void) {
     LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
@@ -40,7 +42,6 @@ int main(void) {
 
     LOG_INF("Init complete");
     
-    temp_block_t temp_block;
     while (1)
     {
         k_sleep(K_SECONDS(1));

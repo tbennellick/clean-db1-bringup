@@ -48,7 +48,7 @@ static void nt_thread(void *arg1, void *arg2, void *arg3)
         return;
     }
 
-    uint8_t sample_count = 0;
+    uint32_t sample_count = 0;
     block.count = 0;
 
     while(1) {
@@ -72,8 +72,7 @@ static void nt_thread(void *arg1, void *arg2, void *arg3)
             memset(&block.samples, 0xaa, sizeof(block.samples));
         }
 
-        k_sleep(K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS));
-//        k_timer_status_sync(&temp_sample_timer); /* Wait for next sample period */
+        k_timer_status_sync(&temp_sample_timer);
     }
 }
 
