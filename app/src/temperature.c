@@ -7,8 +7,7 @@
 #include "temperature.h"
 #include "debug_leds.h"
 
-//LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
-LOG_MODULE_REGISTER(nt, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(nt, CONFIG_APP_LOG_LEVEL);
 
 #define TEMP_THREAD_STACK_SIZE 1024
 #define TEMP_THREAD_PRIORITY 5
