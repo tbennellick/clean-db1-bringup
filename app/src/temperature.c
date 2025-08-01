@@ -1,16 +1,21 @@
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
-#include <zephyr/drivers/adc.h>
-#include <zephyr/logging/log.h>
+#include "debug_leds.h"
+#include "temperature.h"
+
 #include <math.h>
 
-#include "temperature.h"
-#include "debug_leds.h"
+#include <zephyr/device.h>
+#include <zephyr/drivers/adc.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(nt, CONFIG_APP_LOG_LEVEL);
 
 #define TEMP_THREAD_STACK_SIZE 1024
-#define TEMP_THREAD_PRIORITY 5
+#define TEMP_THREAD_PRIORITY   5
+
+/* This currently using SW timers. A HW timer implementation exists in nomerge/hardware-adc-trigger.
+ * It needs more work, however, to modify the ADC driver to allow continuous sampling.
+ * This would also be an opportunity to add hardware averaging. */
 
 static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
@@ -22,93 +27,94 @@ static K_TIMER_DEFINE(temp_sample_timer, NULL, NULL);
 static K_THREAD_STACK_DEFINE(temp_thread_stack, TEMP_THREAD_STACK_SIZE);
 static struct k_thread temp_thread_data;
 
-_Noreturn
-static void nt_thread(void *arg1, void *arg2, void *arg3)
-{
-    ARG_UNUSED(arg1);
-    ARG_UNUSED(arg2);
-    ARG_UNUSED(arg3);
+_Noreturn static void nt_thread(void *arg1, void *arg2, void *arg3) {
+	ARG_UNUSED(arg1);
+	ARG_UNUSED(arg2);
+	ARG_UNUSED(arg3);
 
-    LOG_DBG("Temperature sampling thread started");
+	LOG_DBG("Temperature sampling thread started");
 
-    int ret;
-    static int16_t m_sample_buffer;
-    struct adc_sequence_options options;
-    struct adc_sequence sequence;
+	int ret;
+	static int16_t m_sample_buffer;
+	struct adc_sequence_options options;
+	struct adc_sequence sequence;
 
-    memset(&sequence, 0, sizeof(sequence));
-    memset(&options, 0, sizeof(options));
-    memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
+	memset(&sequence, 0, sizeof(sequence));
+	memset(&options, 0, sizeof(options));
+	memset(&m_sample_buffer, 0xaa, sizeof(m_sample_buffer));
 
-    /* Set .channels, .resolution and .oversampling from dt */
-    ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
-    if (ret < 0) {
-        LOG_ERR("ADC sequence initialization failed: %d", ret);
-        k_thread_abort(k_current_get());
-    }
+	/* Set .channels, .resolution and .oversampling from dt */
+	ret = adc_sequence_init_dt(&temp_adc_channel, &sequence);
+	if (ret < 0) {
+		LOG_ERR("ADC sequence initialization failed: %d", ret);
+		k_thread_abort(k_current_get());
+	}
 
-    uint32_t sample_count = 0;
-    block.count = 0;
+	uint32_t sample_count = 0;
+	block.count = 0;
 
-    while(1) {
-        sequence.buffer = &block.samples[sample_count];
-        sequence.buffer_size = sizeof(int16_t);
-        ret = adc_read(temp_adc_channel.dev, &sequence);
-        if (ret < 0) {
-            LOG_ERR("ADC read failed: %d", ret);
-            continue;
-        }
-        
-        sample_count++;
-        if(sample_count >= CONFIG_NASAL_TEMP_BLOCK_SIZE) {
-            block.timestamp_ms = k_uptime_get_32();
-            block.count++;
-            ret = k_msgq_put(&temp_msgq, &block, K_NO_WAIT);
-            if (ret < 0) {
-                LOG_ERR("Failed to put temperature block in message queue: %d", ret);
-            }
-            sample_count = 0;
-            memset(&block.samples, 0xaa, sizeof(block.samples));
-        }
+	while (1) {
+		sequence.buffer = &block.samples[sample_count];
+		sequence.buffer_size = sizeof(int16_t);
+		ret = adc_read(temp_adc_channel.dev, &sequence);
+		if (ret < 0) {
+			LOG_ERR("ADC read failed: %d", ret);
+			continue;
+		}
 
-        k_timer_status_sync(&temp_sample_timer);
-    }
+		sample_count++;
+		if (sample_count >= CONFIG_NASAL_TEMP_BLOCK_SIZE) {
+			block.timestamp_ms = k_uptime_get_32();
+			block.count++;
+			ret = k_msgq_put(&temp_msgq, &block, K_NO_WAIT);
+			if (ret < 0) {
+				LOG_ERR("Failed to put temperature block in message queue: %d", ret);
+			}
+			sample_count = 0;
+			memset(&block.samples, 0xaa, sizeof(block.samples));
+		}
+
+		k_timer_status_sync(&temp_sample_timer);
+	}
 }
 
-int init_temperature(void)
-{
-    int ret;
+int init_temperature(void) {
+	int ret;
 
-    ret = adc_is_ready_dt(&temp_adc_channel);
-    if (!ret) {
-        LOG_ERR("ADC device is not ready");
-        return -ENODEV;
-    }
+	ret = adc_is_ready_dt(&temp_adc_channel);
+	if (!ret) {
+		LOG_ERR("ADC device is not ready");
+		return -ENODEV;
+	}
 
-    ret = adc_channel_setup_dt(&temp_adc_channel);
-    if (ret < 0) {
-        LOG_ERR("ADC channel setup failed: %d", ret);
-        return ret;
-    }
+	ret = adc_channel_setup_dt(&temp_adc_channel);
+	if (ret < 0) {
+		LOG_ERR("ADC channel setup failed: %d", ret);
+		return ret;
+	}
 
-    k_timer_start(&temp_sample_timer, K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS),
-                  K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS));
+	k_timer_start(
+		&temp_sample_timer, K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS), K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS));
 
-    k_thread_create(&temp_thread_data, temp_thread_stack,
-                    K_THREAD_STACK_SIZEOF(temp_thread_stack),
-                    nt_thread, NULL, NULL, NULL,
-                    TEMP_THREAD_PRIORITY, 0, K_NO_WAIT);
-    
-    k_thread_name_set(&temp_thread_data, "nt_thr");
-    
-    return 0;
+	k_thread_create(&temp_thread_data,
+	                temp_thread_stack,
+	                K_THREAD_STACK_SIZEOF(temp_thread_stack),
+	                nt_thread,
+	                NULL,
+	                NULL,
+	                NULL,
+	                TEMP_THREAD_PRIORITY,
+	                0,
+	                K_NO_WAIT);
+
+	k_thread_name_set(&temp_thread_data, "nt_thr");
+
+	return 0;
 }
 
-int temperature_read_block(temp_block_t *block, k_timeout_t timeout)
-{
-    if (block == NULL) {
-        return -EINVAL;
-    }
-    return k_msgq_get(&temp_msgq, block, timeout);
- }
-
+int temperature_read_block(temp_block_t *block, k_timeout_t timeout) {
+	if (block == NULL) {
+		return -EINVAL;
+	}
+	return k_msgq_get(&temp_msgq, block, timeout);
+}
