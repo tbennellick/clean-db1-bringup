@@ -16,8 +16,15 @@ config NASAL_TEMP_BLOCK_SIZE
 	default 100
 	help
 	  Configure the number of temperature samples collected per block
-	  before sending to the message queue. Larger values use more memory
-	  but reduce message queue overhead. Default is 100 samples.
+	  before sending to the message queue.
+
+config NASAL_TEMP_QUEUE_LEN
+	int "Length of the temperature message queue"
+	default 4
+	help
+      Configure the length of the temperature message queue.
+
+
 
 endmenu
 

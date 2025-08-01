@@ -10,13 +10,12 @@
 //LOG_MODULE_REGISTER(temperature, CONFIG_APP_LOG_LEVEL);
 LOG_MODULE_REGISTER(nt, LOG_LEVEL_DBG);
 
-#define TEMP_MSGQ_SIZE 32  /* Number of blocks that can be queued */
 #define TEMP_THREAD_STACK_SIZE 1024
 #define TEMP_THREAD_PRIORITY 5
 
 static const struct adc_dt_spec temp_adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
-K_MSGQ_DEFINE(temp_msgq, sizeof(temp_block_t), TEMP_MSGQ_SIZE, 4);
+K_MSGQ_DEFINE(temp_msgq, sizeof(temp_block_t), CONFIG_NASAL_TEMP_QUEUE_LEN, 4);
 temp_block_t block;
 
 static K_TIMER_DEFINE(temp_sample_timer, NULL, NULL);
@@ -92,11 +91,9 @@ int init_temperature(void)
         return ret;
     }
 
-    /* Start the sampling timer */
-    k_timer_start(&temp_sample_timer, K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS), 
+    k_timer_start(&temp_sample_timer, K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS),
                   K_MSEC(CONFIG_NASAL_TEMP_SAMPLE_PERIOD_MS));
 
-    /* Create and start the temperature sampling thread */
     k_thread_create(&temp_thread_data, temp_thread_stack,
                     K_THREAD_STACK_SIZEOF(temp_thread_stack),
                     nt_thread, NULL, NULL, NULL,

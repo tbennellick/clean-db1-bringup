@@ -34,9 +34,9 @@ int main(void) {
     init_pressure();
 //    init_exg();
     init_fuel_gauge();
-//    init_modem();
+    init_modem();
     init_als();
-//    init_audio();
+    init_audio();
     init_display();
     init_temperature();
 
@@ -47,13 +47,10 @@ int main(void) {
         k_sleep(K_SECONDS(1));
         printk(".");
         debug_led_toggle(0);
-        int ret = temperature_read_block(&temp_block, K_NO_WAIT);
-        if (ret == 0) {
-            LOG_INF("Temp block # %d, at %u ms", temp_block.count, temp_block.timestamp_ms);
-//            LOG_HEXDUMP_WRN(temp_block.samples, sizeof(temp_block.samples), "Temp samples");
-            LOG_HEXDUMP_WRN(temp_block.samples, 20, "Temp samples");
+        if (temperature_read_block(&temp_block, K_NO_WAIT) ==0) {
+            printk(":");
             }
-    }
+        }
     return 0;
 }
 
