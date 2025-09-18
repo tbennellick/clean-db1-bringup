@@ -1,173 +1,231 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/storage/disk_access.h>
-#include <zephyr/fs/fs.h>
-#include <zephyr/fs/littlefs.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/led.h>
-#include <string.h>
+#include <zephyr/fs/fs.h>
 
-#include "storage.h"
+#if defined(CONFIG_FAT_FILESYSTEM_ELM)
 
-//LOG_MODULE_REGISTER(storage, CONFIG_APP_LOG_LEVEL);
-LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
+#include <ff.h>
 
-#define STORAGE_PARTITION_LABEL "EMMC"
-#define STORAGE_MOUNT_POINT "/lfs"
+/*
+ *  Note the fatfs library is able to mount only strings inside _VOLUME_STRS
+ *  in ffconf.h
+ */
+#if defined(CONFIG_DISK_DRIVER_MMC)
+#define DISK_DRIVE_NAME "SD2"
+#else
+#define DISK_DRIVE_NAME "SD"
+#endif
 
-/* LittleFS configuration */
-FS_LITTLEFS_DECLARE_DEFAULT_CONFIG(storage_cfg);
-static struct fs_mount_t lfs_storage_mnt = {
-    .type = FS_LITTLEFS,
-    .fs_data = &storage_cfg,
-    .storage_dev = (void *)STORAGE_PARTITION_LABEL,
-    .mnt_point = STORAGE_MOUNT_POINT,
+#define DISK_MOUNT_PT "/"DISK_DRIVE_NAME":"
+
+static FATFS fat_fs;
+/* mounting info */
+static struct fs_mount_t mp = {
+	.type = FS_FATFS,
+	.fs_data = &fat_fs,
 };
 
-static bool storage_initialized = false;
+#elif defined(CONFIG_FILE_SYSTEM_EXT2)
 
-//static const struct gpio_dt_spec emmc_reset = GPIO_DT_SPEC_GET(DT_ALIAS(emmc_reset), gpios);
+#include <zephyr/fs/ext2.h>
 
+#define DISK_DRIVE_NAME "SD"
+#define DISK_MOUNT_PT "/ext"
+
+static struct fs_mount_t mp = {
+	.type = FS_EXT2,
+	.flags = FS_MOUNT_FLAG_NO_FORMAT,
+	.storage_dev = (void *)DISK_DRIVE_NAME,
+	.mnt_point = "/ext",
+};
+
+#endif
+
+#if defined(CONFIG_FAT_FILESYSTEM_ELM)
+#define FS_RET_OK FR_OK
+#else
+#define FS_RET_OK 0
+#endif
+
+LOG_MODULE_REGISTER(storage_sample, LOG_LEVEL_DBG);
+
+#define MAX_PATH 128
+#define SOME_FILE_NAME "some.dat"
+#define SOME_DIR_NAME "some"
+#define SOME_REQUIRED_LEN MAX(sizeof(SOME_FILE_NAME), sizeof(SOME_DIR_NAME))
+
+// static int lsdir(const char *path);
+// #ifdef CONFIG_FS_SAMPLE_CREATE_SOME_ENTRIES
+// static bool create_some_entries(const char *base_path)
+// {
+// 	char path[MAX_PATH];
+// 	struct fs_file_t file;
+// 	int base = strlen(base_path);
+//
+// 	fs_file_t_init(&file);
+//
+// 	if (base >= (sizeof(path) - SOME_REQUIRED_LEN)) {
+// 		LOG_ERR("Not enough concatenation buffer to create file paths");
+// 		return false;
+// 	}
+//
+// 	LOG_INF("Creating some dir entries in %s", base_path);
+// 	strncpy(path, base_path, sizeof(path));
+//
+// 	path[base++] = '/';
+// 	path[base] = 0;
+// 	strcat(&path[base], SOME_FILE_NAME);
+//
+// 	if (fs_open(&file, path, FS_O_CREATE) != 0) {
+// 		LOG_ERR("Failed to create file %s", path);
+// 		return false;
+// 	}
+// 	fs_close(&file);
+//
+// 	path[base] = 0;
+// 	strcat(&path[base], SOME_DIR_NAME);
+//
+// 	if (fs_mkdir(path) != 0) {
+// 		LOG_ERR("Failed to create dir %s", path);
+// 		/* If code gets here, it has at least successes to create the
+// 		 * file so allow function to return true.
+// 		 */
+// 	}
+// 	return true;
+// }
+// #endif
+
+static const char *disk_mount_pt = DISK_MOUNT_PT;
 
 int init_storage(void)
 {
-    int rc;
-    
-    if (storage_initialized) {
-        LOG_WRN("Storage already initialized");
-        return 0;
-    }
+	/* raw disk i/o */
+	do {
+		static const char *disk_pdrv = DISK_DRIVE_NAME;
+		uint64_t memory_size_mb;
+		uint32_t block_count;
+		uint32_t block_size;
 
-//    if (!gpio_is_ready_dt(&emmc_reset)) {
-//        LOG_ERR("eMMC reset GPIO not ready");
-//        return -ENODEV;
-//    }
+		if (disk_access_ioctl(disk_pdrv,
+				DISK_IOCTL_CTRL_INIT, NULL) != 0) {
+			LOG_ERR("Storage init ERROR!");
+			break;
+		}
 
+		if (disk_access_ioctl(disk_pdrv,
+				DISK_IOCTL_GET_SECTOR_COUNT, &block_count)) {
+			LOG_ERR("Unable to get sector count");
+			break;
+		}
+		LOG_INF("Block count %u", block_count);
 
-    LOG_DBG("SDHC clock at %d",CLOCK_GetUsdhcClkFreq());
+		if (disk_access_ioctl(disk_pdrv,
+				DISK_IOCTL_GET_SECTOR_SIZE, &block_size)) {
+			LOG_ERR("Unable to get sector size");
+			break;
+		}
+		printk("Sector size %u\n", block_size);
+
+		memory_size_mb = (uint64_t)block_count * block_size;
+		printk("Memory Size(MB) %u\n", (uint32_t)(memory_size_mb >> 20));
+
+		if (disk_access_ioctl(disk_pdrv,
+				DISK_IOCTL_CTRL_DEINIT, NULL) != 0) {
+			LOG_ERR("Storage deinit ERROR!");
+			break;
+		}
+	} while (0);
+
+	mp.mnt_point = disk_mount_pt;
+
+	int rc = fs_mkfs(FS_FATFS, (uintptr_t)"EMMC", NULL, 0);
+	printk(" Format returned %d\n", rc);
 
 //
-//    rc = gpio_pin_configure_dt(&emmc_reset, GPIO_OUTPUT_ACTIVE);
-//    if (rc != 0) {
-//        LOG_ERR("Failed to configure eMMC reset pin: %d", rc);
-//        return rc;
-//    }
-//    LOG_INF("eMMC reset pin asserted");
+// 	int res = fs_mount(&mp);
 //
-//    /* Hold reset for minimum 1ms as per eMMC spec */
-//    k_sleep(K_MSEC(50));
+// 	if (res == FS_RET_OK) {
+// 		printk("Disk mounted.\n");
+// 		/* Try to unmount and remount the disk */
+// 		res = fs_unmount(&mp);
+// 		if (res != FS_RET_OK) {
+// 			printk("Error unmounting disk\n");
+// 			return res;
+// 		}
+// 		res = fs_mount(&mp);
+// 		if (res != FS_RET_OK) {
+// 			printk("Error remounting disk\n");
+// 			return res;
+// 		}
 //
-//    gpio_pin_set_dt(&emmc_reset, 0);
-//    LOG_INF("eMMC reset pin de-asserted");
+// 		if (lsdir(disk_mount_pt) == 0) {
+// #ifdef CONFIG_FS_SAMPLE_CREATE_SOME_ENTRIES
+// 			if (create_some_entries(disk_mount_pt)) {
+// 				lsdir(disk_mount_pt);
+// 			}
+// #endif
+// 		}
+// 	} else {
+// 		printk("Error mounting disk.\n");
+// 	}
 //
-//    /* Wait for eMMC internal initialization - spec requires 74+ clock cycles */
-//    k_sleep(K_MSEC(200));
+// 	fs_unmount(&mp);
 
-    /* Initialize disk access */
-    rc = disk_access_init(STORAGE_PARTITION_LABEL);
-    if (rc != 0) {
-        LOG_ERR("Storage init failed: %d", rc);
-        return rc;
-    }
-
-    /* Mount the filesystem */
-    rc = fs_mount(&lfs_storage_mnt);
-    if (rc != 0) {
-        LOG_ERR("LittleFS mount failed: %d", rc);
-
-        /* TODO: Remove this when there is a better system around it*/
-        /* Try to format the filesystem if mount fails */
-        LOG_INF("Attempting to format eMMC with LittleFS...");
-        rc = fs_mkfs(FS_LITTLEFS, (uintptr_t)STORAGE_PARTITION_LABEL, NULL, 0);
-        if (rc != 0) {
-            LOG_ERR("LittleFS format failed: %d", rc);
-            return rc;
-        }
-        
-        /* Try mounting again after format */
-        rc = fs_mount(&lfs_storage_mnt);
-        if (rc != 0) {
-            LOG_ERR("LittleFS mount failed after format: %d", rc);
-            return rc;
-        }
-    }
-
-    storage_initialized = true;
-    LOG_INF("eMMC storage with LittleFS mounted at %s", STORAGE_MOUNT_POINT);
-    
-    storage_test();
-    
-    return 0;
+	while (1) {
+		k_sleep(K_MSEC(1000));
+	}
+	return 0;
 }
-
-int storage_test(void)
-{
-    struct fs_file_t file;
-    int rc;
-    const char *test_file = STORAGE_MOUNT_POINT "/test.txt";
-    const char *test_data = "Hello from eMMC LittleFS!\n";
-    char read_buffer[64];
-
-    if (!storage_initialized) {
-        LOG_ERR("Storage not initialized");
-        return -EINVAL;
-    }
-
-    /* Initialize file object */
-    fs_file_t_init(&file);
-
-    /* Write test */
-    rc = fs_open(&file, test_file, FS_O_CREATE | FS_O_WRITE);
-    if (rc < 0) {
-        LOG_ERR("Failed to create test file: %d", rc);
-        return rc;
-    }
-
-    rc = fs_write(&file, test_data, strlen(test_data));
-    if (rc < 0) {
-        LOG_ERR("Failed to write test file: %d", rc);
-        fs_close(&file);
-        return rc;
-    }
-
-    fs_close(&file);
-    LOG_INF("Test file written successfully");
-
-    /* Read test */
-    rc = fs_open(&file, test_file, FS_O_READ);
-    if (rc < 0) {
-        LOG_ERR("Failed to open test file for reading: %d", rc);
-        return rc;
-    }
-
-    rc = fs_read(&file, read_buffer, sizeof(read_buffer) - 1);
-    if (rc < 0) {
-        LOG_ERR("Failed to read test file: %d", rc);
-        fs_close(&file);
-        return rc;
-    }
-
-    read_buffer[rc] = '\0';
-    fs_close(&file);
-
-    LOG_INF("Test file content: %s", read_buffer);
-
-    /* Delete test file */
-    rc = fs_unlink(test_file);
-    if (rc != 0) {
-        LOG_WRN("Failed to delete test file: %d", rc);
-    }
-
-    return 0;
-}
-
-bool is_storage_ready(void)
-{
-    return storage_initialized;
-}
-
-const char* get_storage_mount_point(void)
-{
-    return STORAGE_MOUNT_POINT;
-}
+//
+// /* List dir entry by path
+//  *
+//  * @param path Absolute path to list
+//  *
+//  * @return Negative errno code on error, number of listed entries on
+//  *         success.
+//  */
+// static int lsdir(const char *path)
+// {
+// 	int res;
+// 	struct fs_dir_t dirp;
+// 	static struct fs_dirent entry;
+// 	int count = 0;
+//
+// 	fs_dir_t_init(&dirp);
+//
+// 	/* Verify fs_opendir() */
+// 	res = fs_opendir(&dirp, path);
+// 	if (res) {
+// 		printk("Error opening dir %s [%d]\n", path, res);
+// 		return res;
+// 	}
+//
+// 	printk("\nListing dir %s ...\n", path);
+// 	for (;;) {
+// 		/* Verify fs_readdir() */
+// 		res = fs_readdir(&dirp, &entry);
+//
+// 		/* entry.name[0] == 0 means end-of-dir */
+// 		if (res || entry.name[0] == 0) {
+// 			break;
+// 		}
+//
+// 		if (entry.type == FS_DIR_ENTRY_DIR) {
+// 			printk("[DIR ] %s\n", entry.name);
+// 		} else {
+// 			printk("[FILE] %s (size = %zu)\n",
+// 				entry.name, entry.size);
+// 		}
+// 		count++;
+// 	}
+//
+// 	/* Verify fs_closedir() */
+// 	fs_closedir(&dirp);
+// 	if (res == 0) {
+// 		res = count;
+// 	}
+//
+// 	return res;
+// }
