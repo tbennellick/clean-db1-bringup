@@ -6,7 +6,9 @@
   <component name="CMakePythonSetting">
     <option name="pythonIntegrationState" value="YES" />
   </component>
-  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$/../samples/fs_sample">
+    <contentRoot DIR="$PROJECT_DIR$" />
+  </component>
   <component name="WestSettings"><![CDATA[{
   "buildDir": "build/{board}/{source_dir}"
 }]]></component>
