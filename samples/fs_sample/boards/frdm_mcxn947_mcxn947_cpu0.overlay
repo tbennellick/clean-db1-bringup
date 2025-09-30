@@ -135,3 +135,19 @@
 		};
 	};
 };
+
+&smartdma {
+	status = "disabled";
+};
+
+&video_sdma {
+	status = "disabled";
+};
+
+&sai0 {
+	status = "disabled";
+};
+
+&sai1 {
+	status = "disabled";
+};
