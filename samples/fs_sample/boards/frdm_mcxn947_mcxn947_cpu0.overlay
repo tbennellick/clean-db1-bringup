@@ -5,6 +5,7 @@
 	pinctrl-2 = <&pinmux_usdhc0>;
 	pinctrl-names = "default", "slow", "med";
 	no-1-8-v;
+	/delete-property/ cd-gpios; // Remove card detect to free PIO2_1 for D4
 	pwr-gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>; // eMMC power enable pin
 	//	pwr-gpios = <&gpio1 17 GPIO_ACTIVE_LOW>; // eMMC reset pin
 	power-delay-ms = <200>;

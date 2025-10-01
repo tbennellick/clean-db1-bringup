@@ -141,10 +141,10 @@ int main(void)
 		}
 	} while (0);
 
-	mp.mnt_point = disk_mount_pt;
-
-	int rc = fs_mkfs(FS_FATFS, (uintptr_t)"SD2", NULL, 0);
-	printk(" Format returned %d\n", rc);
+	// mp.mnt_point = disk_mount_pt;
+	//
+	// int rc = fs_mkfs(FS_FATFS, (uintptr_t)"SD2", NULL, 0);
+	// printk(" Format returned %d\n", rc);
 
 
 	// int res = fs_mount(&mp);
