@@ -2,7 +2,7 @@
 <project version="4">
   <component name="CMakeSharedSettings">
     <configurations>
-      <configuration PROFILE_NAME="Default-zephyr0.17.1-rc1" ENABLED="false" TOOLCHAIN_NAME="zephyr0.17.1-rc1" GENERATION_OPTIONS="-G Ninja">
+      <configuration PROFILE_NAME="Default-zephyr0.17.1-rc1" ENABLED="true" TOOLCHAIN_NAME="zephyr0.17.1-rc1" GENERATION_OPTIONS="-G Ninja">
         <ADDITIONAL_GENERATION_ENVIRONMENT>
           <envs>
             <env name="BOARD" value="db1/mcxn947/cpu0" />
@@ -13,7 +13,7 @@
           </envs>
         </ADDITIONAL_GENERATION_ENVIRONMENT>
       </configuration>
-      <configuration PROFILE_NAME="FRDM_board" ENABLED="true" TOOLCHAIN_NAME="zephyr0.17.1-rc1" GENERATION_OPTIONS="-G Ninja">
+      <configuration PROFILE_NAME="FRDM_board" ENABLED="false" TOOLCHAIN_NAME="zephyr0.17.1-rc1" GENERATION_OPTIONS="-G Ninja">
         <ADDITIONAL_GENERATION_ENVIRONMENT>
           <envs>
             <env name="BOARD" value="frdm_mcxn947/mcxn947/cpu0" />

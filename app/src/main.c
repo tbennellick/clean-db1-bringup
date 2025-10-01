@@ -20,10 +20,10 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
 int main(void) {
     LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
-    init_debug_leds();
-    debug_led_on();
-    led_manager_init();
-    led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
+    // init_debug_leds();
+    // debug_led_on();
+    // led_manager_init();
+    // led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
     //    init_power(); Called early in kernel startup
 
 //     init_imu();
@@ -41,7 +41,7 @@ int main(void) {
     {
         k_sleep(K_SECONDS(1));
         printk(".");
-        debug_led_toggle();
+        // debug_led_toggle();
     }
     return 0;
 }

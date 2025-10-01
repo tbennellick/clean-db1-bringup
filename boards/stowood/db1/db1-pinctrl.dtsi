@@ -199,24 +199,25 @@
 	pinmux_usdhc0: pinmux_usdhc0 {
 		group0 {
 			pinmux = <SDHC0_CMD_PIO2_5>,
-			       <SDHC0_D0_PIO2_3>,
-			       <SDHC0_D1_PIO2_2>,
-			       <SDHC0_D2_PIO2_7>,
-			       <SDHC0_D3_PIO2_6>,
-				 	<SDHC0_D4_PIO2_1>,
-					<SDHC0_D5_PIO2_0>,
-			       <SDHC0_D6_PIO2_9>,
-			       <SDHC0_D7_PIO2_8>;
+					 <SDHC0_D0_PIO2_3>,
+					 <SDHC0_D1_PIO2_2>,
+					 <SDHC0_D2_PIO2_7>,
+					 <SDHC0_D3_PIO2_6>,
+					 <SDHC0_D4_PIO2_1>,
+					 <SDHC0_D5_PIO2_0>,
+					 <SDHC0_D6_PIO2_9>,
+					 <SDHC0_D7_PIO2_8>;
 			slew-rate = "fast";
 			drive-strength = "low";
 			bias-pull-up;
 			input-enable;
 		};
+
 		group1 {
 			pinmux = <SDHC0_CLK_PIO2_4>;
 			slew-rate = "fast";
 			drive-strength = "low";
-//			input-enable;
+			//			input-enable;
 		};
 	};
 
