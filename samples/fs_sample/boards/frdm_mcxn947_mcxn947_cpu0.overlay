@@ -16,6 +16,8 @@
 		disk-name = "SD2";
 		status = "okay";
 	};
+	/* Disable the original SD card disk */
+	/delete-node/ sdmmc;
 };
 
 
