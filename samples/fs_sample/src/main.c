@@ -141,40 +141,38 @@ int main(void)
 		}
 	} while (0);
 
-	// mp.mnt_point = disk_mount_pt;
-	//
-	// int rc = fs_mkfs(FS_FATFS, (uintptr_t)"SD2", NULL, 0);
-	// printk(" Format returned %d\n", rc);
+	mp.mnt_point = disk_mount_pt;
 
 
-	// int res = fs_mount(&mp);
-	//
-	// if (res == FS_RET_OK) {
-	// 	printk("Disk mounted.\n");
-	// 	/* Try to unmount and remount the disk */
-	// 	res = fs_unmount(&mp);
-	// 	if (res != FS_RET_OK) {
-	// 		printk("Error unmounting disk\n");
-	// 		return res;
-	// 	}
-	// 	res = fs_mount(&mp);
-	// 	if (res != FS_RET_OK) {
-	// 		printk("Error remounting disk\n");
-	// 		return res;
-	// 	}
-//
-// 		if (lsdir(disk_mount_pt) == 0) {
-// #ifdef CONFIG_FS_SAMPLE_CREATE_SOME_ENTRIES
-// 			if (create_some_entries(disk_mount_pt)) {
-// 				lsdir(disk_mount_pt);
-// 			}
-// #endif
-// 		}
-// 	} else {
-// 		printk("Error mounting disk.\n");
-// 	}
-//
-// 	fs_unmount(&mp);
+	int res = fs_mount(&mp);
+	LOG_WRN("after FS Mount");
+
+	if (res == FS_RET_OK) {
+		printk("Disk mounted.\n");
+		/* Try to unmount and remount the disk */
+		res = fs_unmount(&mp);
+		if (res != FS_RET_OK) {
+			printk("Error unmounting disk\n");
+			return res;
+		}
+		res = fs_mount(&mp);
+		if (res != FS_RET_OK) {
+			printk("Error remounting disk\n");
+			return res;
+		}
+
+		if (lsdir(disk_mount_pt) == 0) {
+#ifdef CONFIG_FS_SAMPLE_CREATE_SOME_ENTRIES
+			if (create_some_entries(disk_mount_pt)) {
+				lsdir(disk_mount_pt);
+			}
+#endif
+		}
+	} else {
+		printk("Error mounting disk.\n");
+	}
+
+	fs_unmount(&mp);
 
 	while (1) {
 		k_sleep(K_MSEC(1000));
