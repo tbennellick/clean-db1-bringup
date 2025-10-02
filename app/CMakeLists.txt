@@ -9,21 +9,21 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(app LANGUAGES C)
 
 target_sources(app PRIVATE src/main.c)
-#target_sources(app PRIVATE src/debug_leds.c)
-#target_sources(app PRIVATE src/handle_fatal.c)
-#target_sources(app PRIVATE src/led_manager.c)
-#target_sources(app PRIVATE src/modem.c)
-#target_sources(app PRIVATE src/power.c)
-#target_sources(app PRIVATE src/imu.c)
-#target_sources(app PRIVATE src/rip.c)
-#target_sources(app PRIVATE src/pressure.c)
-##target_sources(app PRIVATE src/exg.c)
-#target_sources(app PRIVATE src/gpio_init.c)
-#target_sources(app PRIVATE src/fuel_gauge.c)
-#target_sources(app PRIVATE src/als.c)
-#target_sources(app PRIVATE src/audio.c)
+target_sources(app PRIVATE src/debug_leds.c)
+target_sources(app PRIVATE src/handle_fatal.c)
+target_sources(app PRIVATE src/led_manager.c)
+target_sources(app PRIVATE src/modem.c)
+target_sources(app PRIVATE src/power.c)
+target_sources(app PRIVATE src/imu.c)
+target_sources(app PRIVATE src/rip.c)
+target_sources(app PRIVATE src/pressure.c)
+#target_sources(app PRIVATE src/exg.c)
+target_sources(app PRIVATE src/gpio_init.c)
+target_sources(app PRIVATE src/fuel_gauge.c)
+target_sources(app PRIVATE src/als.c)
+target_sources(app PRIVATE src/audio.c)
 target_sources(app PRIVATE src/storage.c)
-#
-## This exposes the audio codec routing enum to the app,
-## it seems that there is not a nice way to handle this.
-#target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
+
+# This exposes the audio codec routing enum to the app,
+# it seems that there is not a nice way to handle this.
+target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
