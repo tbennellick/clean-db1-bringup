@@ -358,6 +358,7 @@ zephyr_udc0: &usb1 {
 	pinctrl-names = "default";
 };
 
+
 //zephyr_mipi_dbi_parallel: &flexio0_lcd {
 //	/* DMA channels 0, muxed to FlexIO TX */
 //	dmas = <&edma0 0 61>;
@@ -374,6 +375,7 @@ zephyr_udc0: &usb1 {
 //	pinctrl-names = "default";
 //};
 
+
 /* SmartDMA is used for video driver on this board */
 &smartdma {
 	status = "okay";
@@ -389,6 +391,7 @@ zephyr_udc0: &usb1 {
 	//		pclk-pin = <5>;
 	//	};
 };
+
 
 /*
  * MCXN947 board uses OS timer as the kernel timer
@@ -441,83 +444,4 @@ zephyr_udc0: &usb1 {
 		};
 		/* storage_partition is placed in WINBOND flash memory*/
 	};
-};
-
-&flexspi {
-	pinctrl-0 = <&pinmux_flexspi>;
-	pinctrl-names = "default";
-	ahb-prefetch;
-	ahb-bufferable;
-	ahb-cacheable;
-	ahb-read-addr-opt;
-	combination-mode;
-	rx-clock-source = <1>;
-
-	/* WINBOND flash memory*/
-	w25q64jvssiq: w25q64jvssiq@0 {
-		compatible = "nxp,imx-flexspi-nor";
-		status = "okay";
-		size = <67108864>;
-		reg = <0>;
-		spi-max-frequency = <133000000>;
-		jedec-id = [ef 40 17];
-		erase-block-size = <4096>;
-		write-block-size = <1>;
-		cs-interval-unit = <1>;
-		cs-interval = <2>;
-		cs-hold-time = <3>;
-		cs-setup-time = <3>;
-		data-valid-time = <2>;
-		column-space = <0>;
-		partitions {
-			compatible = "fixed-partitions";
-			#address-cells = <1>;
-			#size-cells = <1>;
-			storage_partition: partition@0 {
-				label = "storage";
-				reg = <0x0 DT_SIZE_M(8)>;
-			};
-		};
-
-	};
-};
-
-&dac0 {
-	pinctrl-0 = <&pinmux_dac0>;
-	pinctrl-names = "default";
-};
-
-&sai1 {
-	pinctrl-0 = <&pinmux_sai1>;
-	pinctrl-names = "default";
-};
-
-&sai0 {
-	pinctrl-0 = <&pinmux_sai0>;
-	pinctrl-names = "default";
-};
-
-&usdhc0 {
-	pinctrl-0 = <&pinmux_usdhc0>;
-	pinctrl-1 = <&pinmux_usdhc0>;
-	pinctrl-2 = <&pinmux_usdhc0>;
-	cd-gpios = <&gpio2 1 GPIO_ACTIVE_LOW>;
-	pinctrl-names = "default", "slow", "med";
-	no-1-8-v;
-};
-
-&lpadc0 {
-	pinctrl-0 = <&pinmux_lpadc0>;
-	pinctrl-names = "default";
-};
-
-
-&lpcmp0 {
-	pinctrl-0 = <&pinmux_lpcmp0>;
-	pinctrl-names = "default";
-};
-
-&i3c1 {
-	pinctrl-0 = <&pinmux_i3c1>;
-	pinctrl-names = "default";
 };
