@@ -1,9 +1,3 @@
-#
-# Copyright 2024 NXP
-#
-# SPDX-License-Identifier: Apache-2.0
-#
-
 if(CONFIG_SOC_MCXN947_CPU0 OR CONFIG_SECOND_CORE_MCUX)
   board_runner_args(jlink "--device=MCXN947_M33_0" "--reset-after-load")
   board_runner_args(linkserver  "--device=MCXN947:FRDM-MCXN947")
