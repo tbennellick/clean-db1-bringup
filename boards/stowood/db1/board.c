@@ -282,7 +282,7 @@ static int frdm_mcxn947_init(void)
 #endif
 
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(usdhc0))
-	CLOCK_SetClkDiv(kCLOCK_DivUSdhcClk, 4u);
+	CLOCK_SetClkDiv(kCLOCK_DivUSdhcClk, 1u);
 	CLOCK_AttachClk(kFRO_HF_to_USDHC);
 #endif
 

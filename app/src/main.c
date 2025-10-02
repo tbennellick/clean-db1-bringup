@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
 int main(void) {
     LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
+    LOG_INF("Built for %s on %s at %s", CONFIG_BOARD, __DATE__, __TIME__);
     // init_debug_leds();
     // debug_led_on();
     // led_manager_init();

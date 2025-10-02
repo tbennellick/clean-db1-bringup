@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.13.1)
+
+if(NOT DEFINED BOARD)
+    set(BOARD db1/mcxn947/cpu0) # Must be before find_package()
+    #set(BOARD frdm_mcxn947/mcxn947/cpu0) # Must be before find_package()
+endif()
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(app LANGUAGES C)
