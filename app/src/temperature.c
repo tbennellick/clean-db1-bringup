@@ -71,7 +71,6 @@ _Noreturn static void nt_thread(void *arg1, void *arg2, void *arg3) {
 				LOG_ERR("Failed to put temperature block in message queue: %d", ret);
 			}
 			sample_count = 0;
-			memset(&block.samples, 0xaa, sizeof(block.samples));
 		}
 
 		k_timer_status_sync(&temp_sample_timer);
