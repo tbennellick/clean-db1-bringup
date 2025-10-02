@@ -8,6 +8,7 @@
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="WestSettings"><![CDATA[{
+  "toolchainName": "zephyr0.17.1-rc1",
   "buildDir": "build/{board}/{source_dir}"
 }]]></component>
 </project>
