@@ -1,18 +1,19 @@
 
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
-#include <zephyr/storage/disk_access.h>
-#include <zephyr/fs/fs.h>
-#include "zephyr/random/random.h"
-#include <ff.h>
-#include <zephyr/logging/log.h>
-
 #include "zephyr/drivers/regulator.h"
+#include "zephyr/random/random.h"
+
+#include <zephyr/device.h>
+#include <zephyr/fs/fs.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/storage/disk_access.h>
+
+#include <ff.h>
 
 LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
 
 #define DISK_DRIVE_NAME "SD2"
-#define DISK_MOUNT_PT "/"DISK_DRIVE_NAME":"
+#define DISK_MOUNT_PT   "/" DISK_DRIVE_NAME ":"
 
 static FATFS fat_fs;
 /* mounting info */
@@ -23,15 +24,14 @@ static struct fs_mount_t mp = {
 
 #define FS_RET_OK FR_OK
 
-#define MAX_PATH 128
-#define SOME_FILE_NAME "some.dat"
-#define SOME_DIR_NAME "some"
+#define MAX_PATH          128
+#define SOME_FILE_NAME    "some.dat"
+#define SOME_DIR_NAME     "some"
 #define SOME_REQUIRED_LEN MAX(sizeof(SOME_FILE_NAME), sizeof(SOME_DIR_NAME))
 
 static const char *disk_mount_pt = DISK_MOUNT_PT;
 
-static int lsdir(const char *path)
-{
+static int lsdir(const char *path) {
 	int res;
 	struct fs_dir_t dirp;
 	static struct fs_dirent entry;
@@ -59,8 +59,7 @@ static int lsdir(const char *path)
 		if (entry.type == FS_DIR_ENTRY_DIR) {
 			printk("[DIR ] %s\n", entry.name);
 		} else {
-			printk("[FILE] %s (size = %zu)\n",
-				entry.name, entry.size);
+			printk("[FILE] %s (size = %zu)\n", entry.name, entry.size);
 		}
 		count++;
 	}
@@ -74,8 +73,7 @@ static int lsdir(const char *path)
 	return res;
 }
 
-static bool create_some_entries(const char *base_path)
-{
+static bool create_some_entries(const char *base_path) {
 	char path[MAX_PATH];
 	struct fs_file_t file;
 	int base = strlen(base_path);
@@ -117,49 +115,45 @@ static bool create_some_entries(const char *base_path)
 	return true;
 }
 
-int setup_disk(void)
-{
-		static const char *disk_pdrv = DISK_DRIVE_NAME;
-		uint64_t memory_size_mb;
-		uint32_t block_count;
-		uint32_t block_size;
+int setup_disk(void) {
+	static const char *disk_pdrv = DISK_DRIVE_NAME;
+	uint64_t memory_size_mb;
+	uint32_t block_count;
+	uint32_t block_size;
 
-		int err = disk_access_ioctl(disk_pdrv,
-				DISK_IOCTL_CTRL_INIT, NULL);
-		if (err != 0) {
-			LOG_ERR("Storage init ERROR!");
-			return err;
-		}
+	int err = disk_access_ioctl(disk_pdrv, DISK_IOCTL_CTRL_INIT, NULL);
+	if (err != 0) {
+		LOG_ERR("Storage init ERROR!");
+		return err;
+	}
 
-		err = disk_access_ioctl(disk_pdrv,	DISK_IOCTL_GET_SECTOR_COUNT, &block_count);
-		if (err != 0)
-		{
-			LOG_ERR("Unable to get sector count");
-			return err;
-		}
-		LOG_INF("Block count %u", block_count);
+	err = disk_access_ioctl(disk_pdrv, DISK_IOCTL_GET_SECTOR_COUNT, &block_count);
+	if (err != 0) {
+		LOG_ERR("Unable to get sector count");
+		return err;
+	}
+	LOG_INF("Block count %u", block_count);
 
-	err =disk_access_ioctl(disk_pdrv,DISK_IOCTL_GET_SECTOR_SIZE, &block_size);
-		if (err) {
-			LOG_ERR("Unable to get sector size");
-			return err;
-				}
+	err = disk_access_ioctl(disk_pdrv, DISK_IOCTL_GET_SECTOR_SIZE, &block_size);
+	if (err) {
+		LOG_ERR("Unable to get sector size");
+		return err;
+	}
 
 	LOG_INF("Sector size %u", block_size);
 
 	memory_size_mb = (uint64_t)block_count * block_size;
 	LOG_INF("Memory Size(MB) %u", (uint32_t)(memory_size_mb >> 20));
 
-	err = disk_access_ioctl(disk_pdrv,DISK_IOCTL_CTRL_DEINIT, NULL);
-		if (err) {
-			LOG_ERR("Storage deinit ERROR!");
-			return err;
-			}
+	err = disk_access_ioctl(disk_pdrv, DISK_IOCTL_CTRL_DEINIT, NULL);
+	if (err) {
+		LOG_ERR("Storage deinit ERROR!");
+		return err;
+	}
 	return 0;
 }
 
-int init_storage(void)
-{
+int init_storage(void) {
 	int ret = setup_disk();
 	if (ret != 0) {
 		LOG_ERR("Storage init failed");
@@ -170,7 +164,7 @@ int init_storage(void)
 
 	int res = fs_mount(&mp);
 
-	if (res!=FS_RET_OK) {
+	if (res != FS_RET_OK) {
 		LOG_INF("Problem mounting disk %d", res);
 		return res;
 	}
@@ -178,7 +172,5 @@ int init_storage(void)
 	lsdir(disk_mount_pt);
 
 	fs_unmount(&mp);
-
 	return 0;
 }
-
