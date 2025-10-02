@@ -15,8 +15,11 @@
 #include "als.h"
 #include "audio.h"
 #include "display.h"
+#include "temperature.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
+temp_block_t temp_block;
+
 
 int main(void) {
     LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
@@ -35,14 +38,19 @@ int main(void) {
     init_als();
     init_audio();
     init_display();
+    init_temperature();
 
     LOG_INF("Init complete");
+    
     while (1)
     {
         k_sleep(K_SECONDS(1));
         printk(".");
-        debug_led_toggle();
-    }
+        debug_led_toggle(0);
+        if (temperature_read_block(&temp_block, K_NO_WAIT) ==0) {
+            printk(":");
+            }
+        }
     return 0;
 }
 

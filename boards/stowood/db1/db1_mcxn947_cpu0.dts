@@ -5,6 +5,9 @@
 #include <zephyr/dt-bindings/i2c/i2c.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/mcux-lpadc.h>
+
 / {
 	model = "NXP FRDM_N94 board";
 	compatible = "nxp,mcxn947", "nxp,mcx";
@@ -20,7 +23,6 @@
 		zephyr,uart-mcumgr = &flexcomm4_lpuart4;
 		zephyr,console = &flexcomm4_lpuart4;
 		zephyr,shell-uart = &flexcomm4_lpuart4;
-		zephyr,canbus = &flexcan0;
 		zephyr,code-cpu1-partition = &slot1_partition;
 		zephyr,display = &st7789v;
 	};
@@ -62,9 +64,10 @@
 		mcuboot-button0 = &user_button_2;
 
 		watchdog0 = &wwdt0;
-		pwm-0 = &flexpwm1_pwm0;
-		pwm-1 = &sc_timer;
+//		pwm-0 = &flexpwm1_pwm0;
+//		pwm-1 = &sc_timer;
 		rtc = &rtc;
+		temp-adc = &temp_adc_channel;
 	};
 	leds {
 		compatible = "gpio-leds";
@@ -219,7 +222,13 @@
 		};
 	};
 
+	zephyr,user {
+		io-channels = <&lpadc0 0>;
+	};
+
 };
+
+
 
 /*
  * Default for this board is to allocate SRAM0-5 to cpu0 but the
@@ -505,9 +514,7 @@
 };
 
 &dac0 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_dac0>;
-	pinctrl-names = "default";
+	status = "disabled";
 };
 &enet {
 	status = "disabled";
@@ -526,18 +533,27 @@
 };
 
 &flexpwm1_pwm0 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
-	pinctrl-names = "default";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
+//	pinctrl-names = "default";
 };
-&flexcan0 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_flexcan0>;
-	pinctrl-names = "default";
+&flexpwm1_pwm1 {
+	status = "disabled";
+};
+&flexpwm1_pwm2 {
+	status = "disabled";
 };
 
+&flexcan0 {
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_flexcan0>;
+//	pinctrl-names = "default";
+};
+
+/* This is actually configured directly via HAL to allow triggering */
 &ctimer0 {
 	status = "okay";
+//	prescale = < 0x0 >;
 };
 
 &usdhc0 {
@@ -562,7 +578,21 @@
 	status = "okay";
 	pinctrl-0 = <&pinmux_lpadc0>;
 	pinctrl-names = "default";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* this gets passed via "user space" rather than via the drvier in the normal way */
+	temp_adc_channel: channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_EXTERNAL1";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <16>;
+		zephyr,vref-mv = <1800>;
+		zephyr,input-positive = <MCUX_LPADC_CH3A>;
+	};
 };
+
 
 
 zephyr_udc0: &usb1 {
@@ -586,9 +616,9 @@ zephyr_udc0: &usb1 {
 };
 
 &i3c1 {
-	status = "okay";
-	pinctrl-0 = <&pinmux_i3c1>;
-	pinctrl-names = "default";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_i3c1>;
+//	pinctrl-names = "default";
 };
 
 &flexio0 {
@@ -632,25 +662,7 @@ zephyr_udc0: &usb1 {
 	status = "disabled";
 };
 
-
-zephyr_mipi_dbi_parallel: &flexio0_lcd {
-	/* DMA channels 0, muxed to FlexIO TX */
-	dmas = <&edma0 0 61>;
-	dma-names = "tx";
-	shifters-count = <8>;
-	timers-count = <1>;
-	enwr-pin = <1>;
-	rd-pin = <0>;
-	data-pin-start = <16>;
-	reset-gpios = <&gpio4 7 GPIO_ACTIVE_HIGH>;
-	cs-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
-	rs-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
-	pinctrl-0 = <&pinmux_flexio_lcd>;
-	pinctrl-names = "default";
-};
-
-
-/* SmartDMA is used for video driver on this board */
+/* TODO Is this in use? */
 &smartdma {
 	status = "okay";
 	program-mem = <0x4000000>;
