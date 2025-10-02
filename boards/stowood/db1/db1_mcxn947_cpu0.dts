@@ -1,9 +1,3 @@
-/*
- * Copyright 2024 NXP
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 /dts-v1/;
 
 #include <nxp/nxp_mcxn94x.dtsi>
@@ -11,12 +5,9 @@
 #include <zephyr/dt-bindings/i2c/i2c.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 
-
-
 / {
 	model = "NXP FRDM_N94 board";
 	compatible = "nxp,mcxn947", "nxp,mcx";
-
 	cpus {
 		/delete-node/ cpu@1;
 	};
@@ -158,20 +149,19 @@
 &flexcomm1_lpspi1 {
 	status = "okay";
 };
-
 &flexcomm2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &flexcomm2_lpi2c2 {
-	status = "okay";
+	status = "disabled";
 };
 
-/*
- *LPFLEXCOMM supports UART and I2C on the same instance, enable this for
- * LFLEXCOMM2
- */
 &flexcomm2_lpuart2 {
+	status = "disabled";
+};
+
+&flexcomm3 {
 	status = "okay";
 };
 
@@ -253,15 +243,15 @@
 };
 
 &enet {
-	status = "okay";
+	status = "disabled";
 };
 
 &enet_mac {
-	status = "okay";
+	status = "disabled";
 };
 
 &enet_mdio {
-	status = "okay";
+	status = "disabled";
 };
 
 &wwdt0 {
@@ -269,7 +259,15 @@
 };
 
 &flexpwm1_pwm0 {
-	status = "okay";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
+//	pinctrl-names = "default";
+};
+&flexpwm1_pwm1 {
+	status = "disabled";
+};
+&flexpwm1_pwm2 {
+	status = "disabled";
 };
 
 &flexcan0 {
@@ -351,18 +349,6 @@ zephyr_udc0: &usb1 {
 
 &flexcomm1_lpspi1 {
 	pinctrl-0 = <&pinmux_flexcomm1_lpspi>;
-	pinctrl-names = "default";
-};
-
-nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
-	pinctrl-0 = <&pinmux_flexcomm2_lpi2c>;
-	pinctrl-names = "default";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-};
-
-&flexcomm2_lpuart2 {
-	current-speed = <115200>;
-	pinctrl-0 = <&pinmux_flexcomm2_lpuart>;
 	pinctrl-names = "default";
 };
 
@@ -508,30 +494,6 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 
 &sai0 {
 	pinctrl-0 = <&pinmux_sai0>;
-	pinctrl-names = "default";
-};
-
-&enet {
-	pinctrl-0 = <&pinmux_enet_qos>;
-	pinctrl-names = "default";
-};
-
-&enet_mac {
-	phy-connection-type = "rmii";
-	zephyr,random-mac-address;
-	phy-handle = <&phy>;
-};
-
-&enet_mdio {
-	phy: ethernet-phy@0 {
-		compatible = "ethernet-phy";
-		reg = <0>;
-		status = "okay";
-	};
-};
-
-&flexpwm1_pwm0 {
-	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
 	pinctrl-names = "default";
 };
 
