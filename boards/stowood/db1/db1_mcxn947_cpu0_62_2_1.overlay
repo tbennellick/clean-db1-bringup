@@ -1,12 +1,12 @@
-&sai1 {
-	status = "okay";
-	/delete-property/ nxp,tx-sync-mode;
-};
-
-&flexcomm8_lpspi8 {
-	abp2s: abp2s@0 {
-		min-pressure-millipsi = <(-1000)>;
-		max-pressure-millipsi = <1000>;
-	};
-
-};
+//&sai1 {
+//	status = "okay";
+//	/delete-property/ nxp,tx-sync-mode;
+//};
+//
+//&flexcomm8_lpspi8 {
+//	abp2s: abp2s@0 {
+//		min-pressure-millipsi = <(-1000)>;
+//		max-pressure-millipsi = <1000>;
+//	};
+//
+//};

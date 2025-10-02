@@ -1,16 +1,9 @@
 board:
   name: db1
-  full_name: dev-board1
+  full_name: FRDM-MCXN947
   vendor: nxp
   socs:
-  - name: mcxn947
-    variants:
-    - name: qspi
-      cpucluster: 'cpu0'
-  revision:
-    format: major.minor.patch
-    default: 62.2.1
-    exact: true
-    revisions:
-      - name: 62.2.0
-      - name: 62.2.1
+    - name: mcxn947
+      variants:
+        - name: qspi
+          cpucluster: 'cpu0'
