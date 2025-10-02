@@ -187,9 +187,61 @@
 	status = "okay";
 };
 
-&flexcomm7_lpi2c7 {
+&flexcomm7_lpspi7 {
+	pinctrl-0 = <&pinmux_flexcomm7_lpspi>;
+	pinctrl-names = "default";
+	status = "okay";
+	/* CS must remain low for the entire duration of the serial communication. */
+	/* After the serial communication is finished, always wait four or more tCLK periods before taking CS high.*/
+	/* That is 4*514e-9 = 2.056us*/
+	pcs-sck-delay = <2500>; //Delay in nanoseconds from the chip select assert to the first clock
+
+	/* The chip select must be deasserted at least 4 tCLK periods after the last clock edge. */
+	/* That is 4*514e-9 = 2.056us */
+	sck-pcs-delay = <2500>; //Delay in nanoseconds from the last clock edge to the chip select
+
+	/* Gap between last clock of each word must be more than tsdecode 9.5.2.9 */
+	/* if CLK is 2.048 MHz, then tSDECODE (4 × tCLK) is 2.056 µs. */
+	transfer-delay = <2500>; //Delay in nanoseconds between last SCK edge of a transfer word and the first SCK edge of the next transfer word.
+	ads1298: ads1298@0 {
+		compatible = "ti,ads1298";
+		status = "okay";
+		reg = <0x0>;
+		spi-max-frequency = <10000000>; /* Can go higher */
+		//	spi-min-frequency = <500000>; /* Can go higher */
+	};
+
+};
+
+
+//&flexcomm7_lpi2c7 {
+//	status = "okay";
+//};
+
+&flexcomm8 {
 	status = "okay";
 };
+
+&flexcomm8_lpspi8 {
+	pinctrl-0 = <&pinmux_flexcomm8_lpspi>;
+	pinctrl-names = "default";
+	status = "okay";
+	pcs-sck-delay = <2800>; //Delay in nanoseconds from the chip select assert to the first clock (DS=2.5us)
+	sck-pcs-delay = <150>; //Delay in nanoseconds from the last clock edge to the chip select (DS=100ns)
+	//	transfer-delay = <2500>; //Delay in nanoseconds between last SCK edge of a transfer word and the first SCK edge of the next transfer word.
+
+	abp2s: abp2s@0 {
+		compatible = "honeywell,abp2s";
+		status = "okay";
+		reg = <0x0>;
+		spi-max-frequency = <200000>; /* Can go higher */
+		min-pressure-millipsi = <0>;
+		max-pressure-millipsi = <1000>;
+	};
+
+};
+
+
 
 &flexspi {
 	status = "okay";
@@ -221,7 +273,9 @@
 };
 
 &flexcan0 {
-	status = "okay";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_flexcan0>;
+//	pinctrl-names = "default";
 };
 
 &ctimer0 {
@@ -282,7 +336,9 @@ zephyr_udc0: &usb1 {
 };
 
 &sc_timer {
-	status = "okay";
+	status = "disabled";
+//	pinctrl-0 = <&pinmux_sctimer>;
+//	pinctrl-names = "default";
 };
 
 &sai1 {
@@ -316,32 +372,36 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	pinctrl-names = "default";
 };
 
-&flexcomm7_lpi2c7 {
-	pinctrl-0 = <&pinmux_flexcomm7_lpi2c>;
-	pinctrl-names = "default";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-	ov7670: ov7670@21 {
-		compatible = "ovti,ov7670";
-		reset-gpios = <&gpio1 19 GPIO_ACTIVE_HIGH>;
-		pwdn-gpios = <&gpio1 18 GPIO_ACTIVE_HIGH>;
-		reg = <0x21>;
-	};
-};
+//zephyr_mipi_dbi_parallel: &flexio0_lcd {
+//	/* DMA channels 0, muxed to FlexIO TX */
+//	dmas = <&edma0 0 61>;
+//	dma-names = "tx";
+//	shifters-count = <8>;
+//	timers-count = <1>;
+//	enwr-pin = <1>;
+//	rd-pin = <0>;
+//	data-pin-start = <16>;
+//	reset-gpios = <&gpio4 7 GPIO_ACTIVE_HIGH>;
+//	cs-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+//	rs-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+//	pinctrl-0 = <&pinmux_flexio_lcd>;
+//	pinctrl-names = "default";
+//};
 
 /* SmartDMA is used for video driver on this board */
 &smartdma {
 	status = "okay";
 	program-mem = <0x4000000>;
-	video_sdma: video-sdma {
-		status = "okay";
-		compatible = "nxp,video-smartdma";
-		pinctrl-0 = <&pinmux_smartdma_camera>;
-		pinctrl-names = "default";
-		sensor = <&ov7670>;
-		vsync-pin = <4>;
-		hsync-pin = <11>;
-		pclk-pin = <5>;
-	};
+	//	video_sdma: video-sdma {
+	//		status = "okay";
+	//		compatible = "nxp,video-smartdma";
+	//		pinctrl-0 = <&pinmux_smartdma_camera>;
+	//		pinctrl-names = "default";
+	////		sensor = <&ov7670>;
+	//		vsync-pin = <4>;
+	//		hsync-pin = <11>;
+	//		pclk-pin = <5>;
+	//	};
 };
 
 /*
@@ -489,21 +549,6 @@ nxp_8080_touch_panel_i2c: &flexcomm2_lpi2c2 {
 	pinctrl-names = "default";
 };
 
-zephyr_mipi_dbi_parallel: &flexio0_lcd {
-	/* DMA channels 0, muxed to FlexIO TX */
-	dmas = <&edma0 0 61>;
-	dma-names = "tx";
-	shifters-count = <8>;
-	timers-count = <1>;
-	enwr-pin = <1>;
-	rd-pin = <0>;
-	data-pin-start = <16>;
-	reset-gpios = <&gpio4 7 GPIO_ACTIVE_HIGH>;
-	cs-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
-	rs-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
-	pinctrl-0 = <&pinmux_flexio_lcd>;
-	pinctrl-names = "default";
-};
 
 &lpcmp0 {
 	pinctrl-0 = <&pinmux_lpcmp0>;
@@ -512,15 +557,5 @@ zephyr_mipi_dbi_parallel: &flexio0_lcd {
 
 &i3c1 {
 	pinctrl-0 = <&pinmux_i3c1>;
-	pinctrl-names = "default";
-};
-
-&flexcan0 {
-	pinctrl-0 = <&pinmux_flexcan0>;
-	pinctrl-names = "default";
-};
-
-&sc_timer {
-	pinctrl-0 = <&pinmux_sctimer>;
 	pinctrl-names = "default";
 };
