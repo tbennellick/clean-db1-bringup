@@ -50,107 +50,107 @@
 };
 
 
-&flexcomm2 {
-	status = "disabled";
-};
+//&flexcomm2 {
+//	status = "disabled";
+//};
+//
+//&flexcomm2_lpi2c2 {
+//	status = "disabled";
+//};
+//
+//&flexcomm2_lpuart2 {
+//	status = "disabled";
+//};
+//
+//&flexspi {
+//	status = "disabled";
+//	w25q64jvssiq: w25q64jvssiq@0 {
+//		status = "disabled";
+//	};
+//};
+//
+//&enet {
+//	status = "disabled";
+//};
+//
+//&enet_mac {
+//	status = "disabled";
+//};
+//
+//&enet_mdio {
+//	status = "disabled";
+//};
+//
+//&flexpwm1_pwm0 {
+//	status = "disabled";
+//	//	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
+//	//	pinctrl-names = "default";
+//};
+//&flexpwm1_pwm1 {
+//	status = "disabled";
+//};
+//&flexpwm1_pwm2 {
+//	status = "disabled";
+//};
+//
+//&flexcan0 {
+//	status = "disabled";
+//	//	pinctrl-0 = <&pinmux_flexcan0>;
+//	//	pinctrl-names = "default";
+//};
+//
+//
+//&lpcmp0 {
+//	status = "disabled";
+//};
+//
+//&sc_timer {
+//	status = "disabled";
+//	//	pinctrl-0 = <&pinmux_sctimer>;
+//	//	pinctrl-names = "default";
+//};
 
-&flexcomm2_lpi2c2 {
-	status = "disabled";
-};
 
-&flexcomm2_lpuart2 {
-	status = "disabled";
-};
-
-&flexspi {
-	status = "disabled";
-	w25q64jvssiq: w25q64jvssiq@0 {
-		status = "disabled";
-	};
-};
-
-&enet {
-	status = "disabled";
-};
-
-&enet_mac {
-	status = "disabled";
-};
-
-&enet_mdio {
-	status = "disabled";
-};
-
-&flexpwm1_pwm0 {
-	status = "disabled";
-	//	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
-	//	pinctrl-names = "default";
-};
-&flexpwm1_pwm1 {
-	status = "disabled";
-};
-&flexpwm1_pwm2 {
-	status = "disabled";
-};
-
-&flexcan0 {
-	status = "disabled";
-	//	pinctrl-0 = <&pinmux_flexcan0>;
-	//	pinctrl-names = "default";
-};
-
-
-&lpcmp0 {
-	status = "disabled";
-};
-
-&sc_timer {
-	status = "disabled";
-	//	pinctrl-0 = <&pinmux_sctimer>;
-	//	pinctrl-names = "default";
-};
-
-
-&sai0 {
-	status = "disabled";
-};
-
-&os_timer {
-	status = "disabled";
-};
-
-/ {
-	gpio_keys {
-		compatible = "gpio-keys";
-
-		user_button_2: button_0 {
-			label = "User SW2";
-			gpios = <&gpio0 23 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-			zephyr,code = <INPUT_KEY_0>;
-			status = "disabled";
-		};
-
-		user_button_3: button_1 {
-			label = "User SW3";
-			gpios = <&gpio0 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-			zephyr,code = <INPUT_KEY_1>;
-			status = "disabled";
-		};
-	};
-};
-
-&smartdma {
-	status = "disabled";
-};
+//&sai0 {
+//	status = "disabled";
+//};
+//
+//&os_timer {
+//	status = "disabled";
+//};
+//
+/// {
+//	gpio_keys {
+//		compatible = "gpio-keys";
+//
+//		user_button_2: button_0 {
+//			label = "User SW2";
+//			gpios = <&gpio0 23 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+//			zephyr,code = <INPUT_KEY_0>;
+//			status = "disabled";
+//		};
+//
+//		user_button_3: button_1 {
+//			label = "User SW3";
+//			gpios = <&gpio0 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+//			zephyr,code = <INPUT_KEY_1>;
+//			status = "disabled";
+//		};
+//	};
+//};
+//
+//&smartdma {
+//	status = "disabled";
+//};
 
 //&video_sdma {
 //	status = "disabled";
 //};
 
-&sai0 {
-	status = "disabled";
-};
-
+//&sai0 {
+//	status = "disabled";
+//};
+//
 &sai1 {
 	status = "disabled";
 };
