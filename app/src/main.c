@@ -16,6 +16,7 @@
 #include "audio.h"
 #include "display.h"
 #include "temperature.h"
+#include "storage.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 temp_block_t temp_block;
@@ -39,6 +40,7 @@ int main(void) {
     init_audio();
     init_display();
     init_temperature();
+    init_storage();
 
     LOG_INF("Init complete");
     
