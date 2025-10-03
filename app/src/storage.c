@@ -148,6 +148,15 @@ int setup_disk(void) {
 }
 
 int init_storage(void) {
+
+	int rc;
+
+	// rc = fs_mkfs(FS_FATFS, (uintptr_t)"SD2:", NULL, 0);
+	//
+	// if (rc < 0) {
+	// 	LOG_ERR("Format failed");
+	// 	return 0;
+	// }
 	int ret = setup_disk();
 	if (ret != 0) {
 		LOG_ERR("Storage init failed");
