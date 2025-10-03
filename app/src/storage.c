@@ -243,9 +243,7 @@ int setup_disk(void) {
 	return 0;
 }
 
-void make_session_dir(void) {
-	char path[MAX_PATH];
-	snprintf(path, sizeof(path), "%s/%s", disk_mount_pt, get_boot_id());
+void make_session_dir(uint8_t *path) {
 	if (fs_mkdir(path) != 0) {
 		LOG_ERR("Failed to create dir %s", path);
 		/* If code gets here, it has at least successes to create the
@@ -262,8 +260,10 @@ void format(void) {
 }
 
 int init_storage(void) {
+	char boot_root_path[MAX_PATH];
+	snprintf(boot_root_path, sizeof(boot_root_path), "%s/%s", disk_mount_pt, get_boot_id());
 
-	//	format();
+	// format();
 
 	int ret = setup_disk();
 	if (ret != 0) {
@@ -279,12 +279,13 @@ int init_storage(void) {
 		return res;
 	}
 
-	make_session_dir();
+	make_session_dir(boot_root_path);
 
-	measure_write_speed(disk_mount_pt);
-	measure_read_speed(disk_mount_pt);
+	measure_write_speed(boot_root_path);
+	measure_read_speed(boot_root_path);
 
 	lsdir(disk_mount_pt);
+	lsdir(boot_root_path);
 
 	fs_unmount(&mp);
 	return 0;
