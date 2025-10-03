@@ -16,20 +16,18 @@ LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
 #define DISK_DRIVE_NAME "SD2"
 #define DISK_MOUNT_PT   "/" DISK_DRIVE_NAME ":"
 
+#define PERF_FILE_SIZE_MB 10
+#define PERF_FILE_NAME    "perf_test"
+#define WRITE_CHUNK_SIZE  4096
+static uint8_t test_buf[WRITE_CHUNK_SIZE];
+
 static FATFS fat_fs;
-/* mounting info */
 static struct fs_mount_t mp = {
 	.type = FS_FATFS,
 	.fs_data = &fat_fs,
 };
 
-#define FS_RET_OK FR_OK
-
-#define MAX_PATH          128
-#define SOME_FILE_NAME    "some.dat"
-#define SOME_DIR_NAME     "some"
-#define SOME_REQUIRED_LEN MAX(sizeof(SOME_FILE_NAME), sizeof(SOME_DIR_NAME))
-
+#define MAX_PATH 128
 static const char *disk_mount_pt = DISK_MOUNT_PT;
 
 static int lsdir(const char *path) {
@@ -68,56 +66,9 @@ static int lsdir(const char *path) {
 	return res;
 }
 
-static bool create_some_entries(const char *base_path) {
-	char path[MAX_PATH];
-	struct fs_file_t file;
-	int base = strlen(base_path);
-
-	fs_file_t_init(&file);
-
-	if (base >= (sizeof(path) - SOME_REQUIRED_LEN)) {
-		LOG_ERR("Not enough concatenation buffer to create file paths");
-		return false;
-	}
-
-	LOG_INF("Creating some dir entries in %s", base_path);
-	strncpy(path, base_path, sizeof(path));
-
-	path[base++] = '/';
-	path[base] = 0;
-	// strcat(&path[base], SOME_FILE_NAME);
-	uint16_t num = sys_rand16_get();
-
-	snprintf(path, sizeof(path), "%s/%d", base_path, num);
-
-	if (fs_open(&file, path, FS_O_CREATE) != 0) {
-		LOG_ERR("Failed to create file %s", path);
-		return false;
-	}
-	uint8_t d[] = "Hello World\n";
-	fs_write(&file, d, sizeof(d));
-	fs_close(&file);
-
-	path[base] = 0;
-	strcat(&path[base], SOME_DIR_NAME);
-
-	if (fs_mkdir(path) != 0) {
-		LOG_ERR("Failed to create dir %s", path);
-		/* If code gets here, it has at least successes to create the
-		 * file so allow function to return true.
-		 */
-	}
-	return true;
-}
-
-#define PERF_FILE_SIZE_MB 10
-#define PERF_FILE_NAME    "perf_test"
-#define WRITE_CHUNK_SIZE  4096
-
 int measure_write_speed(const char *base_path) {
 	char path[MAX_PATH];
 	struct fs_file_t file;
-	static uint8_t write_buf[WRITE_CHUNK_SIZE];
 	int64_t start_time, end_time;
 	size_t total_bytes = PERF_FILE_SIZE_MB * 1024 * 1024;
 	size_t bytes_written = 0;
@@ -127,7 +78,7 @@ int measure_write_speed(const char *base_path) {
 
 	/* Fill write buffer with pattern */
 	for (int i = 0; i < WRITE_CHUNK_SIZE; i++) {
-		write_buf[i] = i & 0xFF;
+		test_buf[i] = i & 0xFF;
 	}
 
 	snprintf(path, sizeof(path), "%s/%s", base_path, PERF_FILE_NAME);
@@ -142,7 +93,7 @@ int measure_write_speed(const char *base_path) {
 
 	while (bytes_written < total_bytes) {
 		size_t to_write = MIN(WRITE_CHUNK_SIZE, total_bytes - bytes_written);
-		ssize_t written = fs_write(&file, write_buf, to_write);
+		ssize_t written = fs_write(&file, test_buf, to_write);
 		if (written < 0) {
 			LOG_ERR("Write failed: %d", (int)written);
 			fs_close(&file);
@@ -167,7 +118,6 @@ int measure_write_speed(const char *base_path) {
 int measure_read_speed(const char *base_path) {
 	char path[MAX_PATH];
 	struct fs_file_t file;
-	static uint8_t read_buf[WRITE_CHUNK_SIZE];
 	int64_t start_time, end_time;
 	size_t bytes_read = 0;
 	int ret;
@@ -185,7 +135,7 @@ int measure_read_speed(const char *base_path) {
 	start_time = k_uptime_get();
 
 	while (true) {
-		ssize_t read = fs_read(&file, read_buf, WRITE_CHUNK_SIZE);
+		ssize_t read = fs_read(&file, test_buf, WRITE_CHUNK_SIZE);
 		if (read <= 0) {
 			break;
 		}
@@ -274,7 +224,7 @@ int init_storage(void) {
 	mp.mnt_point = disk_mount_pt;
 
 	int res = fs_mount(&mp);
-	if (res != FS_RET_OK) {
+	if (res != 0) {
 		LOG_INF("Problem mounting disk %d", res);
 		return res;
 	}
