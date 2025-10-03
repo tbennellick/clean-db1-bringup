@@ -1,10 +1,10 @@
 #pragma once
 
-#include <zephyr/types.h>
 #include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2s.h>
 #include <zephyr/drivers/spi.h>
-#include <zephyr/drivers/gpio.h>
+#include <zephyr/types.h>
 
 struct ads1298_i2s_config {
 	struct spi_dt_spec spi_bus;
@@ -20,8 +20,8 @@ struct ads1298_i2s_config {
 struct ads1298_i2s_data {
 	struct k_mem_slab *mem_slab;
 	struct k_msgq data_queue;
-    void * rx_in_msgs[CONFIG_EXG_RX_SAMPLE_COUNT];
-    uint32_t timeout;
+	void *rx_in_msgs[CONFIG_EXG_RX_SAMPLE_COUNT];
+	uint32_t timeout;
 	bool running;
 	bool read_busy;
 	uint8_t current_config1;
@@ -29,4 +29,3 @@ struct ads1298_i2s_data {
 	struct k_work_delayable get_samples_work;
 	const struct device *dev;
 };
-
