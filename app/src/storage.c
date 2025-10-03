@@ -38,28 +38,22 @@ static int lsdir(const char *path) {
 	int count = 0;
 
 	fs_dir_t_init(&dirp);
-
-	/* Verify fs_opendir() */
 	res = fs_opendir(&dirp, path);
 	if (res) {
-		printk("Error opening dir %s [%d]\n", path, res);
+		LOG_ERR("Error opening dir %s [%d]\n", path, res);
 		return res;
 	}
 
-	printk("\nListing dir %s ...\n", path);
 	for (;;) {
-		/* Verify fs_readdir() */
 		res = fs_readdir(&dirp, &entry);
-
-		/* entry.name[0] == 0 means end-of-dir */
-		if (res || entry.name[0] == 0) {
+		if (res || entry.name[0] == 0) { /* entry.name[0] == 0 means end-of-dir */
 			break;
 		}
 
 		if (entry.type == FS_DIR_ENTRY_DIR) {
-			printk("[DIR ] %s\n", entry.name);
+			LOG_INF("[DIR ] %s", entry.name);
 		} else {
-			printk("[FILE] %s (size = %zu)\n", entry.name, entry.size);
+			LOG_INF("[FILE] %s (size = %zu)", entry.name, entry.size);
 		}
 		count++;
 	}
