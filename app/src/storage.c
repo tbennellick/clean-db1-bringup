@@ -148,16 +148,28 @@ int setup_disk(void) {
 	return 0;
 }
 
+void make_session_dir(void) {
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/%s", disk_mount_pt, get_boot_id());
+	if (fs_mkdir(path) != 0) {
+		LOG_ERR("Failed to create dir %s", path);
+		/* If code gets here, it has at least successes to create the
+		 * file so allow function to return true.
+		 */
+	}
+}
+
+void format(void) {
+	int rc = fs_mkfs(FS_FATFS, (uintptr_t)"SD2:", NULL, 0);
+	if (rc < 0) {
+		LOG_ERR("Format failed");
+	}
+}
+
 int init_storage(void) {
 
-	int rc;
+	//	format();
 
-	// rc = fs_mkfs(FS_FATFS, (uintptr_t)"SD2:", NULL, 0);
-	//
-	// if (rc < 0) {
-	// 	LOG_ERR("Format failed");
-	// 	return 0;
-	// }
 	int ret = setup_disk();
 	if (ret != 0) {
 		LOG_ERR("Storage init failed");
@@ -172,49 +184,7 @@ int init_storage(void) {
 		return res;
 	}
 
-	char *base_path = (char *)disk_mount_pt;
-
-	char path[MAX_PATH];
-	// struct fs_file_t file;
-	// int base = strlen(base_path);
-	//
-	// fs_file_t_init(&file);
-	//
-	// if (base >= (sizeof(path) - SOME_REQUIRED_LEN)) {
-	// 	LOG_ERR("Not enough concatenation buffer to create file paths");
-	// 	return false;
-	// }
-	//
-	// LOG_INF("Creating some dir entries in %s", base_path);
-	// strncpy(path, base_path, sizeof(path));
-	//
-	// path[base++] = '/';
-	// path[base] = 0;
-	// // strcat(&path[base], SOME_FILE_NAME);
-	// uint16_t num = sys_rand16_get();
-	//
-	// snprintf(path, sizeof(path), "%s/%s", base_path, get_boot_id());
-	snprintf(path, sizeof(path), "%s/%s", base_path, "e4e047eb-575c-46a8-a815-21e70b3ed142");
-	// snprintf(path, sizeof(path), "%s/%s", base_path, "e4e047eb-");
-
-	// if (fs_open(&file, path, FS_O_CREATE) != 0) {
-	// 	LOG_ERR("Failed to create file %s", path);
-	// 	return false;
-	// }
-	// uint8_t d[] = "Hello World\n";
-	// fs_write(&file, d, sizeof(d));
-	// fs_close(&file);
-	//
-	// path[base] = 0;
-	// strcat(&path[base], SOME_DIR_NAME);
-	//
-
-	if (fs_mkdir(path) != 0) {
-		LOG_ERR("Failed to create dir %s", path);
-		/* If code gets here, it has at least successes to create the
-		 * file so allow function to return true.
-		 */
-	}
+	make_session_dir();
 
 	// create_some_entries(disk_mount_pt);
 	lsdir(disk_mount_pt);
