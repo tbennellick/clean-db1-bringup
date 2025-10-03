@@ -110,6 +110,101 @@ static bool create_some_entries(const char *base_path) {
 	return true;
 }
 
+#define PERF_FILE_SIZE_MB 10
+#define PERF_FILE_NAME    "perf_test"
+#define WRITE_CHUNK_SIZE  4096
+
+int measure_write_speed(const char *base_path) {
+	char path[MAX_PATH];
+	struct fs_file_t file;
+	static uint8_t write_buf[WRITE_CHUNK_SIZE];
+	int64_t start_time, end_time;
+	size_t total_bytes = PERF_FILE_SIZE_MB * 1024 * 1024;
+	size_t bytes_written = 0;
+	int ret;
+
+	fs_file_t_init(&file);
+
+	/* Fill write buffer with pattern */
+	for (int i = 0; i < WRITE_CHUNK_SIZE; i++) {
+		write_buf[i] = i & 0xFF;
+	}
+
+	snprintf(path, sizeof(path), "%s/%s", base_path, PERF_FILE_NAME);
+
+	ret = fs_open(&file, path, FS_O_CREATE | FS_O_WRITE);
+	if (ret != 0) {
+		LOG_ERR("Failed to open file for write test: %d", ret);
+		return ret;
+	}
+
+	start_time = k_uptime_get();
+
+	while (bytes_written < total_bytes) {
+		size_t to_write = MIN(WRITE_CHUNK_SIZE, total_bytes - bytes_written);
+		ssize_t written = fs_write(&file, write_buf, to_write);
+		if (written < 0) {
+			LOG_ERR("Write failed: %d", (int)written);
+			fs_close(&file);
+			return written;
+		}
+		bytes_written += written;
+	}
+
+	fs_close(&file);
+	end_time = k_uptime_get();
+
+	int64_t duration_ms = end_time - start_time;
+	if (duration_ms > 0) {
+		uint32_t speed_kbps = (total_bytes * 1000) / (duration_ms * 1024);
+		uint32_t speed_mbps = (total_bytes * 8) / (duration_ms * 1000);
+		LOG_INF("Write: %zu bytes in %lld ms = %u KB/s (%u Mb/s)", total_bytes, duration_ms, speed_kbps, speed_mbps);
+	}
+
+	return 0;
+}
+
+int measure_read_speed(const char *base_path) {
+	char path[MAX_PATH];
+	struct fs_file_t file;
+	static uint8_t read_buf[WRITE_CHUNK_SIZE];
+	int64_t start_time, end_time;
+	size_t bytes_read = 0;
+	int ret;
+
+	fs_file_t_init(&file);
+
+	snprintf(path, sizeof(path), "%s/%s", base_path, PERF_FILE_NAME);
+
+	ret = fs_open(&file, path, FS_O_READ);
+	if (ret != 0) {
+		LOG_ERR("Failed to open file for read test: %d", ret);
+		return ret;
+	}
+
+	start_time = k_uptime_get();
+
+	while (true) {
+		ssize_t read = fs_read(&file, read_buf, WRITE_CHUNK_SIZE);
+		if (read <= 0) {
+			break;
+		}
+		bytes_read += read;
+	}
+
+	fs_close(&file);
+	end_time = k_uptime_get();
+
+	int64_t duration_ms = end_time - start_time;
+	if (duration_ms > 0) {
+		uint32_t speed_kbps = (bytes_read * 1000) / (duration_ms * 1024);
+		uint32_t speed_mbps = (bytes_read * 8) / (duration_ms * 1000);
+		LOG_INF("Read: %zu bytes in %lld ms = %u KB/s (%u Mb/s)", bytes_read, duration_ms, speed_kbps, speed_mbps);
+	}
+
+	return 0;
+}
+
 int setup_disk(void) {
 	static const char *disk_pdrv = DISK_DRIVE_NAME;
 	uint64_t memory_size_mb;
@@ -186,7 +281,9 @@ int init_storage(void) {
 
 	make_session_dir();
 
-	// create_some_entries(disk_mount_pt);
+	measure_write_speed(disk_mount_pt);
+	measure_read_speed(disk_mount_pt);
+
 	lsdir(disk_mount_pt);
 
 	fs_unmount(&mp);
