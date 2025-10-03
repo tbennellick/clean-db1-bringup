@@ -188,7 +188,7 @@ static void ads1298_get_samples_work_handler(struct k_work *work)
         ret = ads1298_transact(dev, NULL, &rx);
         if (ret == 0)
         {
-            k_msgq_put(data->data_queue, &mem_block, K_NO_WAIT);
+            k_msgq_put(&data->data_queue, &mem_block, K_NO_WAIT);
         } else
         {
             k_mem_slab_free(data->mem_slab, mem_block);
@@ -230,7 +230,7 @@ static int ads1298_i2s_read(const struct device *dev, void **mem_block, size_t *
     }
 
 
-    ret = k_msgq_get(data->data_queue, &buffer, SYS_TIMEOUT_MS(data->timeout));
+    ret = k_msgq_get(&data->data_queue, &buffer, SYS_TIMEOUT_MS(data->timeout));
     if (ret != 0)
     {
         return ret;
@@ -400,7 +400,7 @@ static int ads1298_i2s_init(const struct device *dev)
 	data->running = false;
 	data->read_busy = false;
 	data->current_config1 = 0x06; /* To match value on HW reset */
-    k_msgq_init(data->data_queue, (char *)data->rx_in_msgs, sizeof(ads1298_sample_t *),CONFIG_EXG_RX_SAMPLE_COUNT);
+    k_msgq_init(&data->data_queue, (char *)data->rx_in_msgs, sizeof(ads1298_sample_t *),CONFIG_EXG_RX_SAMPLE_COUNT);
 
 
     /* Initialize work queue for data processing */
