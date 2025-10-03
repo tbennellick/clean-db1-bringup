@@ -27,8 +27,8 @@ int main(void) {
 	init_debug_leds();
 	debug_led_on();
 	init_id();
-	LOG_INF("Boot ID %s", get_boot_id());
-	LOG_INF("Gateway ID %s", get_gateway_id());
+	LOG_INF("Boot ID    \t%s", get_boot_id());
+	LOG_INF("Device  ID \t%s", get_device_id());
 
 	led_manager_init();
 	led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
