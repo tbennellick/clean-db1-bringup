@@ -1,4 +1,5 @@
 
+#include "boot_id.h"
 #include "zephyr/drivers/regulator.h"
 #include "zephyr/random/random.h"
 
@@ -166,12 +167,56 @@ int init_storage(void) {
 	mp.mnt_point = disk_mount_pt;
 
 	int res = fs_mount(&mp);
-
 	if (res != FS_RET_OK) {
 		LOG_INF("Problem mounting disk %d", res);
 		return res;
 	}
-	create_some_entries(disk_mount_pt);
+
+	char *base_path = (char *)disk_mount_pt;
+
+	char path[MAX_PATH];
+	// struct fs_file_t file;
+	// int base = strlen(base_path);
+	//
+	// fs_file_t_init(&file);
+	//
+	// if (base >= (sizeof(path) - SOME_REQUIRED_LEN)) {
+	// 	LOG_ERR("Not enough concatenation buffer to create file paths");
+	// 	return false;
+	// }
+	//
+	// LOG_INF("Creating some dir entries in %s", base_path);
+	// strncpy(path, base_path, sizeof(path));
+	//
+	// path[base++] = '/';
+	// path[base] = 0;
+	// // strcat(&path[base], SOME_FILE_NAME);
+	// uint16_t num = sys_rand16_get();
+	//
+	// snprintf(path, sizeof(path), "%s/%s", base_path, get_boot_id());
+	snprintf(path, sizeof(path), "%s/%s", base_path, "e4e047eb-575c-46a8-a815-21e70b3ed142");
+	// snprintf(path, sizeof(path), "%s/%s", base_path, "e4e047eb-");
+
+	// if (fs_open(&file, path, FS_O_CREATE) != 0) {
+	// 	LOG_ERR("Failed to create file %s", path);
+	// 	return false;
+	// }
+	// uint8_t d[] = "Hello World\n";
+	// fs_write(&file, d, sizeof(d));
+	// fs_close(&file);
+	//
+	// path[base] = 0;
+	// strcat(&path[base], SOME_DIR_NAME);
+	//
+
+	if (fs_mkdir(path) != 0) {
+		LOG_ERR("Failed to create dir %s", path);
+		/* If code gets here, it has at least successes to create the
+		 * file so allow function to return true.
+		 */
+	}
+
+	// create_some_entries(disk_mount_pt);
 	lsdir(disk_mount_pt);
 
 	fs_unmount(&mp);
