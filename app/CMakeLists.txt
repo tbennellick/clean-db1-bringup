@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.13.1)
+
+if(NOT DEFINED BOARD)
+    set(BOARD db1/mcxn947/cpu0) # Must be before find_package()
+    #set(BOARD frdm_mcxn947/mcxn947/cpu0) # Must be before find_package()
+endif()
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(app LANGUAGES C)
@@ -24,9 +29,9 @@ target_sources(app PRIVATE src/temperature.c)
 zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artefacts/test_logo.c)
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../artefacts)
 
+#include the exg driver (is there a better way?)
 target_include_directories(app PRIVATE ../include/app/drivers)
 
-#
-## This exposes the audio codec routing enum to the app,
-## it seems that there is not a nice way to handle this.
-#target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
+# This exposes the audio codec routing enum to the app,
+# it seems that there is not a nice way to handle this.
+target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../drivers/audio/max9867)
