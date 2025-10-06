@@ -15,6 +15,9 @@
 #include <zephyr/fs/fs.h>
 #include <stdio.h>
 
+#include "zephyr/drivers/gpio.h"
+#include <zephyr/storage/disk_access.h>
+
 LOG_MODULE_REGISTER(main);
 
 #if CONFIG_DISK_DRIVER_FLASH
@@ -32,6 +35,7 @@ FS_LITTLEFS_DECLARE_DEFAULT_CONFIG(storage);
 
 #if !defined(CONFIG_DISK_DRIVER_FLASH) && \
 	!defined(CONFIG_DISK_DRIVER_RAM) && \
+	!defined(CONFIG_DISK_DRIVER_MMC) && \
 	!defined(CONFIG_DISK_DRIVER_SDMMC)
 #error No supported disk driver enabled
 #endif
@@ -54,6 +58,10 @@ USBD_DEFINE_MSC_LUN(nand, "NAND", "Zephyr", "FlashDisk", "0.00");
 
 #if CONFIG_DISK_DRIVER_SDMMC
 USBD_DEFINE_MSC_LUN(sd, "SD", "Zephyr", "SD", "0.00");
+#endif
+
+#if CONFIG_DISK_DRIVER_MMC
+USBD_DEFINE_MSC_LUN(mmc, "SD2", "Zephyr", "eMMC", "0.00");
 #endif
 
 static int enable_usb_device_next(void)
@@ -119,6 +127,9 @@ static int mount_app_fs(struct fs_mount_t *mnt)
 		mnt->mnt_point = "/RAM:";
 	} else if (IS_ENABLED(CONFIG_DISK_DRIVER_SDMMC)) {
 		mnt->mnt_point = "/SD:";
+	} else if (IS_ENABLED(CONFIG_DISK_DRIVER_MMC)) {
+		mnt->mnt_point = "/SD2:";
+		mnt->storage_dev = (void *)"SD2";
 	} else {
 		mnt->mnt_point = "/NAND:";
 	}
@@ -228,3 +239,30 @@ int main(void)
 	LOG_INF("The device is put in USB mass storage mode.\n");
 	return 0;
 }
+
+
+#ifdef CONFIG_BOARD_DB1
+#define POWER_VEN_SYS_BASE DT_ALIAS(power_ven_sys_base)
+static const struct gpio_dt_spec ven_sys_base = GPIO_DT_SPEC_GET(POWER_VEN_SYS_BASE, gpios);
+#define HS_USB_SEL DT_ALIAS(hs_usb_sel)
+static const struct gpio_dt_spec hs_usb_sel = GPIO_DT_SPEC_GET(HS_USB_SEL, gpios);
+#define POWER_VEN_STORAGE DT_ALIAS(power_ven_storage)
+static const struct gpio_dt_spec ven_storage = GPIO_DT_SPEC_GET(POWER_VEN_STORAGE, gpios);
+
+
+static int auto_early_power_up(void) {
+	gpio_pin_configure_dt(&ven_sys_base, GPIO_OUTPUT_LOW);
+	gpio_pin_set_dt(&ven_sys_base, 1);
+
+	/* Configure USB mux - active low, set to 0 to enable */
+	gpio_pin_configure_dt(&hs_usb_sel, GPIO_OUTPUT);
+	gpio_pin_set_dt(&hs_usb_sel, 0);
+
+	gpio_pin_configure_dt(&ven_storage, GPIO_OUTPUT_LOW);
+	gpio_pin_set_dt(&ven_storage, 1);
+
+	return 0;
+}
+
+SYS_INIT(auto_early_power_up, POST_KERNEL, 50);
+#endif
