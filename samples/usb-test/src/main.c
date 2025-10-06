@@ -141,7 +141,7 @@ static int auto_early_power_up(void) {
 
   /* Configure USB mux - active low, set to 0 to enable */
   gpio_pin_configure_dt(&hs_usb_sel, GPIO_OUTPUT);
-  gpio_pin_set_dt(&hs_usb_sel, 1);
+  gpio_pin_set_dt(&hs_usb_sel, 0);
 
   return 0;
 }
