@@ -28,6 +28,11 @@ target_sources(app PRIVATE src/storage.c)
 target_sources(app PRIVATE src/uuid_lib.c)
 target_sources(app PRIVATE src/boot_id.c)
 target_sources(app PRIVATE src/ui.c)
+target_sources(app PRIVATE src/usb.c)
+
+#TODO This needs to be replaced with stowood specific info
+include(${ZEPHYR_BASE}/samples/subsys/usb/common/common.cmake)
+
 
 #Logo can be optionally removed from the build.
 zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artefacts/test_logo.c)
