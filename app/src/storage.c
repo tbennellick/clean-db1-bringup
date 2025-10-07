@@ -182,8 +182,8 @@ int setup_disk(void) {
 
 	LOG_INF("Sector size %u", block_size);
 
-	memory_size_mb = (uint64_t)block_count * block_size;
-	LOG_INF("Memory Size(MB) %u", (uint32_t)(memory_size_mb >> 20));
+	memory_size_bytes = (uint64_t)block_count * block_size;
+	LOG_INF("Memory Size(MB) %u", (uint32_t)(memory_size_bytes >> 20));
 
 	err = disk_access_ioctl(disk_pdrv, DISK_IOCTL_CTRL_DEINIT, NULL);
 	if (err) {
