@@ -209,9 +209,31 @@ void format(void) {
 	}
 }
 
-int init_storage(void) {
+void append_file(const char *path, const void *data, size_t len) {
+	struct fs_file_t file;
+	int ret;
+
+	fs_file_t_init(&file);
+
+	ret = fs_open(&file, path, FS_O_CREATE | FS_O_WRITE | FS_O_APPEND);
+	if (ret != 0) {
+		LOG_ERR("Failed to open file for append: %d", ret);
+		return;
+	}
+
+	ssize_t written = fs_write(&file, data, len);
+	if (written < 0) {
+		LOG_ERR("Write failed: %d", (int)written);
+	} else if ((size_t)written < len) {
+		LOG_WRN("Short write: %d of %zu", (int)written, len);
+	}
+
+	fs_close(&file);
+}
+
+int storage_thread(void) {
 	char boot_root_path[MAX_PATH];
-	snprintf(boot_root_path, sizeof(boot_root_path), "%s/%s", disk_mount_pt, get_boot_id());
+	snprintf(boot_root_path, sizeof(boot_root_path), "%s/%s", disk_mount_pt, (char *)get_boot_id());
 
 	// format();
 
@@ -237,6 +259,33 @@ int init_storage(void) {
 	lsdir(disk_mount_pt);
 	lsdir(boot_root_path);
 
+	uint8_t test_data[16];
+	uint8_t loop = 0;
+	snprintf(boot_root_path, sizeof(boot_root_path), "%s/%s/%s", disk_mount_pt, (char *)get_boot_id(), "test");
+	while (1) {
+		memset(test_data, loop++, sizeof(test_data));
+		append_file(boot_root_path, test_data, sizeof(test_data));
+		k_sleep(K_SECONDS(1));
+		printf("`");
+	}
+
 	fs_unmount(&mp);
+	return 0;
+}
+
+int init_storage(void) {
+	static K_THREAD_STACK_DEFINE(storage_thread_stack, 4096);
+	static struct k_thread storage_thread_data;
+
+	k_thread_create(&storage_thread_data,
+	                storage_thread_stack,
+	                K_THREAD_STACK_SIZEOF(storage_thread_stack),
+	                (k_thread_entry_t)storage_thread,
+	                NULL,
+	                NULL,
+	                NULL,
+	                K_PRIO_PREEMPT(7),
+	                0,
+	                K_NO_WAIT);
 	return 0;
 }
