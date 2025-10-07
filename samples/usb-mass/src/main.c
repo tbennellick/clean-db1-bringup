@@ -11,7 +11,7 @@
 #include "zephyr/drivers/gpio.h"
 #include <zephyr/storage/disk_access.h>
 
-#include <ff.h>
+// #include <ff.h>
 
 LOG_MODULE_REGISTER(main);
 
