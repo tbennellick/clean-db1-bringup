@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(main);
 // #define STORAGE_PARTITION_ID		FIXED_PARTITION_ID(STORAGE_PARTITION)
 
 
-static struct usbd_context *sample_usbd;
+static struct usbd_context *usb_context;
 USBD_DEFINE_MSC_LUN(mmc, "SD2", "Zephyr", "eMMC", "0.00");
 
 int main(void)
@@ -34,13 +34,13 @@ int main(void)
 	}
 
 
-	sample_usbd = sample_usbd_init_device(NULL);
-	if (sample_usbd == NULL) {
+	usb_context = sample_usbd_init_device(NULL);
+	if (usb_context == NULL) {
 		LOG_ERR("Failed to initialize USB device");
 		return -ENODEV;
 	}
 
-	err = usbd_enable(sample_usbd);
+	err = usbd_enable(usb_context);
 	if (err) {
 		LOG_ERR("Failed to enable device support");
 		return err;
