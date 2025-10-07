@@ -70,7 +70,7 @@ int measure_write_speed(const char *base_path) {
 	char path[MAX_PATH];
 	struct fs_file_t file;
 	int64_t start_time, end_time;
-	size_t total_bytes = PERF_FILE_SIZE_MB * 1024 * 1024;
+	uint64_t total_bytes = PERF_FILE_SIZE_MB * 1024 * 1024;
 	size_t bytes_written = 0;
 	int ret;
 
