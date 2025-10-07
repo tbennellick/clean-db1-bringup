@@ -147,8 +147,8 @@ int measure_read_speed(const char *base_path) {
 
 	int64_t duration_ms = end_time - start_time;
 	if (duration_ms > 0) {
-		uint32_t speed_kbps = (bytes_read * 1000) / (duration_ms * 1024);
-		uint32_t speed_mbps = (bytes_read * 8) / (duration_ms * 1000);
+		uint32_t speed_kbps = ((uint64_t)bytes_read * 1000) / (duration_ms * 1024);
+		uint32_t speed_mbps = ((uint64_t)bytes_read * 8) / (duration_ms * 1000);
 		LOG_INF("Read: %zu bytes in %lld ms = %u KB/s (%u Mb/s)", bytes_read, duration_ms, speed_kbps, speed_mbps);
 	}
 
