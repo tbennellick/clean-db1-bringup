@@ -109,7 +109,7 @@ int measure_write_speed(const char *base_path) {
 	if (duration_ms > 0) {
 		uint32_t speed_kbps = ((uint64_t)total_bytes * 1000) / (duration_ms * 1024);
 		uint32_t speed_mbps = ((uint64_t)total_bytes * 8) / (duration_ms * 1000);
-		LOG_INF("Write: %zu bytes in %lld ms = %u KB/s (%u Mb/s)", total_bytes, duration_ms, speed_kbps, speed_mbps);
+		LOG_INF("Write: %lld bytes in %lld ms = %u KB/s (%u Mb/s)", total_bytes, duration_ms, speed_kbps, speed_mbps);
 	}
 
 	return 0;
