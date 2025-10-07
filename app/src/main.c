@@ -39,19 +39,20 @@ int main(void) {
 	init_ui();
 	LOG_INF("Buttons: Left %d Right %d", left_button(), right_button());
 
-	init_imu();
-	init_rip();
-	init_pressure();
-	//    init_exg();
-	init_fuel_gauge();
-	init_modem();
-	init_als();
-	init_audio();
-	init_display();
-	init_temperature();
-	// init_storage();
+	// init_imu();
+	// init_rip();
+	// init_pressure();
+	// //    init_exg();
+	// init_fuel_gauge();
+	// init_modem();
+	// init_als();
+	// init_audio();
+	// init_display();
+	// init_temperature();
 
-	init_usb();
+	init_storage();
+
+	// init_usb();
 
 	LOG_INF("Init complete");
 
