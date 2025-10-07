@@ -157,7 +157,7 @@ int measure_read_speed(const char *base_path) {
 
 int setup_disk(void) {
 	static const char *disk_pdrv = DISK_DRIVE_NAME;
-	uint64_t memory_size_mb;
+	uint64_t memory_size_bytes;
 	uint32_t block_count;
 	uint32_t block_size;
 
