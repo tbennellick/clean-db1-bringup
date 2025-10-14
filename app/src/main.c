@@ -18,6 +18,7 @@
 #include "fuel_gauge.h"
 #include "storage.h"
 #include "temperature.h"
+#include "ui.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 temp_block_t temp_block;
@@ -33,6 +34,8 @@ int main(void) {
 	led_manager_init();
 	led_manager_set(LED_MANAGER_COLOUR_OFF, LED_MANAGER_MODE_CONT);
 	//    init_power(); Called early in kernel startup
+
+	init_ui();
 
 	init_imu();
 	init_rip();
