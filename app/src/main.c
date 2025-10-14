@@ -36,6 +36,7 @@ int main(void) {
 	//    init_power(); Called early in kernel startup
 
 	init_ui();
+	LOG_INF("Buttons: Left %d Right %d", left_button(), right_button());
 
 	init_imu();
 	init_rip();
