@@ -1,5 +1,6 @@
 
 #include "boot_id.h"
+#include "process_storage.h"
 #include "uuid_lib.h"
 #include "zephyr/drivers/regulator.h"
 #include "zephyr/random/random.h"
@@ -33,7 +34,9 @@ static struct fs_mount_t mp = {
 	.fs_data = &fat_fs,
 };
 
-static int lsdir(const char *path) {
+K_MSGQ_DEFINE(storage_msgq, sizeof(uint32_t), CONFIG_STORAGE_Q_LEN, 4);
+
+__maybe_unused static int lsdir(const char *path) {
 	int res;
 	struct fs_dir_t dirp;
 	static struct fs_dirent entry;
@@ -240,7 +243,8 @@ void append_file(const char *path, const void *data, size_t len) {
 	fs_close(&file);
 }
 
-int storage_thread(void) {
+int storage_thread(void *arg1, void *arg2, void *arg3) {
+	struct k_msgq *msgq = (struct k_msgq *)arg1;
 
 	// format();
 
@@ -260,12 +264,13 @@ int storage_thread(void) {
 
 	make_session_dir();
 
-	// do stuff
+	process_storage_queue(msgq);
+
 	fs_unmount(&mp);
 	return 0;
 }
 
-int init_storage(void) {
+struct k_msgq *init_storage(void) {
 	static K_THREAD_STACK_DEFINE(storage_thread_stack, 4096);
 	static struct k_thread storage_thread_data;
 
@@ -273,11 +278,11 @@ int init_storage(void) {
 	                storage_thread_stack,
 	                K_THREAD_STACK_SIZEOF(storage_thread_stack),
 	                (k_thread_entry_t)storage_thread,
-	                NULL,
+	                &storage_msgq,
 	                NULL,
 	                NULL,
 	                K_PRIO_PREEMPT(7),
 	                0,
 	                K_NO_WAIT);
-	return 0;
+	return &storage_msgq;
 }

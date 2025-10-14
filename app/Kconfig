@@ -24,7 +24,11 @@ config NASAL_TEMP_QUEUE_LEN
 	help
       Configure the length of the temperature message queue.
 
-
+config STORAGE_Q_LEN
+	int "Length of the storage message queue"
+	default 100
+	help
+	  Configure the length of the storage message queue.
 
 endmenu
 
