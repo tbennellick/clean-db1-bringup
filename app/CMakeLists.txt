@@ -32,6 +32,7 @@ target_sources(app PRIVATE src/uuid_lib.c)
 target_sources(app PRIVATE src/boot_id.c)
 target_sources(app PRIVATE src/ui.c)
 target_sources(app PRIVATE src/usb.c)
+target_sources(app PRIVATE src/process_storage.c)
 
 #TODO This needs to be replaced with stowood specific info
 include(${ZEPHYR_BASE}/samples/subsys/usb/common/common.cmake)
