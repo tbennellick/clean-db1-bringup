@@ -1,7 +1,10 @@
 
 #include "boot_id.h"
+#include "uuid_lib.h"
 #include "zephyr/drivers/regulator.h"
 #include "zephyr/random/random.h"
+
+#include <ctype.h>
 
 #include <zephyr/device.h>
 #include <zephyr/fs/fs.h>
@@ -15,20 +18,20 @@ LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
 
 #define DISK_DRIVE_NAME "SD2"
 #define DISK_MOUNT_PT   "/" DISK_DRIVE_NAME ":"
+static const char *disk_mount_pt = DISK_MOUNT_PT;
 
-#define PERF_FILE_SIZE_MB 10
-#define PERF_FILE_NAME    "perf_test"
-#define WRITE_CHUNK_SIZE  4096
-static uint8_t test_buf[WRITE_CHUNK_SIZE];
+#define BFP_SESSION_DIR_DIGITS_COUNT 8
+#define BFP_FILENAME_DIGITS_COUNT    8
+#define BFP_EVENT_FILE_EXTENSION     ".binpb"
+#define BFP_FILENAME_LEN             (BFP_FILENAME_DIGITS_COUNT + sizeof(BFP_EVENT_FILE_EXTENSION) - 1)
+
+#define MAX_PATH 128
 
 static FATFS fat_fs;
 static struct fs_mount_t mp = {
 	.type = FS_FATFS,
 	.fs_data = &fat_fs,
 };
-
-#define MAX_PATH 128
-static const char *disk_mount_pt = DISK_MOUNT_PT;
 
 static int lsdir(const char *path) {
 	int res;
@@ -64,95 +67,6 @@ static int lsdir(const char *path) {
 	}
 
 	return res;
-}
-
-int measure_write_speed(const char *base_path) {
-	char path[MAX_PATH];
-	struct fs_file_t file;
-	int64_t start_time, end_time;
-	uint64_t total_bytes = PERF_FILE_SIZE_MB * 1024 * 1024;
-	size_t bytes_written = 0;
-	int ret;
-
-	fs_file_t_init(&file);
-
-	/* Fill write buffer with pattern */
-	for (int i = 0; i < WRITE_CHUNK_SIZE; i++) {
-		test_buf[i] = i & 0xFF;
-	}
-
-	snprintf(path, sizeof(path), "%s/%s", base_path, PERF_FILE_NAME);
-
-	ret = fs_open(&file, path, FS_O_CREATE | FS_O_WRITE);
-	if (ret != 0) {
-		LOG_ERR("Failed to open file for write test: %d", ret);
-		return ret;
-	}
-
-	start_time = k_uptime_get();
-
-	while (bytes_written < total_bytes) {
-		size_t to_write = MIN(WRITE_CHUNK_SIZE, total_bytes - bytes_written);
-		ssize_t written = fs_write(&file, test_buf, to_write);
-		if (written < 0) {
-			LOG_ERR("Write failed: %d", (int)written);
-			fs_close(&file);
-			return written;
-		}
-		bytes_written += written;
-	}
-
-	fs_close(&file);
-	end_time = k_uptime_get();
-
-	int64_t duration_ms = end_time - start_time;
-	if (duration_ms > 0) {
-		uint32_t speed_kbps = ((uint64_t)total_bytes * 1000) / (duration_ms * 1024);
-		uint32_t speed_mbps = ((uint64_t)total_bytes * 8) / (duration_ms * 1000);
-		LOG_INF("Write: %lld bytes in %lld ms = %u KB/s (%u Mb/s)", total_bytes, duration_ms, speed_kbps, speed_mbps);
-	}
-
-	return 0;
-}
-
-int measure_read_speed(const char *base_path) {
-	char path[MAX_PATH];
-	struct fs_file_t file;
-	int64_t start_time, end_time;
-	size_t bytes_read = 0;
-	int ret;
-
-	fs_file_t_init(&file);
-
-	snprintf(path, sizeof(path), "%s/%s", base_path, PERF_FILE_NAME);
-
-	ret = fs_open(&file, path, FS_O_READ);
-	if (ret != 0) {
-		LOG_ERR("Failed to open file for read test: %d", ret);
-		return ret;
-	}
-
-	start_time = k_uptime_get();
-
-	while (true) {
-		ssize_t read = fs_read(&file, test_buf, WRITE_CHUNK_SIZE);
-		if (read <= 0) {
-			break;
-		}
-		bytes_read += read;
-	}
-
-	fs_close(&file);
-	end_time = k_uptime_get();
-
-	int64_t duration_ms = end_time - start_time;
-	if (duration_ms > 0) {
-		uint32_t speed_kbps = ((uint64_t)bytes_read * 1000) / (duration_ms * 1024);
-		uint32_t speed_mbps = ((uint64_t)bytes_read * 8) / (duration_ms * 1000);
-		LOG_INF("Read: %zu bytes in %lld ms = %u KB/s (%u Mb/s)", bytes_read, duration_ms, speed_kbps, speed_mbps);
-	}
-
-	return 0;
 }
 
 int setup_disk(void) {
@@ -193,13 +107,108 @@ int setup_disk(void) {
 	return 0;
 }
 
-void make_session_dir(uint8_t *path) {
-	if (fs_mkdir(path) != 0) {
-		LOG_ERR("Failed to create dir %s", path);
-		/* If code gets here, it has at least successes to create the
-		 * file so allow function to return true.
-		 */
+bool is_session_dir(struct fs_dirent *entry, int32_t *session_val) {
+	/* Sanitise (This originates from storage and therefore potentially external influence)*/
+	if ((*entry).type != FS_DIR_ENTRY_DIR) {
+		return false;
 	}
+
+	if (strlen((*entry).name) != BFP_SESSION_DIR_DIGITS_COUNT) {
+		return false;
+	}
+
+	for (int i = 0; i < BFP_SESSION_DIR_DIGITS_COUNT; i++) {
+		if (0 == isdigit((*entry).name[i])) {
+			return false;
+		}
+	}
+
+	/* Convert */
+	char *end;
+	const long a = strtol((*entry).name, &end, 10);
+	*session_val = a;
+
+	return true;
+}
+
+int32_t get_next_session_count(void) {
+	int res;
+	struct fs_dir_t dirp;
+	static struct fs_dirent entry;
+	int highest_previous_session_value = 0;
+
+	fs_dir_t_init(&dirp);
+
+	res = fs_opendir(&dirp, disk_mount_pt);
+	if (res) {
+		LOG_ERR("Error opening dir %s [%d]", DISK_MOUNT_PT, res);
+	}
+
+	for (;;) {
+		res = fs_readdir(&dirp, &entry);
+		if (res || entry.name[0] == 0) { /* entry.name[0] == 0 means end-of-dir */
+			break;
+		}
+
+		int32_t this_session_val = 0;
+		if (is_session_dir(&entry, &this_session_val)) {
+			if (this_session_val > highest_previous_session_value) {
+				highest_previous_session_value = this_session_val;
+			}
+		}
+	}
+
+	fs_closedir(&dirp);
+
+	return highest_previous_session_value + 1;
+}
+
+void touch_file(char *path) {
+	struct fs_file_t file;
+	fs_file_t_init(&file);
+	int res = fs_open(&file, path, FS_O_CREATE | FS_O_RDWR);
+	if (res) {
+		LOG_ERR("File creation failed with %d %s", res, path);
+	}
+	res = fs_close(&file);
+	if (res) {
+		LOG_ERR("File close failed with %d %s", res, path);
+	}
+}
+
+void make_session_dir() {
+	char path[MAX_PATH + UUID_STRING_SIZE];
+
+	uint32_t session_number = get_next_session_count();
+
+	int ret = snprintf(path, sizeof(path), "%s/%08d", disk_mount_pt, session_number);
+	if (ret < 0 || ret >= sizeof(path)) {
+		LOG_ERR("Session dir path snprintf failed");
+		return;
+	}
+
+	LOG_INF("Make session directory %s", path);
+	ret = fs_mkdir(path);
+	if (ret < 0) {
+		LOG_ERR("Make session dir failed");
+	}
+
+	/* Write boot id (to be replaced with an event)*/
+	ret = snprintf(path, sizeof(path), "%s/%08d/boot_%s", disk_mount_pt, session_number, (char *)get_boot_id());
+	if (ret < 0 || ret >= sizeof(path)) {
+		LOG_ERR("Session id path snprintf failed");
+		return;
+	}
+
+	touch_file(path);
+
+	/* Write device id (to be replaced with an event)*/
+	ret = snprintf(path, sizeof(path), "%s/%08d/dev_%s", disk_mount_pt, session_number, (char *)get_device_id());
+	if (ret < 0 || ret >= sizeof(path)) {
+		LOG_ERR("Session id path snprintf failed");
+		return;
+	}
+	touch_file(path);
 }
 
 void format(void) {
@@ -230,18 +239,8 @@ void append_file(const char *path, const void *data, size_t len) {
 
 	fs_close(&file);
 }
-__maybe_unused void storage_test(char *boot_root_path) {
-
-	measure_write_speed(boot_root_path);
-	measure_read_speed(boot_root_path);
-
-	lsdir(disk_mount_pt);
-	lsdir(boot_root_path);
-}
 
 int storage_thread(void) {
-	char boot_root_path[MAX_PATH];
-	snprintf(boot_root_path, sizeof(boot_root_path), "%s/%s", disk_mount_pt, (char *)get_boot_id());
 
 	// format();
 
@@ -259,18 +258,9 @@ int storage_thread(void) {
 		return res;
 	}
 
-	make_session_dir(boot_root_path);
+	make_session_dir();
 
-	uint8_t test_data[16];
-	uint8_t loop = 0;
-	snprintf(boot_root_path, sizeof(boot_root_path), "%s/%s/%s", disk_mount_pt, (char *)get_boot_id(), "test");
-	while (1) {
-		memset(test_data, loop++, sizeof(test_data));
-		append_file(boot_root_path, test_data, sizeof(test_data));
-		k_sleep(K_SECONDS(1));
-		printf("`");
-	}
-
+	// do stuff
 	fs_unmount(&mp);
 	return 0;
 }

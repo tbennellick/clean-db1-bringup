@@ -47,16 +47,16 @@ int main(void) {
 		init_usb();
 	} else {
 		LOG_INF("Continuing in Record mode");
-		init_imu();
-		init_rip();
-		init_pressure();
-		//    init_exg();
-		init_fuel_gauge();
-		init_modem();
-		init_als();
-		init_audio();
-		init_display();
-		init_temperature();
+		// init_imu();
+		// init_rip();
+		// init_pressure();
+		// //    init_exg();
+		// init_fuel_gauge();
+		// init_modem();
+		// init_als();
+		// init_audio();
+		// init_display();
+		// init_temperature();
 		init_storage();
 	}
 
