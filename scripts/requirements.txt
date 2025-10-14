@@ -9,3 +9,4 @@ pylink-square==1.6.0
 PyYAML==6.0.2
 west==1.4.0
 wget==3.2
+pykwalify==1.8.0

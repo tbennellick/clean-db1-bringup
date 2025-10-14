@@ -57,6 +57,7 @@
 		hs-usb-sel = &hs_usb_sel;
 		backlight = &backlight;
 		display-reset = &display_reset;
+		emmc-reset = &emmc_reset;
 
 		sw0 = &user_button_2;
 		sw1 = &user_button_3;
@@ -165,7 +166,10 @@
 			gpios = <&gpio4 7 GPIO_ACTIVE_LOW>;
 			label = "Display Reset";
 		};
-
+		emmc_reset: emmc_reset {
+			gpios = <&gpio1 17 GPIO_ACTIVE_LOW>;
+			label = "eMMC Reset";
+		};
 	};
 
 	gpio_keys {
@@ -561,15 +565,23 @@
 	pinctrl-0 = <&pinmux_usdhc0>;
 	pinctrl-1 = <&pinmux_usdhc0>;
 	pinctrl-2 = <&pinmux_usdhc0>;
-	cd-gpios = <&gpio2 1 GPIO_ACTIVE_LOW>;
 	pinctrl-names = "default", "slow", "med";
 	no-1-8-v;
-	sdmmc {
-		compatible = "zephyr,sdmmc-disk";
-		disk-name = "SD";
+	/delete-property/ cd-gpios; // Remove card detect to free PIO2_1 for D4
+	pwr-gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>; // eMMC power enable pin
+	//	pwr-gpios = <&gpio1 17 GPIO_ACTIVE_LOW>; // eMMC reset pin
+	power-delay-ms = <200>;
+	/* eMMC - embedded storage */
+	emmc {
+		//				compatible = "zephyr,sdmmc-disk";
+		compatible = "zephyr,mmc-disk";
+		disk-name = "SD2";
 		status = "okay";
 	};
+	/* Disable the original SD card disk */
+	/delete-node/ sdmmc;
 };
+
 &vref {
 	status = "okay";
 };
@@ -634,9 +646,9 @@ zephyr_udc0: &usb1 {
 };
 
 &sc_timer {
-	status = "okay";
-	pinctrl-0 = <&pinmux_sctimer>;
-	pinctrl-names = "default";
+	status = "disabled"; // has a pin on sdhc bus
+//	pinctrl-0 = <&pinmux_sctimer>;
+//	pinctrl-names = "default";
 };
 
 
