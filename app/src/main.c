@@ -50,9 +50,9 @@ int main(void) {
 	// init_display();
 	// init_temperature();
 
-	init_storage();
+		// init_storage();
 
-	// init_usb();
+	 init_usb();
 
 	LOG_INF("Init complete");
 
