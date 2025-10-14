@@ -230,6 +230,15 @@ void append_file(const char *path, const void *data, size_t len) {
 
 	fs_close(&file);
 }
+__maybe_unused
+int storage_test(char * boot_root_path) {
+
+	measure_write_speed(boot_root_path);
+	measure_read_speed(boot_root_path);
+
+	lsdir(disk_mount_pt);
+	lsdir(boot_root_path);
+}
 
 int storage_thread(void) {
 	char boot_root_path[MAX_PATH];
@@ -252,12 +261,6 @@ int storage_thread(void) {
 	}
 
 	make_session_dir(boot_root_path);
-
-	measure_write_speed(boot_root_path);
-	measure_read_speed(boot_root_path);
-
-	lsdir(disk_mount_pt);
-	lsdir(boot_root_path);
 
 	uint8_t test_data[16];
 	uint8_t loop = 0;
