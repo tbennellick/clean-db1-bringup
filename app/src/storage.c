@@ -5,15 +5,17 @@
 #include "zephyr/drivers/regulator.h"
 #include "zephyr/random/random.h"
 
-#include <ctype.h>
-
 #include <zephyr/device.h>
 #include <zephyr/fs/fs.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/storage/disk_access.h>
 
+// clang-format off
+/* the order of these two lines matters (_T redefined) */
 #include <ff.h>
+#include <ctype.h>
+// clang-format on
 
 LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
 
