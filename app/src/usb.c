@@ -26,7 +26,7 @@ static void usb_msg_callback(struct usbd_context *const ctx, const struct usbd_m
 		break;
 
 	default:
-		LOG_ERR("USB message: %s", usbd_msg_type_string(msg->type));
+		//		LOG_ERR("USB message: %s", usbd_msg_type_string(msg->type));
 		break;
 	}
 }
