@@ -30,6 +30,13 @@ config STORAGE_Q_LEN
 	help
 	  Configure the length of the storage message queue.
 
+config LOG_ROTATE_INTERVAL
+	int "Log rotation interval in seconds"
+	default 300
+	help
+	  Configure the interval in seconds at which log files are rotated.
+	  Default is 300 seconds (5 minutes).
+
 endmenu
 
 module = APP
