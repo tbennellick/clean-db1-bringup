@@ -50,9 +50,13 @@ int main(void) {
 	// init_display();
 	// init_temperature();
 
-		// init_storage();
-
-	 init_usb();
+	if (left_button()) {
+		LOG_WRN("Left button pressed on boot - entering extract mode");
+		init_usb();
+	} else {
+		LOG_INF("Continuing in Record mode");
+		init_storage();
+	}
 
 	LOG_INF("Init complete");
 
