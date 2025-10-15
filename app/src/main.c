@@ -9,7 +9,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include <BFP.pb.h>
+#include <BFP_proto_rev.h>
 #include <app_version.h>
+
 // #include "exg.h"
 #include "als.h"
 #include "audio.h"
@@ -56,6 +59,12 @@ int main(void) {
 		init_temperature();
 		init_storage();
 	}
+
+	BaseEvent event = BaseEvent_init_default;
+	event.event_type = EventType_EVENT_TYPE_EXG_DATA;
+	event.has_event_type = true;
+
+	LOG_INF("Event type %d", event.event_type);
 
 	LOG_INF("Init complete");
 
