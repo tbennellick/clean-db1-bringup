@@ -1,23 +1,46 @@
 syntax = "proto2";
 
-/* Don't use 'required' fields. They are a pain. See:
- * https://developers.google.com/protocol-buffers/docs/proto#specifying-field-rules
- *
- * In general, every message reserves a few 1-byte encoding field numbers for future use.
- * Fields numbers 1-15 are encoded with 1-byte, 16-2047 are 2-byte.
- */
+enum Priority {
+    PRIORITY_LOW = 0;      // Background operations, logging
+    PRIORITY_NORMAL = 1;   // Standard sensor data, user input
+    PRIORITY_HIGH = 2;     // System state changes, errors
+    PRIORITY_CRITICAL = 3; // Safety-critical events, emergencies
+}
 
-message StoredEventLog {
-    reserved 1 to 5;
-    optional uint32 version = 6;              // Log format version
-    optional uint64 start_timestamp_us = 7;   // First event timestamp
-    optional uint64 end_timestamp_us = 8;     // Last event timestamp
-    optional uint32 event_count = 9;          // Number of events in log
-    repeated bytes encoded_events = 10; // Protobuf-encoded BaseEvent messages
+enum EventType {
+    EVENT_TYPE_UNKNOWN = 0;
+
+    // Sensor events
+    EVENT_TYPE_EXG_DATA = 1;
+    // User interaction events
+//    EVENT_TYPE_BUTTON_PRESS = 10;
+//    EVENT_TYPE_BUTTON_RELEASE = 11;
+//
+    // System events
+//    EVENT_TYPE_SYSTEM_STARTUP = 20;
+//    EVENT_TYPE_SYSTEM_SHUTDOWN = 21;
+
+}
+
+message ExGDataEvent {
+    optional bytes readings = 1;
+    optional uint32 status = 2;
+}
+
+message TempDataEvent {
+    optional uint32 temperature = 1;
 }
 
 
-message TestMessage {
-    reserved 1 to 5;
-    optional bytes boot_id = 6;
+message BaseEvent {
+    optional uint64 timestamp_us = 1;        // Microsecond timestamp from system boot
+    optional EventType event_type = 2;       // Event classification enum
+    optional Priority priority = 3;          // Event priority level
+
+    reserved 4 to 10;
+
+    oneof event_data {
+        ExGDataEvent exg_data_event = 11;
+        TempDataEvent temp_data_event = 12;
+    }
 }

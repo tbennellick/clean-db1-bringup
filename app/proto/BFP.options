@@ -1,1 +1,2 @@
 TestMessage.boot_id max_size:16 fixed_length:true
+ExGDataEvent.readings max_size:40 fixed_length:true
