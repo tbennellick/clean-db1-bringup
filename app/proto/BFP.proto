@@ -1,0 +1,23 @@
+syntax = "proto2";
+
+/* Don't use 'required' fields. They are a pain. See:
+ * https://developers.google.com/protocol-buffers/docs/proto#specifying-field-rules
+ *
+ * In general, every message reserves a few 1-byte encoding field numbers for future use.
+ * Fields numbers 1-15 are encoded with 1-byte, 16-2047 are 2-byte.
+ */
+
+message StoredEventLog {
+    reserved 1 to 5;
+    optional uint32 version = 6;              // Log format version
+    optional uint64 start_timestamp_us = 7;   // First event timestamp
+    optional uint64 end_timestamp_us = 8;     // Last event timestamp
+    optional uint32 event_count = 9;          // Number of events in log
+    repeated bytes encoded_events = 10; // Protobuf-encoded BaseEvent messages
+}
+
+
+message TestMessage {
+    reserved 1 to 5;
+    optional bytes boot_id = 6;
+}

@@ -9,7 +9,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include <BFP_proto_rev.h>
 #include <app_version.h>
+#include <proto/BFP.pb.h>
+
 // #include "exg.h"
 #include "als.h"
 #include "audio.h"
@@ -56,6 +59,12 @@ int main(void) {
 		init_temperature();
 		init_storage();
 	}
+
+	StoredEventLog log = StoredEventLog_init_default;
+	log.has_version = true;
+	log.version = BFP_PROTO_REV;
+
+	LOG_INF("Logging format version %d", log.version);
 
 	LOG_INF("Init complete");
 
