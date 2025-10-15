@@ -223,28 +223,6 @@ void format(void) {
 	}
 }
 
-void append_file(const char *path, const void *data, size_t len) {
-	struct fs_file_t file;
-	int ret;
-
-	fs_file_t_init(&file);
-
-	ret = fs_open(&file, path, FS_O_CREATE | FS_O_WRITE | FS_O_APPEND);
-	if (ret != 0) {
-		LOG_ERR("Failed to open file for append: %d", ret);
-		return;
-	}
-
-	ssize_t written = fs_write(&file, data, len);
-	if (written < 0) {
-		LOG_ERR("Write failed: %d", (int)written);
-	} else if ((size_t)written < len) {
-		LOG_WRN("Short write: %d of %zu", (int)written, len);
-	}
-
-	fs_close(&file);
-}
-
 int storage_thread(void *arg1, void *arg2, void *arg3) {
 	struct k_msgq *msgq = (struct k_msgq *)arg1;
 
