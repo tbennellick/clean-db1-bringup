@@ -1,0 +1,30 @@
+&w25q64jvssiq {
+	status = "okay";
+
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		fatfs_storage: partition@0 {
+			reg = <0x00000000 DT_SIZE_M(8)>; /* 64 Mbits */
+		};
+	};
+};
+
+/ {
+	msc_disk0 {
+		compatible = "zephyr,flash-disk";
+		partition = <&fatfs_storage>;
+		disk-name = "NAND";
+		cache-size = <4096>;
+	};
+
+};
+
+&usdhc0 {
+	status = "disabled";
+	sdmmc {
+		status = "disabled";
+	};
+};

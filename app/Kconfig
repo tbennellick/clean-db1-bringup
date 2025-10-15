@@ -40,3 +40,6 @@ config DISPLAY_LOGO
 	  Enable inclusion of the logo in the display output.
 	  When disabled, the logo source files will not be compiled
 	  and the logo will not be displayed.
+
+# TODO this should be removed and replaced with local, stowood specific config
+source "samples/subsys/usb/common/Kconfig.sample_usbd"

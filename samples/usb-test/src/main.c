@@ -14,6 +14,8 @@
 #include <zephyr/usb/usb_device.h>
 
 #include <zephyr/logging/log.h>
+
+#include "zephyr/drivers/gpio.h"
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 #define RAMDISK_VOLUME_NAME "RAM"
@@ -125,5 +127,27 @@ int main(void) {
 
   return 0;
 }
+
+#ifdef CONFIG_BOARD_DB1
+#define POWER_VEN_SYS_BASE DT_ALIAS(power_ven_sys_base)
+#define HS_USB_SEL DT_ALIAS(hs_usb_sel)
+
+static const struct gpio_dt_spec ven_sys_base = GPIO_DT_SPEC_GET(POWER_VEN_SYS_BASE, gpios);
+static const struct gpio_dt_spec hs_usb_sel = GPIO_DT_SPEC_GET(HS_USB_SEL, gpios);
+
+static int auto_early_power_up(void) {
+  gpio_pin_configure_dt(&ven_sys_base, GPIO_OUTPUT_LOW);
+  gpio_pin_set_dt(&ven_sys_base, 1);
+
+  /* Configure USB mux - active low, set to 0 to enable */
+  gpio_pin_configure_dt(&hs_usb_sel, GPIO_OUTPUT);
+  gpio_pin_set_dt(&hs_usb_sel, 0);
+
+  return 0;
+}
+
+SYS_INIT(auto_early_power_up, POST_KERNEL, 50);
+#endif
+
 
 SYS_INIT(ramdisk_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);

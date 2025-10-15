@@ -19,6 +19,7 @@
 #include "storage.h"
 #include "temperature.h"
 #include "ui.h"
+#include "usb.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 temp_block_t temp_block;
@@ -38,17 +39,23 @@ int main(void) {
 	init_ui();
 	LOG_INF("Buttons: Left %d Right %d", left_button(), right_button());
 
-	init_imu();
-	init_rip();
-	init_pressure();
-	//    init_exg();
-	init_fuel_gauge();
-	init_modem();
-	init_als();
-	init_audio();
-	init_display();
-	init_temperature();
-	init_storage();
+	if (left_button()) {
+		LOG_WRN("Left button pressed on boot - entering extract mode");
+		init_usb();
+	} else {
+		LOG_INF("Continuing in Record mode");
+		init_imu();
+		init_rip();
+		init_pressure();
+		//    init_exg();
+		init_fuel_gauge();
+		init_modem();
+		init_als();
+		init_audio();
+		init_display();
+		init_temperature();
+		init_storage();
+	}
 
 	LOG_INF("Init complete");
 
