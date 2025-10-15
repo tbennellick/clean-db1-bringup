@@ -27,6 +27,7 @@ target_sources(app PRIVATE src/temperature.c)
 target_sources(app PRIVATE src/storage.c)
 target_sources(app PRIVATE src/uuid_lib.c)
 target_sources(app PRIVATE src/boot_id.c)
+target_sources(app PRIVATE src/ui.c)
 
 #Logo can be optionally removed from the build.
 zephyr_sources_ifdef(CONFIG_DISPLAY_LOGO ../artefacts/test_logo.c)
