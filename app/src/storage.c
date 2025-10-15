@@ -15,6 +15,8 @@
 /* the order of these two lines matters (_T redefined) */
 #include <ff.h>
 #include <ctype.h>
+
+#include "proto/BFP.pb.h"
 // clang-format on
 
 LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
@@ -24,9 +26,6 @@ LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
 static const char *disk_mount_pt = DISK_MOUNT_PT;
 
 #define BFP_SESSION_DIR_DIGITS_COUNT 8
-#define BFP_FILENAME_DIGITS_COUNT    8
-#define BFP_EVENT_FILE_EXTENSION     ".binpb"
-#define BFP_FILENAME_LEN             (BFP_FILENAME_DIGITS_COUNT + sizeof(BFP_EVENT_FILE_EXTENSION) - 1)
 
 #define MAX_PATH 128
 
@@ -36,7 +35,7 @@ static struct fs_mount_t mp = {
 	.fs_data = &fat_fs,
 };
 
-K_MSGQ_DEFINE(storage_msgq, sizeof(uint32_t), CONFIG_STORAGE_Q_LEN, 4);
+K_MSGQ_DEFINE(storage_msgq, sizeof(BaseEvent), CONFIG_STORAGE_Q_LEN, 4);
 
 __maybe_unused static int lsdir(const char *path) {
 	int res;
@@ -181,25 +180,26 @@ void touch_file(char *path) {
 	}
 }
 
-void make_session_dir() {
-	char path[MAX_PATH + UUID_STRING_SIZE];
+void make_session_dir(char *session_dir_path, size_t len) {
 
 	uint32_t session_number = get_next_session_count();
 
-	int ret = snprintf(path, sizeof(path), "%s/%08d", disk_mount_pt, session_number);
-	if (ret < 0 || ret >= sizeof(path)) {
+	int ret = snprintf(session_dir_path, len, "%s/%08d", disk_mount_pt, session_number);
+	if (ret < 0 || ret >= len) {
 		LOG_ERR("Session dir path snprintf failed");
 		return;
 	}
 
-	LOG_INF("Make session directory %s", path);
-	ret = fs_mkdir(path);
+	LOG_INF("Make session directory %s", session_dir_path);
+	ret = fs_mkdir(session_dir_path);
 	if (ret < 0) {
-		LOG_ERR("Make session dir failed");
+		LOG_ERR("Make session dir %s failed", session_dir_path);
 	}
 
+	char path[MAX_PATH + UUID_STRING_SIZE];
+
 	/* Write boot id (to be replaced with an event)*/
-	ret = snprintf(path, sizeof(path), "%s/%08d/boot_%s", disk_mount_pt, session_number, (char *)get_boot_id());
+	ret = snprintf(path, sizeof(path), "%s/boot_%s", session_dir_path, (char *)get_boot_id());
 	if (ret < 0 || ret >= sizeof(path)) {
 		LOG_ERR("Session id path snprintf failed");
 		return;
@@ -208,7 +208,7 @@ void make_session_dir() {
 	touch_file(path);
 
 	/* Write device id (to be replaced with an event)*/
-	ret = snprintf(path, sizeof(path), "%s/%08d/dev_%s", disk_mount_pt, session_number, (char *)get_device_id());
+	ret = snprintf(path, sizeof(path), "%s/dev_%s", session_dir_path, (char *)get_device_id());
 	if (ret < 0 || ret >= sizeof(path)) {
 		LOG_ERR("Session id path snprintf failed");
 		return;
@@ -264,9 +264,9 @@ int storage_thread(void *arg1, void *arg2, void *arg3) {
 		return res;
 	}
 
-	make_session_dir();
-
-	process_storage_queue(msgq);
+	char session_dir_path[MAX_PATH];
+	make_session_dir(session_dir_path, sizeof(session_dir_path));
+	process_storage_queue(msgq, session_dir_path);
 
 	fs_unmount(&mp);
 	return 0;
