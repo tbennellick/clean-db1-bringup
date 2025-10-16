@@ -122,7 +122,7 @@ jobs:
         if: failure()
         run: |
           tree /__w/
-
+          tree ~
       - name: Pack Firmware on failure
         if: failure()
         run: |
