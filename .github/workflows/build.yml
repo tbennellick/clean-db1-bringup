@@ -14,9 +14,25 @@ jobs:
         with:
           clang-format-version: "20"
 
-  build:
+  select-image:
     runs-on: ubuntu-latest
-#    container: ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2
+    outputs:
+      image: ${{ steps.select-image.outputs.image }}
+    steps:
+      - name: Select image
+        id: select-image
+        run: |
+          if docker pull ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2; then
+            echo "image=ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2" >> $GITHUB_OUTPUT
+          else
+            echo "image=bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: select-image
+    runs-on: ubuntu-latest
+    container: ${{ needs.setup.outputs.image }}
+    #    container: ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2
 #    container: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
     permissions:
       contents: "read"
