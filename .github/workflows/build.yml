@@ -95,6 +95,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_BFP_COMMON_SW }}
 
+      # This is needed to access the bfp_common_sw repo via SSH
       - name: Add GitHub to known hosts
         run: |
           mkdir -p /root/.ssh
