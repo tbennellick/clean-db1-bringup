@@ -9,9 +9,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include <BFP.pb.h>
 #include <BFP_proto_rev.h>
 #include <app_version.h>
-#include <proto/BFP.pb.h>
 
 // #include "exg.h"
 #include "als.h"
@@ -60,11 +60,11 @@ int main(void) {
 		init_storage();
 	}
 
-	StoredEventLog log = StoredEventLog_init_default;
-	log.has_version = true;
-	log.version = BFP_PROTO_REV;
+	BaseEvent event = BaseEvent_init_default;
+	event.event_type = EventType_EVENT_TYPE_EXG_DATA;
+	event.has_event_type = true;
 
-	LOG_INF("Logging format version %d", log.version);
+	LOG_INF("Event type %d", event.event_type);
 
 	LOG_INF("Init complete");
 
