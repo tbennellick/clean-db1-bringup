@@ -51,6 +51,11 @@ jobs:
           restore-keys: |
             modules-
 
+      # grant access to the private bfp_common_sw repo
+      - name: Configure git for private repos
+        run: |
+          git config --global url."https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       - name: Mark git repo as not dubious ownership
         run: |
           git config --global --add safe.directory $GITHUB_WORKSPACE

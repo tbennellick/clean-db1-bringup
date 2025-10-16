@@ -22,7 +22,7 @@ manifest:
           - littlefs
           - nanopb
     - name: bfp_common_sw
-      url: git@github.com:Stowood/bfp_common_sw.git
+      url: https://github.com/Stowood/bfp_common_sw.git
       revision: file_rev_4
       path: bfp_common_sw
 
