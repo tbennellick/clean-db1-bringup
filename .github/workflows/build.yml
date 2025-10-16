@@ -21,6 +21,7 @@ jobs:
     permissions:
       contents: "read"
       id-token: "write"
+      packages: "read"
     env:
       CMAKE_PREFIX_PATH: /opt/zephyr-sdk
       BUILD_DIR: build/
