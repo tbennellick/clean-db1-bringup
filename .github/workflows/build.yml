@@ -109,6 +109,15 @@ jobs:
           tree ~/.ssh
           ls -la ~/.ssh
 
+      - name: Verify SSH setup
+        run: |
+          echo "::group::SSH Agent Status"
+          ssh-add -l
+          echo "::endgroup::"
+          echo "::group::Test GitHub SSH connection"
+          ssh -T git@github.com || true
+          echo "::endgroup::"
+
       - name: Mark git repo as not dubious ownership
         run: |
           git config --global --add safe.directory $GITHUB_WORKSPACE
