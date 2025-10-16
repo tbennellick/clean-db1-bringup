@@ -101,6 +101,7 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           tree ~
           tree ~/.ssh
+          ls -la ~/.ssh
 
       - name: Mark git repo as not dubious ownership
         run: |
