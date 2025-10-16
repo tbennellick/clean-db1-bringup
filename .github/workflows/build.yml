@@ -117,6 +117,27 @@ jobs:
           echo "::group::Test GitHub SSH connection"
           ssh -T git@github.com || true
           echo "::endgroup::"
+      - name: Verify SSH setup
+        run: |
+          echo "::group::Environment Info"
+          echo "HOME: $HOME"
+          echo "Current user: $(whoami)"
+          echo "SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
+          echo "::endgroup::"
+          
+          echo "::group::SSH Agent Status"
+          ssh-add -l
+          echo "::endgroup::"
+          
+          echo "::group::Known hosts location"
+          ls -la ~/.ssh/ || echo "~/.ssh doesn't exist"
+          ls -la /root/.ssh/ || echo "/root/.ssh doesn't exist"
+          echo "::endgroup::"
+          
+          echo "::group::Test GitHub SSH connection (verbose)"
+          ssh -vT git@github.com 2>&1 || true
+          echo "::endgroup::" 
+      
 
       - name: Mark git repo as not dubious ownership
         run: |
