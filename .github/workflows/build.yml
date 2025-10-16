@@ -16,7 +16,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    container: ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2
+#    container: ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2
 #    container: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
     permissions:
       contents: "read"
@@ -27,6 +27,20 @@ jobs:
       BUILD_DIR: build/
 
     steps:
+      - name: Try primary image
+        id: primary
+        continue-on-error: true
+        uses: docker://ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2
+        with:
+          args: echo "Primary image"
+
+      - name: Use fallback image
+        if: steps.primary.outcome == 'failure'
+        uses: docker://bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
+        with:
+          args: echo "Fallback image"
+
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
