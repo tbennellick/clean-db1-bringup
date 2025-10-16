@@ -1,5 +1,9 @@
 name: Build FW
 
+env:
+  PRIMARY_IMAGE: ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2
+  FALLBACK_IMAGE: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
+
 on: [push]
 jobs:
   coding_standard:
@@ -33,10 +37,12 @@ jobs:
       - name: Select image
         id: select-image
         run: |
-          if docker pull ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2; then
-            echo "image=ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2" >> $GITHUB_OUTPUT
+          if docker manifest inspect ${{ env.PRIMARY_IMAGE }} > /dev/null 2>&1; then
+            echo "::notice::Using primary image: ${{ env.PRIMARY_IMAGE }}"
+            echo "image=${{ env.PRIMARY_IMAGE }}" >> $GITHUB_OUTPUT
           else
-            echo "image=bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2" >> $GITHUB_OUTPUT
+            echo "::warning::Primary image unavailable, falling back to ${{ env.FALLBACK_IMAGE }}"
+            echo "image=${{ env.FALLBACK_IMAGE }}" >> $GITHUB_OUTPUT
           fi
 
   build:
