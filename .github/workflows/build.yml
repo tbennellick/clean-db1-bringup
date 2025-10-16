@@ -46,6 +46,11 @@ jobs:
       BUILD_DIR: build/
 
     steps:
+      - name: Show container info
+        run: |
+          echo "Container image: ${{ needs.select-image.outputs.image }}"
+          uname -a
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
