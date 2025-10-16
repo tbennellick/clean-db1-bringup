@@ -1,9 +1,5 @@
 name: Build FW
 
-env:
-  PRIMARY_IMAGE: ghcr.io/stowood/fedora-zephyr:f42_0.17.1-rc1-2 # Private to Stowood but Colocated so quick
-  FALLBACK_IMAGE: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2 # Public but slower so available on dev repos
-
 on: [push]
 jobs:
   coding_standard:
@@ -18,51 +14,17 @@ jobs:
         with:
           clang-format-version: "20"
 
-  select-image:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      packages: "read"
-    outputs:
-      image: ${{ steps.select-image.outputs.image }}
-    steps:
-      # We have to explicitly login. container: below does this for us normally.
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Select image
-        id: select-image
-        run: |
-          if docker manifest inspect ${{ env.PRIMARY_IMAGE }} > /dev/null 2>&1; then
-            echo "::notice::Using primary image: ${{ env.PRIMARY_IMAGE }}"
-            echo "image=${{ env.PRIMARY_IMAGE }}" >> $GITHUB_OUTPUT
-          else
-            echo "::warning::Primary image unavailable, falling back to ${{ env.FALLBACK_IMAGE }}"
-            echo "image=${{ env.FALLBACK_IMAGE }}" >> $GITHUB_OUTPUT
-          fi
-
   build:
-    needs: select-image
     runs-on: ubuntu-latest
-    container: ${{ needs.select-image.outputs.image }}
+    container: bennellickeng/fedora-zephyr:f42_0.17.1-rc1-2
     permissions:
       contents: "read"
       id-token: "write"
-      packages: "read"
     env:
       CMAKE_PREFIX_PATH: /opt/zephyr-sdk
       BUILD_DIR: build/
 
     steps:
-      - name: Show container info
-        run: |
-          echo "::notice::Container image: ${{ needs.select-image.outputs.image }}"
-          uname -a
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -102,18 +64,6 @@ jobs:
           echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> /root/.ssh/known_hosts
           echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=" >> /root/.ssh/known_hosts
           echo "github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=" >> /root/.ssh/known_hosts
-
-#      - name: Verify SSH setup
-#        run: |
-#          ssh-add -l
-#          ssh -T git@github.com || true
-#          echo "HOME: $HOME"
-#          echo "Current user: $(whoami)"
-#          echo "SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
-#          ssh-add -l
-#          ls -la ~/.ssh/ || echo "~/.ssh doesn't exist"
-#          ls -la /root/.ssh/ || echo "/root/.ssh doesn't exist"
-#          ssh -vT git@github.com 2>&1 || true
 
       - name: Mark git repo as not dubious ownership
         run: |
