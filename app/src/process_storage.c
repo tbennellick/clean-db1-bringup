@@ -1,10 +1,10 @@
 #include "ff.h"
 #include "process_storage.h"
-#include "proto/BFP.pb.h"
 
 #include <zephyr/fs/fs.h>
 #include <zephyr/logging/log.h>
 
+#include <BFP.pb.h>
 #include <pb_encode.h>
 LOG_MODULE_REGISTER(process_storage, LOG_LEVEL_DBG);
 

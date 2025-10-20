@@ -16,7 +16,7 @@
 #include <ff.h>
 #include <ctype.h>
 
-#include "proto/BFP.pb.h"
+#include <BFP.pb.h>
 // clang-format on
 
 LOG_MODULE_REGISTER(storage, LOG_LEVEL_DBG);
