@@ -102,7 +102,6 @@ void process_storage_queue(struct k_msgq *msgq, char *session_path) {
 
 		if (storage_events[0].state == K_POLL_STATE_MSGQ_DATA_AVAILABLE) {
 			k_msgq_get(msgq, &event, K_FOREVER);
-			// LOG_DBG("Storage got event type %d", event.event_type);
 
 			/*Serialize the event leaving space for length prefix*/
 			pb_ostream_t stream = pb_ostream_from_buffer(encode_buffer + sizeof(uint16_t), BaseEvent_size);
