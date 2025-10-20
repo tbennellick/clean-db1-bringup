@@ -8,6 +8,9 @@
 #include <zephyr/drivers/i2s.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+
+#include <BFP.pb.h>
+
 LOG_MODULE_REGISTER(exg, LOG_LEVEL_DBG);
 
 #define SAMPLES_IN_SLAB 20
@@ -28,37 +31,69 @@ STRUCT_SECTION_ITERABLE(k_mem_slab, exg_0_mem_slab) = Z_MEM_SLAB_INITIALIZER(exg
 #define EXG_RX_THREAD_STACK_SIZE 1024
 #define EXG_RX_THREAD_PRIORITY   4
 
+#define EXG_SAMPLE_SIZE    (sizeof(((ads1298_sample_t *)0)->status) - 3)
+#define PB_EXG_SAMPLE_SIZE (sizeof(((ExGDataEvent *)0)->readings))
+BUILD_ASSERT(EXG_SAMPLE_SIZE <= PB_EXG_SAMPLE_SIZE,
+             "ads1298_sample_t readings do not fit in ExGDataEvent readings field");
+
 static struct k_thread exg_rx_thread_data;
 K_THREAD_STACK_DEFINE(exg_rx_thread_stack, EXG_RX_THREAD_STACK_SIZE);
 
+/* TODO, this thread could disappear if the driver is re-factored to accept the main queue via a register_queue function
+ *   That will remove the extra queue and double handling. Lets get it working first. */
 void exg_rx_thread_func(void *p1, void *p2, void *p3) {
 	const struct device *dev_exg = (const struct device *)p1;
+	struct k_msgq *main_queue = (struct k_msgq *)p2;
 	void *rx_block;
 	size_t rx_size;
 	int ret;
 
 	LOG_INF("EXG RX thread started");
 
+	// Create and send event to main queue
+	BaseEvent event = BaseEvent_init_default;
+	event.has_event_type = true;
+	event.event_type = EventType_EVENT_TYPE_EXG_DATA;
+	event.has_priority = true;
+	event.priority = Priority_PRIORITY_NORMAL;
+	event.has_timestamp_us = true;
+	event.which_event_data = BaseEvent_exg_data_event_tag;
+	event.event_data.exg_data_event.has_status = true;
+	event.event_data.exg_data_event.has_readings = true;
+	event.event_data.exg_data_event.has_sequence_number = true;
+
 	while (1) {
 		ret = i2s_read(dev_exg, &rx_block, &rx_size);
 		if (ret < 0) {
 			LOG_ERR("Failed to read EXG RX stream (%d)", ret);
-			return;
+			continue;
 		}
 
 		ads1298_sample_t *sample = (ads1298_sample_t *)rx_block;
-		LOG_DBG("Received sample: status=%02x%02x%02x, timestamp=%llu, sequence_number=%u",
-		        sample->status[0],
-		        sample->status[1],
-		        sample->status[2],
-		        sample->timestamp,
-		        sample->sequence_number);
+		// LOG_DBG("Received sample: status=%02x%02x%02x, timestamp=%llu, sequence_number=%u",
+		//         sample->status[0],
+		//         sample->status[1],
+		//         sample->status[2],
+		//         sample->timestamp,
+		//         sample->sequence_number);
+
+		event.timestamp_us = sample->timestamp;
+		memcpy(&event.event_data.exg_data_event.status, sample->status, 3);
+
+		event.event_data.exg_data_event.sequence_number = sample->sequence_number;
+
+		memcpy(event.event_data.exg_data_event.readings, &sample->status[3], sizeof(sample->status) - 3);
+
+		ret = k_msgq_put(main_queue, &event, K_NO_WAIT);
+		if (ret != 0) {
+			LOG_WRN("Failed to put event to main queue: %d", ret);
+		}
 
 		k_mem_slab_free(&exg_0_mem_slab, rx_block);
 	}
 }
 
-int init_exg(void) {
+int init_exg(struct k_msgq *mq) {
 	const struct device *const dev = DEVICE_DT_GET_ONE(ti_ads1298_i2s);
 	struct exg_config exg_cfg;
 	int ret;
@@ -91,7 +126,7 @@ int init_exg(void) {
 	                K_THREAD_STACK_SIZEOF(exg_rx_thread_stack),
 	                exg_rx_thread_func,
 	                (void *)dev,
-	                NULL,
+	                mq,
 	                NULL,
 	                EXG_RX_THREAD_PRIORITY,
 	                0,
@@ -99,6 +134,4 @@ int init_exg(void) {
 
 	LOG_INF("EXG Running");
 	return 0;
-
-	LOG_DBG("Device ready: %s\n", dev->name);
 }

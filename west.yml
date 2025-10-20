@@ -23,6 +23,6 @@ manifest:
           - nanopb
     - name: bfp_common_sw
       url:  git@github.com:Stowood/bfp_common_sw.git
-      revision: file_rev_4
+      revision: proto_rev_5
       path: bfp_common_sw
 

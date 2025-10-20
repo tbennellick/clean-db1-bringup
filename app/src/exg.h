@@ -1,2 +1,2 @@
 #pragma once
-int init_exg(void);
+int init_exg(struct k_msgq *mq);

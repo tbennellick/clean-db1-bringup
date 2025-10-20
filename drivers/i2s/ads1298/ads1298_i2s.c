@@ -320,7 +320,6 @@ static int ads1298_probe(const struct device *dev) {
 static int ads1298_i2s_init(const struct device *dev) {
 	const struct ads1298_i2s_config *cfg = dev->config;
 	struct ads1298_i2s_data *data = dev->data;
-	uint8_t device_id;
 	int ret;
 
 	/* Check SPI bus */
@@ -413,7 +412,7 @@ static int ads1298_i2s_init(const struct device *dev) {
 		return ret;
 	}
 
-	LOG_INF("ADS1298 I2S driver initialized, device ID: 0x%02x", device_id);
+	LOG_INF("ADS1298 I2S driver initialized");
 	return 0;
 }
 

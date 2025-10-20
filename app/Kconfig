@@ -30,6 +30,12 @@ config STORAGE_Q_LEN
 	help
 	  Configure the length of the storage message queue.
 
+config PROCESSOR_Q_LEN
+	int "Length of the processor input message queue"
+	default 100
+	help
+	  Configure the length of the processor input message queue.
+
 config LOG_ROTATE_INTERVAL
 	int "Log rotation interval in seconds"
 	default 300
