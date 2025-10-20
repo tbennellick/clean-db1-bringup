@@ -55,7 +55,7 @@ int main(void) {
 	init_imu();
 	init_rip();
 	init_pressure();
-	//    init_exg();
+	init_exg();
 	init_fuel_gauge();
 	init_modem();
 	init_als();
