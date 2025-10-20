@@ -1,6 +1,7 @@
 # Protobuf (nanopb) configuration
 
-include(${ZEPHYR_NANOPB_MODULE_DIR}/cmake/nanopb.cmake)
+list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
+include(nanopb)
 
 # Use protobuf definitions from bfp_common_sw module
 set(BFP_COMMON_SW_DIR ${ZEPHYR_BASE}/../bfp_common_sw)
