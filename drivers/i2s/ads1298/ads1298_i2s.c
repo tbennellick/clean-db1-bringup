@@ -177,6 +177,15 @@ static void ads1298_get_samples_work_handler(struct k_work *work) {
 		rx_bufs[0].len = ADS1298_SAMPLE_LEN;
 		ret = ads1298_transact(dev, NULL, &rx);
 		if (ret == 0) {
+// 			static uint32_t sample_count = 0;
+// 			sample_count++;
+// 			if (sample_count %100 == 0) {
+// 				 LOG_HEXDUMP_DBG(rx.buffers[0].buf, ADS1298_SAMPLE_LEN, "I");
+// /* The data gets here but rx is not actually pointing to the slab that is passed */
+// 			}
+			/* Hack to test */
+			memcpy(mem_block, &rx.buffers[0].buf, ADS1298_SAMPLE_LEN);
+
 			k_msgq_put(&data->data_queue, &mem_block, K_NO_WAIT);
 		} else {
 			k_mem_slab_free(data->mem_slab, mem_block);
@@ -399,6 +408,7 @@ static int ads1298_i2s_init(const struct device *dev) {
 		LOG_ERR("Failed to add DRDY callback: %d", ret);
 		return ret;
 	}
+
 
 	ret = ads1298_base_setup_device(dev);
 	if (ret) {

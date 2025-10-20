@@ -75,6 +75,7 @@ static int auto_early_power_up(void) {
     init_power();
     early_power_up_bodge();
 
+    // power_all(true);
     return 0;
 }
 

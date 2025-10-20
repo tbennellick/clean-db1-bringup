@@ -7,6 +7,7 @@
     <mapping directory="$PROJECT_DIR$/../../modules/hal/cmsis" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../modules/hal/nxp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../modules/hal/st" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../modules/lib/nanopb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../zephyr" vcs="Git" />
   </component>
 </project>

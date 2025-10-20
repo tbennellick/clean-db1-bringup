@@ -27,6 +27,9 @@
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 temp_block_t temp_block;
 
+K_MSGQ_DEFINE(main_queue, sizeof(BaseEvent), 4, 4);
+
+
 int main(void) {
 	LOG_INF("BFP2 Main core %s\n", APP_VERSION_STRING);
 	init_debug_leds();
@@ -53,10 +56,10 @@ int main(void) {
 	}
 	LOG_INF("Continuing in Record mode");
 
-	struct k_msgq *storage_queue = init_storage();
-	struct k_msgq *main_queue = start_processing(storage_queue);
+	// struct k_msgq *storage_queue = init_storage();
+	// struct k_msgq *main_queue = start_processing(storage_queue);
 
-	init_exg(main_queue);
+	init_exg(&main_queue);
 
 	// init_imu();
 	// init_rip();

@@ -62,6 +62,8 @@ void exg_rx_thread_func(void *p1, void *p2, void *p3) {
 	event.event_data.exg_data_event.has_readings = true;
 	event.event_data.exg_data_event.has_sequence_number = true;
 
+	uint32_t sample_count = 0;
+
 	while (1) {
 		ret = i2s_read(dev_exg, &rx_block, &rx_size);
 		if (ret < 0) {
@@ -69,7 +71,8 @@ void exg_rx_thread_func(void *p1, void *p2, void *p3) {
 			continue;
 		}
 
-		ads1298_sample_t *sample = (ads1298_sample_t *)rx_block;
+
+		// ads1298_sample_t *sample = (ads1298_sample_t *)rx_block;
 		// LOG_DBG("Received sample: status=%02x%02x%02x, timestamp=%llu, sequence_number=%u",
 		//         sample->status[0],
 		//         sample->status[1],
@@ -77,12 +80,20 @@ void exg_rx_thread_func(void *p1, void *p2, void *p3) {
 		//         sample->timestamp,
 		//         sample->sequence_number);
 
-		event.timestamp_us = sample->timestamp;
-		memcpy(&event.event_data.exg_data_event.status, sample->status, 3);
+		// sample_count++;
+		// if (sample_count %100 == 0) {
+		// 	LOG_HEXDUMP_DBG(sample->status, sizeof(sample->status), "E");
+		//
+		// 	// LOG_INF("EXG Sample %u: seq=%u, ts=%llu", sample_count, sample->sequence_number, sample->timestamp);
+		// }
 
-		event.event_data.exg_data_event.sequence_number = sample->sequence_number;
 
-		memcpy(event.event_data.exg_data_event.readings, &sample->status[3], sizeof(sample->status) - 3);
+		// event.timestamp_us = sample->timestamp;
+		memcpy(&event.event_data.exg_data_event.status, rx_block, 3);
+
+		// event.event_data.exg_data_event.sequence_number = sample->sequence_number;
+
+		memcpy(event.event_data.exg_data_event.readings, &rx_block[3],  3*8);
 
 		ret = k_msgq_put(main_queue, &event, K_NO_WAIT);
 		if (ret != 0) {
@@ -97,6 +108,13 @@ int init_exg(struct k_msgq *mq) {
 	const struct device *const dev = DEVICE_DT_GET_ONE(ti_ads1298_i2s);
 	struct exg_config exg_cfg;
 	int ret;
+
+	LOG_WRN("diong deffered init exg");
+	ret = device_init(dev);
+	if (ret < 0) {
+		LOG_ERR("Deffered init of EXG failed (%d)", ret);
+		return ret;
+	}
 
 	if (!device_is_ready(dev)) {
 		LOG_ERR("Device %s is not ready\n", dev->name);

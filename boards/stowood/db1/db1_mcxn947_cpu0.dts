@@ -435,8 +435,9 @@
 	ads1298: ads1298@0 {
 		compatible = "ti,ads1298_i2s";
 		status = "okay";
+		zephyr,deferred-init; // hack for now while we sort out the power distribution.
 		reg = <0x0>;
-		spi-max-frequency = <10000000>; /* Can go higher */
+		spi-max-frequency = <1000000>; /* Can go higher */
 		clksel-gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
 		nrst-gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
 		npwdn-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
