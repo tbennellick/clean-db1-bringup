@@ -68,6 +68,7 @@ void exg_rx_thread_func(void *p1, void *p2, void *p3) {
 		ret = i2s_read(dev_exg, &rx_block, &rx_size);
 		if (ret < 0) {
 			LOG_ERR("Failed to read EXG RX stream (%d)", ret);
+			k_sleep(K_MSEC(10));
 			continue;
 		}
 
