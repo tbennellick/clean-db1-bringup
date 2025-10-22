@@ -8,7 +8,9 @@ manifest:
   remotes:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
-
+    - name: stowood
+      url-base: git@github.com:Stowood
+      
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
@@ -21,8 +23,9 @@ manifest:
           - fatfs
           - littlefs
           - nanopb
+
     - name: bfp_common_sw
-      url:  git@github.com:Stowood/bfp_common_sw.git
+      remote: stowood
       revision: file_rev_4
       path: bfp_common_sw
 
