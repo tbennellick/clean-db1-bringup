@@ -51,6 +51,18 @@ jobs:
           restore-keys: |
             modules-
 
+      # grant access to the private bfp_common_sw repo
+      - name: Configure SSH for private repos
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_BFP_COMMON_SW }}
+
+      # This is needed to access the bfp_common_sw repo via SSH
+      - name: Add GitHub to known hosts
+        run: |
+          curl --silent https://api.github.com/meta | python3 -c "import sys, json; print('\n'.join(['github.com ' + key for key in json.load(sys.stdin)['ssh_keys']]))" >> /root/.ssh/known_hosts
+          chmod 600 /root/.ssh/known_hosts
+
       - name: Mark git repo as not dubious ownership
         run: |
           git config --global --add safe.directory $GITHUB_WORKSPACE
@@ -109,7 +121,7 @@ jobs:
         if: failure()
         run: |
           tree /__w/
-
+          tree ~
       - name: Pack Firmware on failure
         if: failure()
         run: |
